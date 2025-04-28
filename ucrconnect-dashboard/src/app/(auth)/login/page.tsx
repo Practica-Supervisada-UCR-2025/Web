@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 
-export default function Login() {
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -43,25 +43,25 @@ export default function Login() {
     setError('');
     setLoading(true);
 
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    const idToken = await user.getIdToken();
-    
-    const response = await fetch('/api/admin/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify({
-        email: user.email,
-        full_name: user.displayName || '',
-        auth_id: user.uid,
-        auth_token: idToken,
-      }),
-    });
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      const idToken = await user.getIdToken();
+      
+      const response = await fetch('/api/admin/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          email: user.email,
+          full_name: user.displayName || '',
+          auth_id: user.uid,
+          auth_token: idToken,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -71,19 +71,19 @@ export default function Login() {
       const { access_token } = await response.json();
 
       window.location.href = '/';
-      } catch (error) {
-        // Handle Firebase auth errors with custom messages
-        if (error instanceof Error) {
-          if (error.message.includes('auth/invalid-credential') ||
-            error.message.includes('auth/user-not-found') ||
-            error.message.includes('auth/wrong-password')) {
-            setError('Nombre de usuario o contraseña incorrectos.');
-          } else {
-            setError('Ha ocurrido un error durante el inicio de sesión.');
-          }
+    } catch (error) {
+      // Handle Firebase auth errors with custom messages
+      if (error instanceof Error) {
+        if (error.message.includes('auth/invalid-credential') ||
+          error.message.includes('auth/user-not-found') ||
+          error.message.includes('auth/wrong-password')) {
+          setError('Nombre de usuario o contraseña incorrectos.');
         } else {
           setError('Ha ocurrido un error durante el inicio de sesión.');
         }
+      } else {
+        setError('Ha ocurrido un error durante el inicio de sesión.');
+      }
     } finally {
       setLoading(false);
     }
@@ -138,14 +138,21 @@ export default function Login() {
           >
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
-
         </div>
       </form>
-            <div className="text-center mt-4">
-                <Link href="recover_password" className="text-sm text-blue-600 hover:text-blue-800">
-                    ¿Olvidaste tu contraseña?
-                </Link>
-            </div>
+      <div className="text-center mt-4">
+        <Link href="recover_password" className="text-sm text-blue-600 hover:text-blue-800">
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
