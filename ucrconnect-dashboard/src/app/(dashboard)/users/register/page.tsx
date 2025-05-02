@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { useEffect } from 'react';
+import { getAuth, fetchSignInMethodsForEmail, createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
+import { auth, getSecondaryAuth } from '@/lib/firebase';
+import { deleteApp } from 'firebase/app';
 
 // Form error types
 type FormErrors = {
@@ -73,7 +76,7 @@ export default function RegisterUser() {
                 password: 'La contraseña es obligatoria.',
                 confirmPassword: 'Debes confirmar tu contraseña.',
             };
-        
+
             return requiredMessages[name] || 'Este campo es obligatorio.';
         }
 
@@ -154,6 +157,18 @@ export default function RegisterUser() {
         return Object.keys(formErrors).length === 0 && emailAvailable === true;
     };
 
+    // Check if email is available
+    //TODO: fix this function to use a backend API instead of Firebase, since Firebase has EEP enabled and always returns an empty array for the signInMethods
+    const isEmailAvailable = async (email: string): Promise<boolean> => {
+        try {
+            const methods = await fetchSignInMethodsForEmail(auth, email);
+            return methods.length === 0;
+        } catch (error) {
+            console.error('Error verificando email en Firebase:', error);
+            return false;
+        }
+    };
+
     // Check email
     useEffect(() => {
         setEmailAvailable(null);
@@ -164,24 +179,10 @@ export default function RegisterUser() {
 
         const timeoutId = setTimeout(async () => {
             try {
-                // Uncomment and adapt the following lines to use the actual API endpoint
-                //const res = await fetch(`/api/users/check-email?email=${formData.email}`);
-                //const data = await res.json();
-                //setEmailAvailable(data.available);
-
-                // Simulating an API call with a timeout
-                const res = await new Promise<{ available: boolean }>((resolve) => {
-                    const yaRegistrados = ['admin@ucr.ac.cr', 'user@ucr.ac.cr'];
-                    setTimeout(() => {
-                        resolve({ available: !yaRegistrados.includes(formData.email.toLowerCase()) });
-                    }, 500);
-                });
-
-                setEmailAvailable(res.available);
-                //---------------------------------------
-
+                const disponible = await isEmailAvailable(formData.email);
+                setEmailAvailable(disponible);
             } catch (error) {
-                console.error("Error al verificar el correo.", error);
+                console.error("Error al verificar el correo con Firebase.", error);
                 setEmailAvailable(null);
             }
         }, 500); // wait 500ms after the last keystroke
@@ -249,8 +250,48 @@ export default function RegisterUser() {
         setIsSubmitting(true);
 
         try {
-            // Fetch API to register user
-            console.log(formData);
+
+            const { auth: secondaryAuth, app: secondaryApp } = getSecondaryAuth();
+
+            const userCredential = await createUserWithEmailAndPassword(
+                secondaryAuth,
+                formData.email,
+                formData.password
+            );
+
+            const newUser = userCredential.user;
+            const authId = newUser.uid;
+            const newUserToken = await newUser.getIdToken();
+
+            await secondaryAuth.signOut();
+            await deleteApp(secondaryApp);
+
+            const currentUser = auth.currentUser;
+            const authToken = currentUser ? await currentUser.getIdToken() : null;
+
+            if (!authToken) {
+                throw new Error("No se pudo obtener el token de autenticación del admin.");
+            }
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/auth/register`, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${authToken}`,
+                },
+                body: JSON.stringify({
+                    email: formData.email,
+                    full_name: formData.name,
+                    auth_id: authId,
+                    auth_token: newUserToken,
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                await deleteUser(newUser); // Delete the user from Firebase if the backend registration fails
+                throw new Error(err.message || "Error en el registro en el backend.");
+            }
+
             setSuccessMessage("Usuario registrado correctamente.");
             setFormData({ name: '', email: '', password: '', confirmPassword: '' });
             setErrors({});
@@ -264,11 +305,11 @@ export default function RegisterUser() {
             setTimeout(() => {
                 setSuccessMessage("");
             }, 3000);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error al registrar usuario.', err);
             setErrors(prev => ({
                 ...prev,
-                form: "Ocurrió un error al registrar el usuario.",
+                form: err.message || "Ocurrió un error al registrar el usuario.",
             }));
         } finally {
             setIsSubmitting(false);
