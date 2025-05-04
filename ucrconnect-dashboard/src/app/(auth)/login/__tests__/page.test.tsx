@@ -56,6 +56,26 @@ describe('Login Page', () => {
     expect(screen.getByPlaceholderText('Contraseña')).toBeInTheDocument();
     expect(screen.getByText('Ingresar')).toBeInTheDocument();
     expect(screen.getByText('¿Olvidaste tu contraseña?')).toBeInTheDocument();
+    // Check for password visibility toggle button
+    expect(screen.getByRole('button', { name: /toggle password visibility/i })).toBeInTheDocument();
+  });
+
+  it('toggles password visibility when clicking the eye icon', () => {
+    render(<Login />);
+    
+    const passwordInput = screen.getByPlaceholderText('Contraseña');
+    const toggleButton = screen.getByRole('button', { name: /toggle password visibility/i });
+    
+    // Initially password should be hidden
+    expect(passwordInput).toHaveAttribute('type', 'password');
+    
+    // Click to show password
+    fireEvent.click(toggleButton);
+    expect(passwordInput).toHaveAttribute('type', 'text');
+    
+    // Click to hide password again
+    fireEvent.click(toggleButton);
+    expect(passwordInput).toHaveAttribute('type', 'password');
   });
 
   it('shows success toast when logout is successful', () => {
