@@ -6,20 +6,45 @@ export async function POST(request: Request) {
     console.log('Request body:', body);
     
     // Validate required fields
-    if (!body.auth_id || !body.auth_token) {
+    if (!body.auth_id || !body.auth_token || !body.email || !body.full_name) {
       return NextResponse.json(
         { 
           message: 'Invalid request',
-          details: 'Missing required fields: auth_id and auth_token'
+          details: 'Missing required fields'
         },
         { status: 400 }
       );
     }
 
+    // Make request to backend API
+    const backendResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: body.email,
+        full_name: body.full_name,
+        auth_id: body.auth_id,
+        auth_token: body.auth_token
+      })
+    });
+
+    const backendData = await backendResponse.json();
+
+    if (!backendResponse.ok) {
+      // Pass through the backend's error response
+      return NextResponse.json(
+        backendData,
+        { status: backendResponse.status }
+      );
+    }
+
+    // If backend response is successful, set the cookie and return success
     const successResponse = NextResponse.json({ message: 'Login successful' });
     
-    // Set the Firebase token as an HTTP-only cookie
-    successResponse.cookies.set('access_token', body.auth_token, {
+    // Set the access token from backend as HTTP-only cookie
+    successResponse.cookies.set('access_token', backendData.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

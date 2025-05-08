@@ -2,6 +2,13 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import Login from '../page';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { useSearchParams } from 'next/navigation';
+import toast from 'react-hot-toast';
+
+// Mock next/navigation
+jest.mock('next/navigation', () => ({
+  useSearchParams: jest.fn(),
+}));
 
 // Mock firebase/auth
 jest.mock('firebase/auth', () => ({
@@ -18,6 +25,15 @@ jest.mock('firebase/app', () => ({
   getApps: jest.fn(() => []),
 }));
 
+// Mock react-hot-toast
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
 // Mock fetch
 global.fetch = jest.fn();
 
@@ -26,6 +42,8 @@ describe('Login Page', () => {
     jest.clearAllMocks();
     // Reset fetch mock
     (global.fetch as jest.Mock).mockReset();
+    // Default mock for useSearchParams
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams());
   });
 
   it('renders login form correctly', () => {
@@ -38,6 +56,56 @@ describe('Login Page', () => {
     expect(screen.getByPlaceholderText('Contraseña')).toBeInTheDocument();
     expect(screen.getByText('Ingresar')).toBeInTheDocument();
     expect(screen.getByText('¿Olvidaste tu contraseña?')).toBeInTheDocument();
+    // Check for password visibility toggle button
+    expect(screen.getByRole('button', { name: /toggle password visibility/i })).toBeInTheDocument();
+  });
+
+  it('toggles password visibility when clicking the eye icon', () => {
+    render(<Login />);
+    
+    const passwordInput = screen.getByPlaceholderText('Contraseña');
+    const toggleButton = screen.getByRole('button', { name: /toggle password visibility/i });
+    
+    // Initially password should be hidden
+    expect(passwordInput).toHaveAttribute('type', 'password');
+    
+    // Click to show password
+    fireEvent.click(toggleButton);
+    expect(passwordInput).toHaveAttribute('type', 'text');
+    
+    // Click to hide password again
+    fireEvent.click(toggleButton);
+    expect(passwordInput).toHaveAttribute('type', 'password');
+  });
+
+  it('shows success toast when logout is successful', () => {
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('logout=success'));
+    
+    render(<Login />);
+    
+    expect(toast.success).toHaveBeenCalledWith('Sesión cerrada exitosamente', {
+      duration: 2000,
+      position: 'top-center',
+      style: {
+        background: '#333',
+        color: '#fff',
+      },
+    });
+  });
+
+  it('shows error toast when logout fails', () => {
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams('logout=error'));
+    
+    render(<Login />);
+    
+    expect(toast.error).toHaveBeenCalledWith('Error al cerrar sesión', {
+      duration: 2000,
+      position: 'top-center',
+      style: {
+        background: '#333',
+        color: '#fff',
+      },
+    });
   });
 
   it('handles successful login', async () => {

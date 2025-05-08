@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 
-export default function Login() {
+function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
@@ -43,25 +44,25 @@ export default function Login() {
     setError('');
     setLoading(true);
 
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    const idToken = await user.getIdToken();
-    
-    const response = await fetch('/api/admin/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${idToken}`
-      },
-      body: JSON.stringify({
-        email: user.email,
-        full_name: user.displayName || '',
-        auth_id: user.uid,
-        auth_token: idToken,
-      }),
-    });
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      const idToken = await user.getIdToken();
+      
+      const response = await fetch('/api/admin/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          email: user.email,
+          full_name: user.displayName || '',
+          auth_id: user.uid,
+          auth_token: idToken,
+        }),
+      });
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -71,19 +72,19 @@ export default function Login() {
       const { access_token } = await response.json();
 
       window.location.href = '/';
-      } catch (error) {
-        // Handle Firebase auth errors with custom messages
-        if (error instanceof Error) {
-          if (error.message.includes('auth/invalid-credential') ||
-            error.message.includes('auth/user-not-found') ||
-            error.message.includes('auth/wrong-password')) {
-            setError('Nombre de usuario o contraseña incorrectos.');
-          } else {
-            setError('Ha ocurrido un error durante el inicio de sesión.');
-          }
+    } catch (error) {
+      // Handle Firebase auth errors with custom messages
+      if (error instanceof Error) {
+        if (error.message.includes('auth/invalid-credential') ||
+          error.message.includes('auth/user-not-found') ||
+          error.message.includes('auth/wrong-password')) {
+          setError('Nombre de usuario o contraseña incorrectos.');
         } else {
           setError('Ha ocurrido un error durante el inicio de sesión.');
         }
+      } else {
+        setError('Ha ocurrido un error durante el inicio de sesión.');
+      }
     } finally {
       setLoading(false);
     }
@@ -118,17 +119,35 @@ export default function Login() {
           />
         </div>
 
-        <div>
+        <div className="relative">
           <input
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Contraseña"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#2980B9] focus:border-[#2980B9] dark:text-[#0C344E]"
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            aria-label="toggle password visibility"
+          >
+            {showPassword ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            )}
+          </button>
         </div>
         <div>
           <button
@@ -138,14 +157,21 @@ export default function Login() {
           >
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
-
         </div>
       </form>
-            <div className="text-center mt-4">
-                <Link href="recover_password" className="text-sm text-blue-600 hover:text-blue-800">
-                    ¿Olvidaste tu contraseña?
-                </Link>
-            </div>
+      <div className="text-center mt-4">
+        <Link href="recover_password" className="text-sm text-blue-600 hover:text-blue-800">
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
