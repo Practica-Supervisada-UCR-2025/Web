@@ -250,7 +250,6 @@ export default function RegisterUser() {
 
         try {
             // Fetch API to register user
-            console.log(formData);
             setSuccessMessage("Usuario registrado correctamente.");
             setFormData({ name: '', email: '', password: '', confirmPassword: '' });
             setErrors({});

@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    console.log('Request body:', body);
     
     // Validate required fields
     if (!body.auth_id || !body.auth_token || !body.email || !body.full_name) {
