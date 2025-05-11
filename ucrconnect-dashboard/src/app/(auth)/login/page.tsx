@@ -64,12 +64,15 @@ function LoginContent() {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to authenticate with backend');
+        throw new Error(data.message || 'Failed to authenticate with backend');
       }
 
-      const { access_token } = await response.json();
+      if (data.access_token) {
+        sessionStorage.setItem('access_token', data.access_token);
+      }
 
       window.location.href = '/';
     } catch (error) {

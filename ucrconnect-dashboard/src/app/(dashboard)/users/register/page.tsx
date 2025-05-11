@@ -253,6 +253,13 @@ export default function RegisterUser() {
 
             const { auth: secondaryAuth, app: secondaryApp } = getSecondaryAuth();
 
+            //Get the auth token from session storage
+            const authToken = sessionStorage.getItem('access_token');
+            if (!authToken) {
+                throw new Error("No se pudo obtener el token de autenticación del admin.");
+            }
+
+            // Create user in Firebase
             const userCredential = await createUserWithEmailAndPassword(
                 secondaryAuth,
                 formData.email,
@@ -263,19 +270,11 @@ export default function RegisterUser() {
             const authId = newUser.uid;
             const newUserToken = await newUser.getIdToken();
 
-            await secondaryAuth.signOut();
-            await deleteApp(secondaryApp);
-
-            const currentUser = auth.currentUser;
-            const authToken = currentUser ? await currentUser.getIdToken() : null;
-
-            if (!authToken) {
-                throw new Error("No se pudo obtener el token de autenticación del admin.");
-            }
-
+            // Send user data to backend api
             const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/auth/register`, {
                 method: "POST",
                 headers: {
+                    'Content-Type': 'application/json',
                     Authorization: `Bearer ${authToken}`,
                 },
                 body: JSON.stringify({
@@ -285,12 +284,16 @@ export default function RegisterUser() {
                     auth_token: newUserToken,
                 }),
             });
-
+            
             if (!response.ok) {
                 const err = await response.json();
                 await deleteUser(newUser); // Delete the user from Firebase if the backend registration fails
                 throw new Error(err.message || "Error en el registro en el backend.");
             }
+            
+            // If the backend registration is successful, sign out the new user from Firebase
+            await secondaryAuth.signOut();
+            await deleteApp(secondaryApp);
 
             setSuccessMessage("Usuario registrado correctamente.");
             setFormData({ name: '', email: '', password: '', confirmPassword: '' });

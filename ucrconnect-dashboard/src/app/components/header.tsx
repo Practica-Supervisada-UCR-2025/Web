@@ -140,7 +140,9 @@ export default function Header() {
             if (!response.ok) {
                 console.error('Failed to logout from backend');
             }
-
+            
+            // Clear the access token cookie
+            sessionStorage.removeItem('access_token');
             // Then logout from Firebase
             await signOut(auth);
             
