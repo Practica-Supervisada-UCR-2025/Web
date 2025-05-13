@@ -87,9 +87,10 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
     const [showSuspendModal, setShowSuspendModal] = useState(false);
     const [showSuspensionDuration, setShowSuspensionDuration] = useState(false);
+    const [showConfirmClearReports, setShowConfirmClearReports] = useState(false);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-gray-300 bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg w-full max-w-3xl p-6 relative">
                 <button
                     onClick={onClose}
@@ -149,7 +150,7 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
                         Ocultar publicaci&oacute;n
                     </button>
                     <button
-                        onClick={onClearReports}
+                        onClick={() => setShowConfirmClearReports(true)}
                         className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors"
                     >
                         Eliminar reportes
@@ -158,19 +159,25 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
             </div>
 
             {showSuspendModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-gray-300 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
                         <h3 className="text-lg font-bold mb-4 text-gray-800">&iquest;Deseas suspender al usuario?</h3>
                         <div className="flex justify-end space-x-4 mt-6">
+                            <button
+                                onClick={() => setShowSuspendModal(false)}
+                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                            >
+                                Cancelar
+                            </button>
                             <button
                                 onClick={() => {
                                     setShowSuspendModal(false);
                                     // Marcar la publicacion como inactiva sin suspender al usuario
                                     onHidePost();
                                 }}
-                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md"
                             >
-                                No
+                                Solo ocultar
                             </button>
                             <button
                                 onClick={() => {
@@ -179,7 +186,7 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
                                 }}
                                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
                             >
-                                S&iacute;
+                                Suspender
                             </button>
                         </div>
                     </div>
@@ -187,36 +194,72 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
             )}
 
             {showSuspensionDuration && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-gray-300 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
                         <h3 className="text-lg font-bold mb-4 text-gray-800">Selecciona la duraci&oacute;n de la suspensi&oacute;n</h3>
-                        <div className="flex justify-center space-x-4 mt-6">
+                        <div className="flex flex-col space-y-3 mt-6">
+                            <div className="flex justify-center space-x-4">
+                                <button
+                                    onClick={() => {
+                                        setShowSuspensionDuration(false);
+                                        onHidePost();
+                                    }}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                                >
+                                    1 d&iacute;a
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowSuspensionDuration(false);
+                                        onHidePost();
+                                    }}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                                >
+                                    3 d&iacute;as
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowSuspensionDuration(false);
+                                        onHidePost();
+                                    }}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                                >
+                                    7 d&iacute;as
+                                </button>
+                            </div>
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={() => setShowSuspensionDuration(false)}
+                                    className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showConfirmClearReports && (
+                <div className="fixed inset-0 bg-gray-300 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg w-full max-w-md p-6">
+                        <h3 className="text-lg font-bold mb-4 text-gray-800">Confirmar eliminaci&oacute;n de reportes</h3>
+                        <p className="text-gray-600 mb-4">&iquest;Est&aacute;s seguro de que deseas eliminar todos los reportes activos de esta publicaci&oacute;n?</p>
+                        <div className="flex justify-end space-x-4 mt-6">
                             <button
-                                onClick={() => {
-                                    setShowSuspensionDuration(false);
-                                    onHidePost();
-                                }}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                                onClick={() => setShowConfirmClearReports(false)}
+                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
                             >
-                                1 d&iacute;a
+                                Cancelar
                             </button>
                             <button
                                 onClick={() => {
-                                    setShowSuspensionDuration(false);
-                                    onHidePost();
+                                    setShowConfirmClearReports(false);
+                                    onClearReports();
                                 }}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
+                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md"
                             >
-                                3 d&iacute;as
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowSuspensionDuration(false);
-                                    onHidePost();
-                                }}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-                            >
-                                7 d&iacute;as
+                                Confirmar
                             </button>
                         </div>
                     </div>
@@ -279,6 +322,13 @@ export default function Content() {
             post.id === selectedPost.id ? { ...post, active: false } : post
         ));
         setSelectedPost(null);
+
+        // Check if current page is empty after this action and go to previous page if needed
+        const remainingPosts = filteredPosts.filter(post => post.id !== selectedPost.id);
+        const remainingPages = Math.ceil(remainingPosts.length / postsPerPage);
+        if (currentPage > 1 && currentPage > remainingPages) {
+            setCurrentPage(currentPage - 1);
+        }
     };
 
     // Handle clear reports
@@ -287,6 +337,13 @@ export default function Content() {
             post.id === selectedPost.id ? { ...post, activeReports: 0 } : post
         ));
         setSelectedPost(null);
+
+        // Check if current page is empty after this action and go to previous page if needed
+        const remainingPosts = filteredPosts.filter(post => post.id !== selectedPost.id);
+        const remainingPages = Math.ceil(remainingPosts.length / postsPerPage);
+        if (currentPage > 1 && currentPage > remainingPages) {
+            setCurrentPage(currentPage - 1);
+        }
     };
 
     return (
