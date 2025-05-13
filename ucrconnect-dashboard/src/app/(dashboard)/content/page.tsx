@@ -68,7 +68,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                 Anterior
             </button>
 
-            <div className="px-4 py-2 bg-gray-100">
+            <div className="px-4 py-2 bg-gray-100 text-gray-800">
                 P&aacute;gina {currentPage} de {totalPages}
             </div>
 
@@ -100,7 +100,7 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
                     </svg>
                 </button>
 
-                <h2 className="text-2xl font-bold mb-4">Detalles de la publicaci&oacute;n</h2>
+                <h2 className="text-2xl font-bold mb-4 text-gray-800">Detalles de la publicaci&oacute;n</h2>
 
                 <div className="mb-6">
                     <div className="flex justify-between mb-2">
@@ -160,7 +160,7 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
             {showSuspendModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4">&iquest;Deseas suspender al usuario?</h3>
+                        <h3 className="text-lg font-bold mb-4 text-gray-800">&iquest;Deseas suspender al usuario?</h3>
                         <div className="flex justify-end space-x-4 mt-6">
                             <button
                                 onClick={() => {
@@ -189,7 +189,7 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
             {showSuspensionDuration && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4">Selecciona la duraci&oacute;n de la suspensi&oacute;n</h3>
+                        <h3 className="text-lg font-bold mb-4 text-gray-800">Selecciona la duraci&oacute;n de la suspensi&oacute;n</h3>
                         <div className="flex justify-center space-x-4 mt-6">
                             <button
                                 onClick={() => {
@@ -300,7 +300,7 @@ export default function Content() {
                             id="sortBy"
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm"
+                            className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-800"
                         >
                             <option value="reports">Reportes</option>
                             <option value="date">Fecha</option>
