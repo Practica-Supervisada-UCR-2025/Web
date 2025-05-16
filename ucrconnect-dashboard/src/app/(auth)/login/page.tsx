@@ -77,14 +77,6 @@ function LoginContent() {
         }),
       });
 
-      // const data = await response.json();
-
-      // if (!response.ok) {
-      //   throw new Error(data.message || 'Failed to authenticate with backend');
-      // }
-
-      // if (data.access_token) {
-      //   sessionStorage.setItem('access_token', data.access_token);
       const responseData = await response.json();
 
       if (!response.ok) {

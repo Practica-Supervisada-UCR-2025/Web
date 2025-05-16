@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { getAuth, fetchSignInMethodsForEmail, createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import { auth, getSecondaryAuth } from '@/lib/firebase';
 import { deleteApp } from 'firebase/app';
+import { NextRequest, NextResponse } from 'next/server';
 
 // Form error types
 type FormErrors = {
@@ -254,10 +255,11 @@ export default function RegisterUser() {
             const { auth: secondaryAuth, app: secondaryApp } = getSecondaryAuth();
 
             //Get the auth token from session storage
-            const authToken = sessionStorage.getItem('access_token');
-            if (!authToken) {
-                throw new Error("No se pudo obtener el token de autenticación del admin.");
-            }
+            // const authToken = sessionStorage.getItem('access_token');
+
+            // if (!authToken) {
+            //     throw new Error("No se pudo obtener el token de autenticación del admin.");
+            // }
 
             // Create user in Firebase
             const userCredential = await createUserWithEmailAndPassword(
@@ -271,11 +273,10 @@ export default function RegisterUser() {
             const newUserToken = await newUser.getIdToken();
 
             // Send user data to backend api
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/admin/auth/register`, {
+            const response = await fetch(`/api/admin/auth/register`, {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${authToken}`,
                 },
                 body: JSON.stringify({
                     email: formData.email,
