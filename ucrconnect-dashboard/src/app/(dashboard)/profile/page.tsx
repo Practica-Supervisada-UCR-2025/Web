@@ -1,7 +1,10 @@
 'use client'
+
 import { useEffect, useState } from 'react'
 import { fetchProfile } from '@/lib/mockApi'
 import { Pencil } from 'lucide-react'
+import { auth } from '@/lib/firebase'
+import { reauthenticateWithCredential, EmailAuthProvider, updatePassword } from 'firebase/auth'
 
 interface FormData {
   firstName: string
@@ -89,23 +92,46 @@ export default function ProfilePage() {
     return newErrors
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const validationErrors = validate()
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
       setSuccessMessage('')
-    } else {
-      setErrors({})
-      setSuccessMessage('Los cambios se guardaron correctamente.')
-      setTimeout(() => setSuccessMessage(''), 3000)
-
-      setFormData(prev => ({
-        ...prev,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      }))
+      return
     }
+
+    if (formData.currentPassword && formData.newPassword) {
+      try {
+        const user = auth.currentUser
+        if (!user || !user.email) {
+          setErrors({ currentPassword: 'No hay usuario autenticado.' })
+          return
+        }
+
+        const credential = EmailAuthProvider.credential(user.email, formData.currentPassword)
+        await reauthenticateWithCredential(user, credential)
+        await updatePassword(user, formData.newPassword)
+      } catch (err: any) {
+        const errorCode = err.code || ''
+        if (errorCode === 'auth/wrong-password') {
+          setErrors({ currentPassword: 'La contraseña actual es incorrecta.' })
+        } else {
+          setErrors({ currentPassword: 'Error al cambiar la contraseña.' })
+        }
+        return
+      }
+    }
+
+    setErrors({})
+    setSuccessMessage('Los cambios se guardaron correctamente.')
+    setTimeout(() => setSuccessMessage(''), 3000)
+
+    setFormData(prev => ({
+      ...prev,
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    }))
   }
 
   return (
@@ -147,74 +173,61 @@ export default function ProfilePage() {
       <h4 className="text-lg font-semibold text-gray-700 mb-4">Información de usuario</h4>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        {/* Nombre */}
         <div className="relative">
           <label className="block text-sm font-semibold text-[#249dd8] mb-1">Nombre</label>
-          <div className="relative">
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName || ''}
-              onChange={handleChange}
-              placeholder="Nombre"
-              className={`peer w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
-                errors.firstName
-                  ? 'border-red-500 ring-red-300'
-                  : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'
-              } text-gray-800`}
-            />
-            <Pencil className="absolute top-1/2 right-3 -translate-y-1/2 text-[#249dd8] w-4 h-4 pointer-events-none" />
-          </div>
+          <input
+            type="text"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleChange}
+            className={`w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
+              errors.firstName
+                ? 'border-red-500 ring-red-300'
+                : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'
+            } text-gray-800`}
+          />
           {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
         </div>
 
-        {/* Apellidos */}
         <div className="relative">
           <label className="block text-sm font-semibold text-[#249dd8] mb-1">Apellidos</label>
-          <div className="relative">
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName || ''}
-              onChange={handleChange}
-              placeholder="Apellidos"
-              className={`peer w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
-                errors.lastName
-                  ? 'border-red-500 ring-red-300'
-                  : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'
-              } text-gray-800`}
-            />
-            <Pencil className="absolute top-1/2 right-3 -translate-y-1/2 text-[#249dd8] w-4 h-4 pointer-events-none" />
-          </div>
+          <input
+            type="text"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            className={`w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
+              errors.lastName
+                ? 'border-red-500 ring-red-300'
+                : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'
+            } text-gray-800`}
+          />
           {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
         </div>
 
-        {/* Email */}
         <div>
           <label className="block text-sm font-semibold text-[#249dd8] mb-1">Correo electrónico</label>
           <input
             type="email"
             name="email"
-            value={formData.email || ''}
+            value={formData.email}
             readOnly
             className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
           />
         </div>
 
-        {/* Username */}
         <div>
           <label className="block text-sm font-semibold text-[#249dd8] mb-1">Usuario</label>
           <input
             type="text"
             name="username"
-            value={formData.username || ''}
+            value={formData.username}
             readOnly
             className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
           />
         </div>
       </div>
 
-      {/* Cambio de contraseña */}
       <h4 className="text-lg font-semibold text-gray-700 mb-4">Cambiar contraseña</h4>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -230,9 +243,9 @@ export default function ProfilePage() {
             <input
               type="password"
               name={field}
-              value={formData[field as keyof FormData] || ''}
+              value={formData[field as keyof FormData]}
               onChange={handleChange}
-              className={`peer w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 ${
+              className={`w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 ${
                 errors[field]
                   ? 'border-red-500 ring-red-300'
                   : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'
@@ -244,7 +257,9 @@ export default function ProfilePage() {
       </div>
 
       <div className="mt-6 flex flex-col items-center space-y-3">
-        <button onClick={handleSubmit} className="bg-[#249dd8] text-white px-10 py-3 rounded-full shadow hover:bg-[#1b87b9] transition">
+        <button
+          onClick={handleSubmit}
+          className="bg-[#249dd8] text-white px-10 py-3 rounded-full shadow hover:bg-[#1b87b9] transition">
           Guardar cambios
         </button>
         {successMessage && <p className="text-green-600 font-medium">{successMessage}</p>}
