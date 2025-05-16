@@ -50,6 +50,19 @@ function LoginContent() {
       
       const idToken = await user.getIdToken();
       
+      // Function to format name from email
+      const formatNameFromEmail = (email: string | null) => {
+        if (!email) return '';
+        const username = email.split('@')[0];
+        return username
+          .split(/[._-]/) // Split by dots, underscores, and hyphens
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+      };
+      
+      // Get a fallback name from email if displayName is null
+      const fallbackName = user.displayName || formatNameFromEmail(user.email);
+      
       const response = await fetch('/api/admin/auth/login', {
         method: 'POST',
         headers: {
@@ -58,20 +71,35 @@ function LoginContent() {
         },
         body: JSON.stringify({
           email: user.email,
-          full_name: user.displayName || '',
+          full_name: fallbackName,
           auth_id: user.uid,
           auth_token: idToken,
         }),
       });
 
-      const data = await response.json();
+      // const data = await response.json();
+
+      // if (!response.ok) {
+      //   throw new Error(data.message || 'Failed to authenticate with backend');
+      // }
+
+      // if (data.access_token) {
+      //   sessionStorage.setItem('access_token', data.access_token);
+      const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to authenticate with backend');
-      }
-
-      if (data.access_token) {
-        sessionStorage.setItem('access_token', data.access_token);
+        console.error('Backend auth failed:', {
+          status: response.status,
+          data: responseData,
+          headers: response.headers ? Object.fromEntries(response.headers.entries()) : {}
+        });
+        
+        // Handle specific error cases
+        if (responseData.missing_fields) {
+          throw new Error('Ha ocurrido un error durante el inicio de sesión.');
+        }
+        
+        throw new Error(responseData.message || responseData.details || 'Ha ocurrido un error durante el inicio de sesión.');
       }
 
       window.location.href = '/';
@@ -83,9 +111,11 @@ function LoginContent() {
           error.message.includes('auth/wrong-password')) {
           setError('Nombre de usuario o contraseña incorrectos.');
         } else {
-          setError('Ha ocurrido un error durante el inicio de sesión.');
+          console.error('Login error:', error);
+          setError(error.message || 'Ha ocurrido un error durante el inicio de sesión.');
         }
       } else {
+        console.error('Unknown login error:', error);
         setError('Ha ocurrido un error durante el inicio de sesión.');
       }
     } finally {
