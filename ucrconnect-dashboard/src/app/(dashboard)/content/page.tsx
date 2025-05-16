@@ -85,12 +85,13 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 
 // Modal component for post details
 const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
+    const [showHideConfirmModal, setShowHideConfirmModal] = useState(false);
     const [showSuspendModal, setShowSuspendModal] = useState(false);
     const [showSuspensionDuration, setShowSuspensionDuration] = useState(false);
     const [showConfirmClearReports, setShowConfirmClearReports] = useState(false);
 
     return (
-        <div className="fixed inset-0 bg-gray-300 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg w-full max-w-3xl p-6 relative">
                 <button
                     onClick={onClose}
@@ -144,7 +145,7 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
 
                 <div className="flex space-x-4 mt-6">
                     <button
-                        onClick={() => setShowSuspendModal(true)}
+                        onClick={() => setShowHideConfirmModal(true)}
                         className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors"
                     >
                         Ocultar publicaci&oacute;n
@@ -158,10 +159,36 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
                 </div>
             </div>
 
-            {showSuspendModal && (
-                <div className="fixed inset-0 bg-gray-300 backdrop-blur-sm flex items-center justify-center z-50">
+            {showHideConfirmModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4 text-gray-800">&iquest;Deseas suspender al usuario?</h3>
+                        <h3 className="text-lg font-bold mb-4 text-gray-800">&iquest;Deseas ocultar publicaci&oacute;n?</h3>
+                        <p className="text-gray-600 mb-4">Esta acci&oacute;n esconder&aacute; la publicaci&oacute;n de la vista p&uacute;blica.</p>
+                        <div className="flex justify-end space-x-4 mt-6">
+                            <button
+                                onClick={() => setShowHideConfirmModal(false)}
+                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowHideConfirmModal(false);
+                                    setShowSuspendModal(true);
+                                }}
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+                            >
+                                Ocultar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showSuspendModal && (
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg w-full max-w-md p-6">
+                        <h3 className="text-lg font-bold mb-4 text-gray-800">&iquest;Tambi&eacute;n deseas suspender al usuario?</h3>
                         <div className="flex justify-end space-x-4 mt-6">
                             <button
                                 onClick={() => setShowSuspendModal(false)}
@@ -172,10 +199,9 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
                             <button
                                 onClick={() => {
                                     setShowSuspendModal(false);
-                                    // Marcar la publicacion como inactiva sin suspender al usuario
                                     onHidePost();
                                 }}
-                                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md"
+                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md"
                             >
                                 Solo ocultar
                             </button>
@@ -194,7 +220,7 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
             )}
 
             {showSuspensionDuration && (
-                <div className="fixed inset-0 bg-gray-300 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
                         <h3 className="text-lg font-bold mb-4 text-gray-800">Selecciona la duraci&oacute;n de la suspensi&oacute;n</h3>
                         <div className="flex flex-col space-y-3 mt-6">
@@ -241,7 +267,7 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
             )}
 
             {showConfirmClearReports && (
-                <div className="fixed inset-0 bg-gray-300 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
                         <h3 className="text-lg font-bold mb-4 text-gray-800">Confirmar eliminaci&oacute;n de reportes</h3>
                         <p className="text-gray-600 mb-4">&iquest;Est&aacute;s seguro de que deseas eliminar todos los reportes activos de esta publicaci&oacute;n?</p>

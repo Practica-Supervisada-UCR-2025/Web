@@ -15,7 +15,7 @@ export const mockPosts = [
         id: 2,
         content: "Este es un post con contenido inapropiado #2",
         contentType: "image",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/1/1f/Oryctolagus_cuniculus_Rcdo.jpg",
+        imageUrl: "https://i.pinimg.com/originals/d7/9b/de/d79bde8334e1e7331fe88673f86a7cbc.gif",
         username: "usuario2",
         email: "usuario2@example.com",
         createdAt: "2025-05-02T14:20:00Z",
