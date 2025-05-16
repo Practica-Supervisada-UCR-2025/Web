@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -10,6 +11,7 @@ export default function Header() {
     const [openSettings, setOpenSettings] = useState(false);
     const [openNotifications, setNotifications] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
+    const router = useRouter();
 
     // Animation states
     const [settingsVisible, setSettingsVisible] = useState(false);
@@ -245,9 +247,18 @@ export default function Header() {
                 transition-opacity duration-150 ${profileVisible ? 'opacity-100' : 'opacity-0'}`}>
                     {/* Content section */}
                     <div className="py-2">
-                        <Link href="/profile" className="text-black text-sm py-2 px-4 block hover:bg-gray-100">
+                        <button
+                            onClick={() => {
+                                setProfileVisible(false);
+                                profileTimeoutRef.current = setTimeout(() => {
+                                    setOpenProfile(false);
+                                    router.push('/profile');
+                                }, 150);
+                            }}
+                            className="w-full text-left text-black text-sm py-2 px-4 block hover:bg-gray-100"
+                        >
                             Ver perfil
-                        </Link>
+                        </button>
                         <button
                             onClick={handleLogout}
                             className="w-full text-left text-black text-sm py-2 px-4 block hover:bg-gray-100"
