@@ -5,7 +5,6 @@ import { useEffect } from 'react';
 import { getAuth, fetchSignInMethodsForEmail, createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import { auth, getSecondaryAuth } from '@/lib/firebase';
 import { deleteApp } from 'firebase/app';
-import { NextRequest, NextResponse } from 'next/server';
 
 // Form error types
 type FormErrors = {
@@ -40,7 +39,6 @@ export default function RegisterUser() {
         confirmPassword: false,
     });
     const [successMessage, setSuccessMessage] = useState('');
-    const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Configuring Validation
@@ -155,7 +153,7 @@ export default function RegisterUser() {
     // Check if its valid
     const isFormValid = (): boolean => {
         const formErrors = validateForm();
-        return Object.keys(formErrors).length === 0 && emailAvailable === true;
+        return Object.keys(formErrors).length === 0;
     };
 
     // Check if email is available
@@ -169,28 +167,6 @@ export default function RegisterUser() {
             return false;
         }
     };
-
-    // Check email
-    useEffect(() => {
-        setEmailAvailable(null);
-
-        if (!formData.email || validateField('email', formData.email)) {
-            return;
-        }
-
-        const timeoutId = setTimeout(async () => {
-            try {
-                const disponible = await isEmailAvailable(formData.email);
-                setEmailAvailable(disponible);
-            } catch (error) {
-                console.error("Error al verificar el correo con Firebase.", error);
-                setEmailAvailable(null);
-            }
-        }, 500); // wait 500ms after the last keystroke
-
-        return () => clearTimeout(timeoutId);
-    }, [formData.email]);
-
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -244,7 +220,7 @@ export default function RegisterUser() {
         setErrors(formErrors);
 
         // No errors and Email available
-        if (Object.keys(formErrors).length > 0 || emailAvailable !== true) {
+        if (Object.keys(formErrors).length > 0) {
             return;
         }
 
@@ -253,13 +229,6 @@ export default function RegisterUser() {
         try {
 
             const { auth: secondaryAuth, app: secondaryApp } = getSecondaryAuth();
-
-            //Get the auth token from session storage
-            // const authToken = sessionStorage.getItem('access_token');
-
-            // if (!authToken) {
-            //     throw new Error("No se pudo obtener el token de autenticación del admin.");
-            // }
 
             // Create user in Firebase
             const userCredential = await createUserWithEmailAndPassword(
@@ -356,19 +325,10 @@ export default function RegisterUser() {
                             value={formData.email}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            className={`mt-1 w-full block px-3 py-2 border ${errors.email || emailAvailable === false ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                            className={`mt-1 w-full block px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
                         />
                         {errors.email && touched.email && (
                             <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                        )}
-                        {formData.email && !errors.email && touched.email && (
-                            <p className={`text-sm mt-1 ${emailAvailable === true ? 'text-green-500' : emailAvailable === false ? 'text-red-500' : 'text-gray-500'}`}>
-                                {emailAvailable === true
-                                    ? 'Correo disponible.'
-                                    : emailAvailable === false
-                                        ? 'Este correo ya está registrado.'
-                                        : 'Verificando disponibilidad...'}
-                            </p>
                         )}
                     </div>
 
@@ -430,7 +390,7 @@ export default function RegisterUser() {
                     )}
 
                     <div className="text-xs text-gray-500 mt-2">
-                        <p>* Campos obligatorios.</p>
+                        <p><span className="text-red-500">*</span> Campos obligatorios.</p>
                     </div>
                 </form>
             </div>
