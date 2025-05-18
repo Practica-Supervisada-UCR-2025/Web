@@ -40,6 +40,8 @@ export default function RegisterUser() {
     });
     const [successMessage, setSuccessMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmationPassword, setShowConfirmationPassword] = useState(false);
 
     // Configuring Validation
     const validationConfig = {
@@ -254,13 +256,13 @@ export default function RegisterUser() {
                     auth_token: newUserToken,
                 }),
             });
-            
+
             if (!response.ok) {
                 const err = await response.json();
                 await deleteUser(newUser); // Delete the user from Firebase if the backend registration fails
                 throw new Error(err.message || "Error en el registro en el backend.");
             }
-            
+
             // If the backend registration is successful, sign out the new user from Firebase
             await secondaryAuth.signOut();
             await deleteApp(secondaryApp);
@@ -336,16 +338,36 @@ export default function RegisterUser() {
                         <label htmlFor="password" className="block text-sm font-semibold text-[#249dd8] mb-1">
                             Contraseña <span className="text-red-500">*</span>
                         </label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            placeholder="Mínimo 8 caracteres"
-                            value={formData.password}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            className={`mt-1 w-full block px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        />
+                        <div className="relative">
+                            <input
+                                id="password"
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Mínimo 8 caracteres"
+                                value={formData.password}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                className={`mt-1 w-full block pr-10 px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                aria-label="toggle password visibility"
+                            >
+                                {showPassword ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
                         {errors.password && touched.password && (
                             <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                         )}
@@ -355,16 +377,36 @@ export default function RegisterUser() {
                         <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[#249dd8] mb-1">
                             Confirmar Contraseña <span className="text-red-500">*</span>
                         </label>
-                        <input
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            type="password"
-                            placeholder="Repite tu contraseña"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            className={`mt-1 w-full block px-3 py-2 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        />
+                        <div className="relative">
+                            <input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type={showConfirmationPassword ? "text" : "password"}
+                                placeholder="Repite tu contraseña"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                className={`mt-1 w-full block px-3 py-2 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmationPassword(!showConfirmationPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                aria-label="toggle password visibility"
+                            >
+                                {showConfirmationPassword ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
                         {errors.confirmPassword && touched.confirmPassword && (
                             <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
                         )}
