@@ -290,12 +290,12 @@ export default function RegisterUser() {
     };
 
     return (
-        <div>
-            <h2 className="mt-2 text-gray-600">Registrar nuevo usuario</h2>
-            <div className="mt-10 w-full sm:w-11/12 md:w-3/4 lg:w-1/3">
+        <div className="max-w-4xl mx-auto mt-10 bg-white shadow-xl rounded-2xl p-10">
+            <h3 className="text-2xl font-bold text-center text-gray-800 mb-10">Registrar nuevo usuario administrador</h3>
+            <div>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-gray-800">
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="name" className="block text-sm font-semibold text-[#249dd8] mb-1">
                             Nombre <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -314,7 +314,7 @@ export default function RegisterUser() {
                     </div>
 
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="email" className="block text-sm font-semibold text-[#249dd8] mb-1">
                             Correo electrónico <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -333,7 +333,7 @@ export default function RegisterUser() {
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="password" className="block text-sm font-semibold text-[#249dd8] mb-1">
                             Contraseña <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -352,7 +352,7 @@ export default function RegisterUser() {
                     </div>
 
                     <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[#249dd8] mb-1">
                             Confirmar Contraseña <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -373,7 +373,7 @@ export default function RegisterUser() {
                     <div className="flex justify-center">
                         <button
                             type="submit"
-                            className="mt-2 w-auto py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 cursor-pointer hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-auto py-3 px-10 rounded-full shadow text-white bg-[#249dd8] cursor-pointer hover:bg-[#1b87b9] disabled:opacity-50 disabled:cursor-not-allowed transition"
                             disabled={!isFormValid() || isSubmitting}
                             title={!isFormValid() ? 'Complete todos los campos correctamente.' : ''}
                         >
