@@ -248,7 +248,36 @@ export default function RegisterUser() {
             if (!response.ok) {
                 const err = await response.json();
                 await deleteUser(newUser); // Delete the user from Firebase if the backend registration fails
-                throw new Error(err.message || "Error en el registro en el backend.");
+
+                let errorMessage = "Ocurrió un error al registrar el usuario.";
+
+                switch (response.status) {
+                    case 400: // Validation error
+                        if (Array.isArray(err.details)) {
+                            errorMessage = err.details.join(" ");
+                        } else {
+                            errorMessage = "Algunos datos no son válidos. Verifica e intenta de nuevo.";
+                        }
+                        break;
+
+                    case 401: // Not authorized
+                        errorMessage = "No estás autorizado para realizar esta acción.";
+                        break;
+
+                    case 409: // Conflict (Email already in use)
+                        errorMessage = "El correo electrónico ya está registrado como administrador.";
+                        break;
+
+                    case 500: // Internal Server Error
+                        errorMessage = "Hubo un problema en el servidor. Intenta nuevamente más tarde.";
+                        break;
+
+                    default:
+                        // Not cotemplated cases
+                        console.warn("Error inesperado:", err.message || response.statusText);
+                        break;
+                }
+                throw new Error(errorMessage);
             }
 
             // If the backend registration is successful, sign out the new user from Firebase
