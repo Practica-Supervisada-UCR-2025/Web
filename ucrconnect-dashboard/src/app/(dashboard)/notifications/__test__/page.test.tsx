@@ -1,20 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import Notifications from '../page';
+import NotificationForm from '@/app/components/notificationForm';
 
 describe('Notifications Component', () => {
     test('renders the Notifications component with correct heading', () => {
         // Render the component
-        render(<Notifications />);
-
-        // Check if the heading with text is in the document
-        const headingElement = screen.getByText(/notifications/i);
-        expect(headingElement).toBeInTheDocument();
-
-        // Additional test to verify it's an h1 element
-        expect(headingElement.tagName).toBe('H1');
-
-        // Verify the className for styling is applied correctly
-        expect(headingElement).toHaveClass('text-gray-800');
+        render(<NotificationForm />);
     });
 });

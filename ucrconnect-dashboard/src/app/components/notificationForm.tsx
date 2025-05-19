@@ -1,23 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function NotificationForm() {
+    // State variables for form inputs
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [topic, setTopic] = useState("all-users");
+
+    // State variables for loading and error messages
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+    const [errors, setErrors] = useState<{ title?: string; description?: string }>({});
+    const [touched, setTouched] = useState({
+        title: false,
+        description: false,
+    });
+
+    useEffect(() => {
+        const newErrors: typeof errors = {};
+
+        if (title.trim().length < 5) {
+            newErrors.title = "El título debe tener al menos 5 caracteres.";
+        } else if (title.length > 100) {
+            newErrors.title = "El título no debe superar los 100 caracteres.";
+        }
+
+        if (description.trim().length < 10) {
+            newErrors.description = "La descripción debe tener al menos 10 caracteres.";
+        } else if (description.length > 1000) {
+            newErrors.description = "La descripción no debe superar los 1000 caracteres.";
+        }
+
+        setErrors(newErrors);
+    }, [title, description]);
+
+    const isFormValid =
+        !loading &&
+        Object.keys(errors).length === 0 &&
+        title.trim() !== "" &&
+        description.trim() !== "";
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSuccessMessage("");
         setErrorMessage("");
 
-        if (!title || !description) {
-            setErrorMessage("El título y descripción son obligatorios.");
-            return;
+        setTouched({
+            title: true,
+            description: true,
+        });
+
+        if (!isFormValid) {
+            throw new Error("Formulario inválido: completa los campos requeridos.");
         }
 
         setLoading(true);
@@ -36,9 +72,14 @@ export default function NotificationForm() {
             setSuccessMessage("Notificación enviada correctamente.");
             setTitle("");
             setDescription("");
-        } catch (err) {
-            console.error(err);
-            setErrorMessage("Hubo un error al enviar la notificación.");
+            setTouched({ title: false, description: false });
+            setErrors({});
+
+            setTimeout(() => {
+                setSuccessMessage("");
+            }, 3000);
+        } catch (err: any) {
+            setErrorMessage(err.message || "Hubo un error al enviar la notificación.");
         } finally {
             setLoading(false);
         }
@@ -54,9 +95,13 @@ export default function NotificationForm() {
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
+                        onBlur={() => setTouched((prev) => ({ ...prev, title: true }))}
                         required
-                        className="mt-1 w-full block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className={`mt-1 w-full block px-3 py-2 border ${touched.title && errors.title ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
                     />
+                    {errors.title && touched.title && (
+                        <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+                    )}
                 </div>
 
                 <div>
@@ -64,10 +109,14 @@ export default function NotificationForm() {
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
+                        onBlur={() => setTouched((prev) => ({ ...prev, description: true }))}
                         required
                         rows={4}
-                        className="mt-1 w-full block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className={`mt-1 w-full block px-3 py-2 border ${touched.description && errors.description ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
                     />
+                    {errors.description && touched.description && (
+                        <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+                    )}
                 </div>
 
                 <div>
@@ -85,7 +134,7 @@ export default function NotificationForm() {
                 <div className="flex justify-center">
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={!isFormValid}
                         className="w-auto py-3 px-10 rounded-full shadow text-white bg-[#249dd8] cursor-pointer hover:bg-[#1b87b9] disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
                         {loading ? "Enviando..." : "Enviar Notificación"}
