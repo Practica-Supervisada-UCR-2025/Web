@@ -78,8 +78,12 @@ export default function NotificationForm() {
             setTimeout(() => {
                 setSuccessMessage("");
             }, 3000);
-        } catch (err: any) {
-            setErrorMessage(err.message || "Hubo un error al enviar la notificación.");
+        } catch (error: unknown) {
+            if (error instanceof Error) {
+                setErrorMessage(error.message);
+            } else {
+                setErrorMessage("Ocurrió un error inesperado.");
+            }
         } finally {
             setLoading(false);
         }
