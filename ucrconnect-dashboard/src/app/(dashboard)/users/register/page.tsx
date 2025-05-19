@@ -158,18 +158,6 @@ export default function RegisterUser() {
         return Object.keys(formErrors).length === 0;
     };
 
-    // Check if email is available
-    //TODO: fix this function to use a backend API instead of Firebase, since Firebase has EEP enabled and always returns an empty array for the signInMethods
-    const isEmailAvailable = async (email: string): Promise<boolean> => {
-        try {
-            const methods = await fetchSignInMethodsForEmail(auth, email);
-            return methods.length === 0;
-        } catch (error) {
-            console.error('Error verificando email en Firebase:', error);
-            return false;
-        }
-    };
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
 
@@ -281,10 +269,20 @@ export default function RegisterUser() {
                 setSuccessMessage("");
             }, 3000);
         } catch (err: any) {
-            console.error('Error al registrar usuario.', err);
+
+            let message = "Ocurrió un error al registrar el usuario.";
+
+            if (err.code === "auth/email-already-in-use") {
+                message = "El correo electrónico ya está en uso.";
+            } else if (err.code === "auth/invalid-email") {
+                message = "El correo electrónico no es válido.";
+            } else if (err.code === "auth/weak-password") {
+                message = "La contraseña es demasiado débil. Debe tener al menos 8 caracteres.";
+            }
+
             setErrors(prev => ({
                 ...prev,
-                form: err.message || "Ocurrió un error al registrar el usuario.",
+                form: message,
             }));
         } finally {
             setIsSubmitting(false);
