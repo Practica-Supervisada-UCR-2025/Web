@@ -94,8 +94,9 @@ export default function NotificationForm() {
             <h3 className="text-2xl font-bold text-center text-gray-800 mb-10">Enviar Notificación</h3>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-gray-800">
                 <div>
-                    <label className="block text-sm font-semibold text-[#249dd8] mb-1">Título <span className="text-red-500">*</span></label>
+                    <label htmlFor="title" className="block text-sm font-semibold text-[#249dd8] mb-1">Título <span className="text-red-500">*</span></label>
                     <input
+                        id="title"
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
@@ -109,8 +110,9 @@ export default function NotificationForm() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-[#249dd8] mb-1">Descripción <span className="text-red-500">*</span></label>
+                    <label htmlFor="description" className="block text-sm font-semibold text-[#249dd8] mb-1">Descripción <span className="text-red-500">*</span></label>
                     <textarea
+                        id="description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         onBlur={() => setTouched((prev) => ({ ...prev, description: true }))}
@@ -124,8 +126,9 @@ export default function NotificationForm() {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-semibold text-[#249dd8] mb-1">Tópico <span className="text-red-500">*</span></label>
+                    <label htmlFor="topic" className="block text-sm font-semibold text-[#249dd8] mb-1">Tópico <span className="text-red-500">*</span></label>
                     <select
+                        id="topic"
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                         className="mt-1 w-full block px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
