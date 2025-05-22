@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import NotificationForm from '@/components/notificationForm';
 import "@testing-library/jest-dom";
 
@@ -131,7 +131,9 @@ describe('NotificationForm', () => {
       expect(screen.getByText(/notificación enviada correctamente/i)).toBeInTheDocument();
     });
 
-    jest.advanceTimersByTime(3000);
+    await act(async () => {
+      jest.advanceTimersByTime(3000);
+    });
     await waitFor(() =>
       expect(screen.queryByText(/notificación enviada correctamente/i)).not.toBeInTheDocument()
     );
@@ -173,7 +175,6 @@ describe('NotificationForm', () => {
 
     const form = submitButton.closest('form');
     fireEvent.submit(form!);
-    screen.debug();
 
     await waitFor(() => {
       expect(screen.getByText(/Formulario inválido: completa los campos requeridos./i)).toBeInTheDocument();
