@@ -51,14 +51,14 @@ export default function NotificationForm() {
             title: true,
             description: true,
         });
-
-        if (!isFormValid) {
-            throw new Error("Formulario inválido: completa los campos requeridos.");
-        }
-
+        
         setLoading(true);
-
+        
         try {
+            if (!isFormValid) {
+                throw new Error("Formulario inválido: completa los campos requeridos.");
+            }
+            
             const res = await fetch("/api/admin/auth/notification", {
                 method: "POST",
                 headers: {
