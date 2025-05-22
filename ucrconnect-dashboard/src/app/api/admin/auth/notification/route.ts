@@ -10,7 +10,5 @@ export async function POST(req: Request) {
 
   await new Promise((res) => setTimeout(res, 1000));
 
-  console.log("Mock: Notificación enviada", body);
-
   return NextResponse.json({ message: "Notificación enviada correctamente (mock)" });
 }
