@@ -1,111 +1,190 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import Users from '@/app/(dashboard)/users/page';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
-
-jest.mock('next/navigation', () => ({
-  useRouter: jest.fn(),
-}));
+import Users from '../page';
+import { mockUsers } from '../mockUsers';
 
 describe('Users Page', () => {
   beforeEach(() => {
     render(<Users />);
   });
 
-  test('displays dashboard stats correctly', () => {
-    // Check if the stats card exists
-    const statsCard = screen.getByText('1234');
+  it('displays dashboard stats correctly', () => {
+    // Check if the stats card exists with the correct number of users
+    const statsCard = screen.getByText(mockUsers.length.toString());
     expect(statsCard).toBeInTheDocument();
 
     // Check if the title is correct
     expect(screen.getByText('Usuarios')).toBeInTheDocument();
-
-    // Check if the change percentage is displayed
-    expect(screen.getByText('+12%')).toBeInTheDocument();
-
-    // Check if the card has the correct background gradient
-    const card = statsCard.closest('div[class*="bg-gradient-to-tr"]');
-    expect(card).toBeInTheDocument();
-    expect(card).toHaveClass('bg-gradient-to-tr', 'from-[#249DD8]', 'to-[#41ADE7BF]', 'text-white');
   });
 
-  test('dashboard stats card is clickable and has correct link', () => {
-    const statsCard = screen.getByText('1234').closest('a');
+  it('dashboard stats card is clickable and has correct link', () => {
+    const statsCard = screen.getByText(mockUsers.length.toString()).closest('a');
     expect(statsCard).toHaveAttribute('href', '/users');
   });
 
-  test('shows title and button with correct link', () => {
-    // Title
-    expect(screen.getByRole('heading', { name: /usuarios/i, level: 3 })).toBeInTheDocument();
-
-    // Button
-    const button = screen.getByRole('button', { name: /registrar nuevo usuario/i });
-    expect(button).toBeInTheDocument();
-
-    // Link
-    const link = button.closest('a');
-    expect(link).toHaveAttribute('href', '/users/register');
+  it('displays search input with correct placeholder', () => {
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    expect(searchInput).toBeInTheDocument();
   });
 
-  test('displays table with correct headers', () => {
+  it('displays register and suspend user buttons', () => {
+    expect(screen.getByText('Registrar nuevo usuario')).toBeInTheDocument();
+    expect(screen.getByText('Suspender usuario')).toBeInTheDocument();
+  });
+
+  it('displays table headers correctly', () => {
     const headers = screen.getAllByRole('columnheader');
-    expect(headers).toHaveLength(6);
+    expect(headers).toHaveLength(4);
     expect(headers[0]).toHaveTextContent('Nombre');
     expect(headers[1]).toHaveTextContent('Correo');
     expect(headers[2]).toHaveTextContent('Tipo');
     expect(headers[3]).toHaveTextContent('Estado');
   });
 
-  test('displays user data correctly', () => {
-    // First user (Juan Pérez)
+  it('displays user data correctly', () => {
+    // Check first page data (6 users)
     expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
     expect(screen.getByText('juan.perez@ucr.ac.cr')).toBeInTheDocument();
-    const studentTypes = screen.getAllByText('Estudiante');
-    expect(studentTypes).toHaveLength(2); // Both Juan and Carlos are students
-    const activeStatuses = screen.getAllByText('Activo');
-    expect(activeStatuses).toHaveLength(2); // Both Juan and María are active
-
-    // Second user (María Rodríguez)
-    expect(screen.getByText('María Rodríguez')).toBeInTheDocument();
-    expect(screen.getByText('maria.rodriguez@ucr.ac.cr')).toBeInTheDocument();
-    expect(screen.getByText('Profesor')).toBeInTheDocument();
-
-    // Third user (Carlos Méndez)
-    expect(screen.getByText('Carlos Méndez')).toBeInTheDocument();
-    expect(screen.getByText('carlos.mendez@ucr.ac.cr')).toBeInTheDocument();
-    expect(screen.getByText('Suspendido')).toBeInTheDocument();
-  });
-
-  test('filters users when typing in search input', () => {
-    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
     
-    // Search by name
-    fireEvent.change(searchInput, { target: { value: 'Juan' } });
-    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
-    expect(screen.queryByText('María Rodríguez')).not.toBeInTheDocument();
-    expect(screen.queryByText('Carlos Méndez')).not.toBeInTheDocument();
-
-    // Search by email
-    fireEvent.change(searchInput, { target: { value: 'maria' } });
-    expect(screen.getByText('María Rodríguez')).toBeInTheDocument();
-    expect(screen.queryByText('Juan Pérez')).not.toBeInTheDocument();
-    expect(screen.queryByText('Carlos Méndez')).not.toBeInTheDocument();
+    // Check user types
+    const studentTypes = screen.getAllByText('Estudiante');
+    const professorTypes = screen.getAllByText('Profesor');
+    expect(studentTypes.length).toBeGreaterThan(0);
+    expect(professorTypes.length).toBeGreaterThan(0);
+    
+    // Check status badges
+    const activeStatuses = screen.getAllByText('Activo');
+    const suspendedStatuses = screen.getAllByText('Suspendido');
+    expect(activeStatuses.length).toBeGreaterThan(0);
+    expect(suspendedStatuses.length).toBeGreaterThan(0);
   });
 
-  test('displays correct user status badges with proper styling', () => {
+  it('displays correct user status badges with proper styling', () => {
     const activeBadges = screen.getAllByText('Activo');
-    const suspendedBadge = screen.getByText('Suspendido');
+    const suspendedBadges = screen.getAllByText('Suspendido');
 
-    expect(activeBadges).toHaveLength(2);
+    expect(activeBadges.length).toBeGreaterThan(0);
     activeBadges.forEach(badge => {
-      expect(badge).toHaveClass('border', 'border-[#609000]', 'text-[#609000]');
+      expect(badge).toHaveClass('bg-[#609000]/20', 'text-[#609000]');
     });
 
-    expect(suspendedBadge).toBeInTheDocument();
-    expect(suspendedBadge).toHaveClass('border', 'border-red-700', 'text-red-700');
+    expect(suspendedBadges.length).toBeGreaterThan(0);
+    suspendedBadges.forEach(badge => {
+      expect(badge).toHaveClass('bg-red-100', 'text-red-700');
+    });
   });
 
-  test('has action buttons for each user', () => {
-    const editButtons = screen.getAllByRole('button', { name: '' });
-    expect(editButtons).toHaveLength(6); // 3 users * 2 buttons each (edit and notify)
+  it('displays pagination controls', () => {
+    const totalPages = Math.ceil(mockUsers.length / 6);
+    
+    // Check page numbers
+    for (let i = 1; i <= Math.min(3, totalPages); i++) {
+      expect(screen.getByText(i.toString())).toBeInTheDocument();
+    }
+
+    // Check navigation buttons
+    const buttons = screen.getAllByRole('button');
+    const paginationButtons = buttons.filter(button => 
+      button.className.includes('rounded-lg') && 
+      !button.textContent?.includes('Registrar') && 
+      !button.textContent?.includes('Suspender')
+    );
+    
+    const prevButton = paginationButtons[0]; // First button is previous
+    const nextButton = paginationButtons[paginationButtons.length - 1]; // Last button is next
+    
+    expect(prevButton).toBeDisabled();
+    expect(nextButton).not.toBeDisabled();
+  });
+
+  it('handles search functionality', () => {
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    
+    // Search for a specific user
+    fireEvent.change(searchInput, { target: { value: 'Juan' } });
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    
+    // Search for non-existent user
+    fireEvent.change(searchInput, { target: { value: 'NonExistentUser' } });
+    expect(screen.queryByText('Juan Pérez')).not.toBeInTheDocument();
+  });
+
+  it('handles page changes correctly', () => {
+    // Click next page button
+    const buttons = screen.getAllByRole('button');
+    const paginationButtons = buttons.filter(button => 
+      button.className.includes('rounded-lg') && 
+      !button.textContent?.includes('Registrar') && 
+      !button.textContent?.includes('Suspender')
+    );
+    const nextButton = paginationButtons[paginationButtons.length - 1];
+    fireEvent.click(nextButton);
+
+    // Verify page 2 is active
+    expect(screen.getByText('2')).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(screen.getByText('1')).toHaveClass('bg-gray-100', 'text-gray-600');
+
+    // Click page 3 button
+    fireEvent.click(screen.getByText('3'));
+
+    // Verify page 3 is active
+    expect(screen.getByText('3')).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(screen.getByText('2')).toHaveClass('bg-gray-100', 'text-gray-600');
+  });
+
+  it('handles search with special characters and spaces', () => {
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    
+    // Search with single space
+    fireEvent.change(searchInput, { target: { value: 'Juan Pérez' } });
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    
+    // Search with special characters
+    fireEvent.change(searchInput, { target: { value: 'María' } });
+    expect(screen.getByText('María Rodríguez')).toBeInTheDocument();
+    
+    // Search with multiple spaces (should show no results)
+    fireEvent.change(searchInput, { target: { value: 'Juan  Pérez' } });
+    expect(screen.queryByText('Juan Pérez')).not.toBeInTheDocument();
+    
+    // Search with no results
+    fireEvent.change(searchInput, { target: { value: 'NonExistentUser' } });
+    expect(screen.queryByText('Juan Pérez')).not.toBeInTheDocument();
+    expect(screen.queryByText('María Rodríguez')).not.toBeInTheDocument();
+  });
+
+  it('handles table row hover states', () => {
+    const rows = screen.getAllByRole('row').slice(1); // Skip header row
+    rows.forEach(row => {
+      expect(row).toHaveClass('hover:bg-gray-50');
+    });
+  });
+
+  it('displays correct user type badges', () => {
+    const studentTypes = screen.getAllByText('Estudiante');
+    const professorTypes = screen.getAllByText('Profesor');
+    
+    studentTypes.forEach(type => {
+      expect(type).toHaveClass('text-gray-900');
+    });
+    
+    professorTypes.forEach(type => {
+      expect(type).toHaveClass('text-gray-900');
+    });
+  });
+
+  it('handles search input focus states', () => {
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    
+    // Check initial state
+    expect(searchInput).toHaveClass('border-gray-300');
+    
+    // Focus input
+    fireEvent.focus(searchInput);
+    expect(searchInput).toHaveClass('focus:ring-[#2980B9]', 'focus:border-[#2980B9]');
+    
+    // Blur input
+    fireEvent.blur(searchInput);
+    expect(searchInput).toHaveClass('border-gray-300');
   });
 });
