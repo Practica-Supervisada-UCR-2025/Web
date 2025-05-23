@@ -273,7 +273,7 @@ export default function RegisterUser() {
 
                     default:
                         // Not cotemplated cases
-                        console.warn("Error inesperado:", err.message || response.statusText);
+                        errorMessage = err.message || "Ocurrió un error inesperado.";
                         break;
                 }
                 throw new Error(errorMessage);
