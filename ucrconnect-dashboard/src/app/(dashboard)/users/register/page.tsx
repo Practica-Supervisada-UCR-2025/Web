@@ -208,7 +208,7 @@ export default function RegisterUser() {
         const formErrors = validateForm();
         setErrors(formErrors);
 
-        // No errors and Email available
+        // No errors
         if (Object.keys(formErrors).length > 0) {
             return;
         }

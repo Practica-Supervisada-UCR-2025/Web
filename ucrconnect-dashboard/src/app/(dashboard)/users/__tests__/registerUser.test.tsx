@@ -4,29 +4,30 @@ import RegisterUser from '../register/page';
 import '@testing-library/jest-dom';
 import { act } from 'react';
 
-import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser, signOut } from 'firebase/auth';
 import { getSecondaryAuth } from '@/lib/firebase';
 import { deleteApp } from 'firebase/app';
 
-jest.mock('firebase/app', () => {
-  return {
-    initializeApp: jest.fn(() => ({})),
-    getApps: jest.fn(() => []),
-    getApp: jest.fn(() => ({})),
-  };
-});
+jest.mock('firebase/auth', () => ({
+    ...jest.requireActual('firebase/auth'),
+    createUserWithEmailAndPassword: jest.fn(),
+    deleteUser: jest.fn(),
+    signOut: jest.fn(),
+}));
 
-jest.mock('firebase/auth', () => {
-  return {
-    getAuth: jest.fn(() => ({
-      createUserWithEmailAndPassword: jest.fn(),
-      signInWithEmailAndPassword: jest.fn(),
-    })),
-  };
-});
+jest.mock('firebase/app', () => ({
+    deleteApp: jest.fn(),
+}));
+
+jest.mock('@/lib/firebase', () => ({
+    getSecondaryAuth: jest.fn(),
+}));
+
+global.fetch = jest.fn();
 
 describe('RegisterUser Component', () => {
     beforeEach(() => {
+        jest.clearAllMocks();
         render(<RegisterUser />);
     });
 
@@ -145,10 +146,10 @@ describe('RegisterUser Component', () => {
         const toggleButton = screen.getByRole('button', { name: /toggle password visibility/i });
 
         expect(passwordInput).toHaveAttribute('type', 'password');
-        
+
         fireEvent.click(toggleButton);
         expect(passwordInput).toHaveAttribute('type', 'text');
-        
+
         fireEvent.click(toggleButton);
         expect(passwordInput).toHaveAttribute('type', 'password');
     });
@@ -166,43 +167,61 @@ describe('RegisterUser Component', () => {
         expect(confirmPasswordInput).toHaveAttribute('type', 'password');
     });
 
-    //FIXME: This test is failing because the mock function is not being called.
-    // test('displays success message on successful form submission', async () => {
-    //     jest.useFakeTimers();
+    test('displays success message on successful form submission', async () => {
+        const mockGetIdToken = jest.fn().mockResolvedValue('fake-token');
+        const mockUser = {
+            uid: '12345',
+            getIdToken: mockGetIdToken,
+        };
 
-    //     const nameInput = screen.getByLabelText(/Nombre/i);
-    //     const emailInput = screen.getByLabelText(/Correo electrónico/i);
-    //     const passwordInput = screen.getByLabelText(/^Contraseña\b/i);
-    //     const confirmPasswordInput = screen.getByLabelText(/Confirmar Contraseña/i);
-    //     const submitButton = screen.getByRole('button', { name: /Registrar usuario/i });
+        const mockSignOut = jest.fn();
+        const mockSecondaryAuth = { signOut: mockSignOut };
+        const mockSecondaryApp = {};
 
-    //     fireEvent.change(nameInput, { target: { value: 'John Doe' } });
-    //     fireEvent.change(emailInput, { target: { value: 'johndoe@ucr.ac.cr' } });
-    //     fireEvent.change(passwordInput, { target: { value: 'password' } });
-    //     fireEvent.change(confirmPasswordInput, { target: { value: 'password' } });
+        (getSecondaryAuth as jest.Mock).mockReturnValue({
+            auth: mockSecondaryAuth,
+            app: mockSecondaryApp,
+        });
 
-    //     fireEvent.blur(nameInput);
-    //     fireEvent.blur(emailInput);
-    //     fireEvent.blur(passwordInput);
-    //     fireEvent.blur(confirmPasswordInput);
-        
-    //     await waitFor(() => {
-    //         expect(submitButton).toBeEnabled();
-    //     });
-    //     fireEvent.click(submitButton);
-        
-    //     await waitFor(() => {
-    //         expect(screen.getByText(/Usuario registrado correctamente./i)).toBeInTheDocument();
-    //     });
+        (createUserWithEmailAndPassword as jest.Mock).mockResolvedValue({ user: mockUser });
+        (fetch as jest.Mock).mockResolvedValue({
+            ok: true, json: async () => ({})
+        });
 
-    //     await act(async () => {
-    //         jest.runOnlyPendingTimers();
-    //     });
-    //     jest.useRealTimers();
-    // });
+        const nameInput = screen.getByLabelText(/Nombre/i);
+        const emailInput = screen.getByLabelText(/Correo electrónico/i);
+        const passwordInput = screen.getByLabelText(/^Contraseña\b/i);
+        const confirmPasswordInput = screen.getByLabelText(/Confirmar Contraseña/i);
+        const submitButton = screen.getByRole('button', { name: /Registrar usuario/i });
 
+        fireEvent.change(nameInput, { target: { value: 'John Doe' } });
+        fireEvent.change(emailInput, { target: { value: 'johndoe@ucr.ac.cr' } });
+        fireEvent.change(passwordInput, { target: { value: '12345678' } });
+        fireEvent.change(confirmPasswordInput, { target: { value: '12345678' } });
+
+        fireEvent.blur(nameInput);
+        fireEvent.blur(emailInput);
+        fireEvent.blur(passwordInput);
+        fireEvent.blur(confirmPasswordInput);
+
+        await waitFor(() => {
+            expect(submitButton).toBeEnabled();
+        });
+        fireEvent.click(submitButton);
+
+        await waitFor(() => {
+            expect(createUserWithEmailAndPassword).toHaveBeenCalled();
+            expect(fetch).toHaveBeenCalledWith('/api/admin/auth/register', expect.any(Object));
+            expect(screen.getByText(/Usuario registrado correctamente./i)).toBeInTheDocument();
+        });
+
+    });
 
     test('disables submit button when form is invalid', () => {
+        const nameInput = screen.getByLabelText(/Nombre/i);
+        fireEvent.change(nameInput, { target: { value: 'John Doe' } });
+        fireEvent.blur(nameInput);
+
         const submitButton = screen.getByRole('button', { name: /Registrar usuario/i });
         expect(submitButton).toBeDisabled();
     });
