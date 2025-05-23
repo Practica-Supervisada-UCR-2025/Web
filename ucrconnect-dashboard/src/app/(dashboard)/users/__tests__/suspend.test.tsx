@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SuspendUser from '../suspend/page';
 import toast from 'react-hot-toast';
@@ -472,5 +472,171 @@ describe('SuspendUser Page', () => {
       fireEvent.mouseLeave(row);
       expect(row).toHaveClass('hover:bg-gray-50');
     });
+  });
+
+  it('handles search input focus and blur states', () => {
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    
+    // Test focus state
+    fireEvent.focus(searchInput);
+    expect(searchInput).toHaveClass('focus:ring-[#2980B9]', 'focus:border-[#2980B9]');
+    
+    // Test blur state
+    fireEvent.blur(searchInput);
+    expect(searchInput).toHaveClass('border-gray-300');
+  });
+
+  it('handles pagination edge cases', () => {
+    // Test first page
+    const pageButtons = screen.getAllByRole('button').filter(button => 
+      button.textContent?.match(/^[0-9]$/) || button.textContent === ''
+    );
+    const prevButton = pageButtons[0];
+    const nextButton = pageButtons[pageButtons.length - 1];
+    
+    // Verify initial state
+    expect(prevButton).toBeDisabled();
+    
+    // Go to last page
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    
+    // Verify last page button is disabled
+    expect(nextButton).toBeDisabled();
+  });
+
+  it('handles modal state changes correctly', () => {
+    // Test suspension modal
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    expect(screen.getByRole('dialog', { name: /está apunto de suspender al siguiente usuario/i })).toBeInTheDocument();
+    
+    // Close the suspension modal
+    const cancelButton = screen.getByRole('button', { name: 'Cancelar' });
+    fireEvent.click(cancelButton);
+    
+    // Test activation modal
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    fireEvent.change(searchInput, { target: { value: 'Carlos' } });
+    const activateButton = screen.getByText('Activar');
+    fireEvent.click(activateButton);
+    expect(screen.getByRole('dialog', { name: /¿está seguro que quiere activar al usuario/i })).toBeInTheDocument();
+  });
+
+  it('handles suspension time selection with all options', () => {
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+
+    const timeSelect = screen.getByRole('combobox');
+    
+    // Test all available options
+    const options = ['1', '3', '7'];
+    options.forEach(option => {
+      fireEvent.change(timeSelect, { target: { value: option } });
+      expect(timeSelect).toHaveValue(option);
+    });
+  });
+
+  it('handles user status changes correctly', () => {
+    // Test suspending a user
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    
+    const timeSelect = screen.getByRole('combobox');
+    fireEvent.change(timeSelect, { target: { value: '3' } });
+    
+    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    fireEvent.click(acceptButton);
+    
+    // Verify user is suspended by checking the specific user's status
+    const userRow = screen.getByText('Juan Pérez').closest('tr');
+    const statusBadge = within(userRow!).getByText('Suspendido');
+    expect(statusBadge).toBeInTheDocument();
+    
+    // Test activating a suspended user
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    fireEvent.change(searchInput, { target: { value: 'Carlos' } });
+    
+    const activateButton = screen.getByText('Activar');
+    fireEvent.click(activateButton);
+    
+    const activateAcceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    fireEvent.click(activateAcceptButton);
+    
+    // Verify user is active by checking the specific user's status
+    const carlosRow = screen.getByText('Carlos Méndez').closest('tr');
+    const activeBadge = within(carlosRow!).getByText('Activo');
+    expect(activeBadge).toBeInTheDocument();
+  });
+
+  it('handles search query changes and pagination reset', () => {
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    
+    // Go to second page
+    const pageButtons = screen.getAllByRole('button').filter(button => 
+      button.textContent?.match(/^[0-9]$/) || button.textContent === ''
+    );
+    const nextButton = pageButtons[pageButtons.length - 1];
+    fireEvent.click(nextButton);
+    
+    // Verify we're on page 2
+    const page2Button = screen.getByRole('button', { name: '2' });
+    expect(page2Button).toHaveClass('bg-[#204C6F]', 'text-white');
+    
+    // Change search query to show only one result
+    fireEvent.change(searchInput, { target: { value: 'Juan' } });
+    
+    // Verify the filtered result is shown
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    expect(screen.queryByText('María Rodríguez')).not.toBeInTheDocument();
+    expect(screen.queryByText('Carlos Méndez')).not.toBeInTheDocument();
+    
+    // Clear search to show all results again
+    fireEvent.change(searchInput, { target: { value: '' } });
+    
+    // Verify pagination is back and on first page
+    const page1Button = screen.getByRole('button', { name: '1' });
+    expect(page1Button).toHaveClass('bg-[#204C6F]', 'text-white');
+  });
+
+  it('handles table cell styling correctly', () => {
+    const rows = screen.getAllByRole('row').slice(1); // Skip header row
+    
+    rows.forEach(row => {
+      // Check name cell styling
+      const nameCell = row.querySelector('td:first-child');
+      expect(nameCell).toHaveClass('text-[#2980B9]');
+      
+      // Check email cell styling
+      const emailCell = row.querySelector('td:nth-child(2)');
+      expect(emailCell).toHaveClass('text-gray-900');
+      
+      // Check type cell styling
+      const typeCell = row.querySelector('td:nth-child(3)');
+      expect(typeCell).toHaveClass('text-gray-900');
+    });
+  });
+
+  it('handles modal overlay click correctly', () => {
+    // Test suspension modal overlay
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    
+    const modalOverlay = screen.getByTestId('modal-overlay');
+    fireEvent.click(modalOverlay);
+    
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    
+    // Test activation modal overlay
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    fireEvent.change(searchInput, { target: { value: 'Carlos' } });
+    
+    const activateButton = screen.getByText('Activar');
+    fireEvent.click(activateButton);
+    
+    const activateModalOverlay = screen.getByTestId('modal-overlay');
+    fireEvent.click(activateModalOverlay);
+    
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 }); 
