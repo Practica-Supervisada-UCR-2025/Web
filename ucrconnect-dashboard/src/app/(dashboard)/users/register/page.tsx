@@ -300,7 +300,9 @@ export default function RegisterUser() {
 
             let message = "Ocurrió un error al registrar el usuario.";
 
-            if (err.code === "auth/email-already-in-use") {
+            if (err instanceof Error && err.message) {
+                message = err.message;
+            } else if (err.code === "auth/email-already-in-use") {
                 message = "El correo electrónico ya está en uso.";
             } else if (err.code === "auth/invalid-email") {
                 message = "El correo electrónico no es válido.";
