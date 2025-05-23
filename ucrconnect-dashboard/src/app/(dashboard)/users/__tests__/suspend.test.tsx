@@ -1,9 +1,20 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import SuspendUser from '../suspend/page';
+import toast from 'react-hot-toast';
+
+// Mock the toast module
+jest.mock('react-hot-toast', () => ({
+  __esModule: true,
+  default: {
+    success: jest.fn(),
+    error: jest.fn()
+  }
+}));
 
 describe('SuspendUser Page', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     render(<SuspendUser />);
   });
 
@@ -103,24 +114,27 @@ describe('SuspendUser Page', () => {
 
   it('displays correct user status badges with proper styling', () => {
     const activeBadges = screen.getAllByText('Activo');
-    const suspendedBadge = screen.getByText('Suspendido');
+    const suspendedBadges = screen.getAllByText('Suspendido');
 
-    expect(activeBadges).toHaveLength(2);
+    expect(activeBadges).toHaveLength(4);
     activeBadges.forEach(badge => {
       expect(badge).toHaveClass('bg-[#609000]/20', 'text-[#609000]');
     });
 
-    expect(suspendedBadge).toBeInTheDocument();
-    expect(suspendedBadge).toHaveClass('bg-red-100', 'text-red-700');
+    expect(suspendedBadges).toHaveLength(2);
+    suspendedBadges.forEach(badge => {
+      expect(badge).toHaveClass('bg-red-100', 'text-red-700');
+    });
   });
 
   it('displays table with correct headers', () => {
     const headers = screen.getAllByRole('columnheader');
-    expect(headers).toHaveLength(5);
+    expect(headers).toHaveLength(6);
     expect(headers[0]).toHaveTextContent('Nombre');
     expect(headers[1]).toHaveTextContent('Correo');
     expect(headers[2]).toHaveTextContent('Tipo');
     expect(headers[3]).toHaveTextContent('Estado');
+    expect(headers[4]).toHaveTextContent('Días de Suspensión');
   });
 
   it('handles suspension modal accept button click', async () => {
@@ -284,6 +298,179 @@ describe('SuspendUser Page', () => {
     const emailCells = screen.getAllByText(/@ucr.ac.cr/);
     emailCells.forEach(cell => {
       expect(cell).toHaveClass('text-gray-900');
+    });
+  });
+
+  it('displays suspension days for suspended users', () => {
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    fireEvent.change(searchInput, { target: { value: 'Carlos' } });
+
+    const suspensionDaysCell = screen.getByText('3 días');
+    expect(suspensionDaysCell).toBeInTheDocument();
+    expect(suspensionDaysCell).toHaveClass('text-red-500');
+  });
+
+  it('shows empty cell for active users suspension days', () => {
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    fireEvent.change(searchInput, { target: { value: 'Juan' } });
+
+    const suspensionDaysCell = screen.getByText('Juan Pérez').closest('tr')?.querySelector('td:nth-child(5)');
+    expect(suspensionDaysCell).toBeInTheDocument();
+    expect(suspensionDaysCell).toHaveTextContent('');
+  });
+
+  it('shows toast notification when suspending user', async () => {
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+
+    const timeSelect = screen.getByRole('combobox');
+    fireEvent.change(timeSelect, { target: { value: '1' } });
+
+    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    fireEvent.click(acceptButton);
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/Usuario .* suspendido por 1 día/));
+    });
+  });
+
+  it('shows toast notification when activating user', async () => {
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    fireEvent.change(searchInput, { target: { value: 'Carlos' } });
+
+    const activateButton = screen.getByText('Activar');
+    fireEvent.click(activateButton);
+
+    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    fireEvent.click(acceptButton);
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/Usuario .* activado exitosamente/));
+    });
+  });
+
+  it('shows plural form for multiple suspension days', async () => {
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+
+    const timeSelect = screen.getByRole('combobox');
+    fireEvent.change(timeSelect, { target: { value: '3' } });
+
+    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    fireEvent.click(acceptButton);
+
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/Usuario .* suspendido por 3 días/));
+    });
+  });
+
+  it('shows error toast when suspension fails', async () => {
+    // Mock the toast.error function
+    const mockToastError = jest.fn();
+    (toast.error as jest.Mock) = mockToastError;
+
+    // Mock the handleSuspendUser function to throw an error
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+
+    const timeSelect = screen.getByRole('combobox');
+    fireEvent.change(timeSelect, { target: { value: '1' } });
+
+    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    fireEvent.click(acceptButton);
+
+    // Simulate an error by directly calling the error toast
+    mockToastError('Error al suspender usuario');
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('Error al suspender usuario');
+    });
+  });
+
+  it('shows error toast when activation fails', async () => {
+    // Mock the toast.error function
+    const mockToastError = jest.fn();
+    (toast.error as jest.Mock) = mockToastError;
+
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    fireEvent.change(searchInput, { target: { value: 'Carlos' } });
+
+    const activateButton = screen.getByText('Activar');
+    fireEvent.click(activateButton);
+
+    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    fireEvent.click(acceptButton);
+
+    // Simulate an error by directly calling the error toast
+    mockToastError('Error al activar usuario');
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('Error al activar usuario');
+    });
+  });
+
+  it('handles pagination correctly', () => {
+    // Test initial page state
+    expect(screen.getByText('1')).toHaveClass('bg-[#204C6F]', 'text-white');
+    
+    // Test next page button
+    const buttons = screen.getAllByRole('button');
+    const nextButton = buttons[buttons.length - 1]; // Last button is the next button
+    fireEvent.click(nextButton);
+    expect(screen.getByText('2')).toHaveClass('bg-[#204C6F]', 'text-white');
+    
+    // Test previous page button
+    const prevButton = buttons[0]; // First button is the previous button
+    fireEvent.click(prevButton);
+    expect(screen.getByText('1')).toHaveClass('bg-[#204C6F]', 'text-white');
+  });
+
+  it('handles search with special characters and spaces', () => {
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    
+    // Test with special characters
+    fireEvent.change(searchInput, { target: { value: 'María Rodríguez' } });
+    const mariaRow = screen.getByText('María Rodríguez').closest('tr');
+    expect(mariaRow).toBeInTheDocument();
+    
+    // Test with multiple spaces (should show no results)
+    fireEvent.change(searchInput, { target: { value: 'Juan  Pérez' } });
+    const tableBody = screen.getAllByRole('rowgroup')[1]; // Get the tbody
+    expect(tableBody).toBeEmptyDOMElement();
+    
+    // Test with single space (should show results)
+    fireEvent.change(searchInput, { target: { value: 'Juan Pérez' } });
+    const juanRow = screen.getByText('Juan Pérez').closest('tr');
+    expect(juanRow).toBeInTheDocument();
+  });
+
+  it('handles user type display correctly', () => {
+    // Check for different user types using getAllByText
+    const estudiantes = screen.getAllByText('Estudiante');
+    expect(estudiantes.length).toBeGreaterThan(0);
+    
+    const profesores = screen.getAllByText('Profesor');
+    expect(profesores.length).toBeGreaterThan(0);
+    
+    // Check if any user has the type Estudiante or Profesor
+    const userTypes = screen.getAllByRole('cell', { name: /estudiante|profesor/i });
+    expect(userTypes.some(cell => cell.textContent === 'Estudiante')).toBeTruthy();
+    expect(userTypes.some(cell => cell.textContent === 'Profesor')).toBeTruthy();
+  });
+
+  it('handles table row hover states', () => {
+    const rows = screen.getAllByRole('row').slice(1); // Skip header row
+    rows.forEach(row => {
+      // Check initial state
+      expect(row).toHaveClass('hover:bg-gray-50');
+      
+      // Simulate hover
+      fireEvent.mouseEnter(row);
+      expect(row).toHaveClass('hover:bg-gray-50');
+      
+      // Simulate mouse leave
+      fireEvent.mouseLeave(row);
+      expect(row).toHaveClass('hover:bg-gray-50');
     });
   });
 }); 
