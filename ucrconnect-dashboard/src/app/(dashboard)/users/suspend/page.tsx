@@ -287,7 +287,7 @@ export default function SuspendUser() {
                 <button 
                   className="px-4 py-2 bg-[#204C6F] text-white rounded-lg hover:bg-[#2980B9] transition-colors"
                   onClick={handleActivateUser}
-                >
+                > 
                   Aceptar
                 </button>
               </div>
