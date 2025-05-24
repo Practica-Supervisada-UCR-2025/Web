@@ -1,11 +1,14 @@
 'use client';
 import { useState } from 'react';
+import { mockUsers } from '../mockUsers';
+import toast from 'react-hot-toast';
 
 interface User {
   name: string;
   email: string;
   type: string;
   status: string;
+  suspensionDays: number;
 }
 
 export default function SuspendUser() {
@@ -14,31 +17,56 @@ export default function SuspendUser() {
   const [showActivateModal, setShowActivateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [suspensionTime, setSuspensionTime] = useState('1');
-  const [users, setUsers] = useState<User[]>([
-    {
-      name: 'Juan Pérez',
-      email: 'juan.perez@ucr.ac.cr',
-      type: 'Estudiante',
-      status: 'Activo'
-    },
-    {
-      name: 'María Rodríguez',
-      email: 'maria.rodriguez@ucr.ac.cr',
-      type: 'Profesor',
-      status: 'Activo'
-    },
-    {
-      name: 'Carlos Méndez',
-      email: 'carlos.mendez@ucr.ac.cr',
-      type: 'Estudiante',
-      status: 'Suspendido'
-    }
-  ]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [users, setUsers] = useState<User[]>(mockUsers);
+  const usersPerPage = 6;
 
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Calculate pagination
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleSuspendUser = () => {
+    if (selectedUser) {
+      try {
+        setUsers(users.map(user => 
+          user.email === selectedUser.email 
+            ? { ...user, status: 'Suspendido', suspensionDays: parseInt(suspensionTime) }
+            : user
+        ));
+        setShowModal(false);
+        toast.success(`Usuario ${selectedUser.name} suspendido por ${suspensionTime} ${parseInt(suspensionTime) === 1 ? 'día' : 'días'}`);
+      } catch (error) {
+        toast.error('Error al suspender usuario');
+      }
+    }
+  };
+
+  const handleActivateUser = () => {
+    if (selectedUser) {
+      try {
+        setUsers(users.map(user => 
+          user.email === selectedUser.email 
+            ? { ...user, status: 'Activo', suspensionDays: 0 }
+            : user
+        ));
+        setShowActivateModal(false);
+        toast.success(`Usuario ${selectedUser.name} activado exitosamente`);
+      } catch (error) {
+        toast.error('Error al activar usuario');
+      }
+    }
+  };
 
   return (
     <div>
@@ -54,7 +82,10 @@ export default function SuspendUser() {
           className="block w-96 pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
           placeholder="Buscar usuarios..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setCurrentPage(1);
+          }}
         />
       </div>
 
@@ -66,11 +97,12 @@ export default function SuspendUser() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correo</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Días de Suspensión</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredUsers.map((user, index) => (
+            {currentUsers.map((user, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 <td className="text-[#2980B9] px-6 py-4 whitespace-nowrap">{user.name}</td>
                 <td className="text-gray-900 px-6 py-4 whitespace-nowrap">{user.email}</td>
@@ -83,6 +115,9 @@ export default function SuspendUser() {
                   }`}>
                     {user.status}
                   </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-red-500">
+                  {user.status === 'Suspendido' ? `${user.suspensionDays} días` : ''}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   {user.status === 'Activo' ? (
@@ -112,6 +147,73 @@ export default function SuspendUser() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-4">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`p-2 rounded-lg ${
+              currentPage === 1
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-[#204C6F] text-white hover:bg-[#2980B9]'
+            }`}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+          {[...Array(totalPages)].map((_, index) => (
+            <button
+              key={index}
+              onClick={() => handlePageChange(index + 1)}
+              className={`px-3 py-1 rounded-lg ${
+                currentPage === index + 1
+                  ? 'bg-[#204C6F] text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {index + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-lg ${
+              currentPage === totalPages
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-[#204C6F] text-white hover:bg-[#2980B9]'
+            }`}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {showModal && (
         <div 
@@ -148,10 +250,7 @@ export default function SuspendUser() {
               </button>
               <button 
                 className="px-4 py-2 bg-[#204C6F] text-white rounded-lg hover:bg-[#2980B9] transition-colors"
-                onClick={() => {
-                  // TODO: Implement suspension logic
-                  setShowModal(false);
-                }}
+                onClick={handleSuspendUser}
               >
                 Aceptar
               </button>
@@ -184,10 +283,7 @@ export default function SuspendUser() {
               </button>
               <button 
                 className="px-4 py-2 bg-[#204C6F] text-white rounded-lg hover:bg-[#2980B9] transition-colors"
-                onClick={() => {
-                  // TODO: Implement activation logic
-                  setShowActivateModal(false);
-                }}
+                onClick={handleActivateUser}
               >
                 Aceptar
               </button>
