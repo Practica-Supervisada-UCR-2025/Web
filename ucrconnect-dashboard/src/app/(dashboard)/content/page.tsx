@@ -1,9 +1,42 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { mockPosts as initialMockPosts } from './mockData';
+import { useState, useEffect, JSX } from 'react';
+import { mockPosts as initialMockPosts } from '../../../../public/data/contentData';
+
+
+// Type definitions
+interface Post {
+    id: number;
+    content: string;
+    contentType: 'text' | 'image' | 'gif';
+    username: string;
+    email: string;
+    imageUrl?: string;
+    createdAt: string | number | Date;
+    active: boolean;
+    activeReports: number;
+    totalReports: number;
+}
+
+interface PostCardProps {
+    post: Post;
+    onClick: (post: Post) => void;
+}
+
+interface PaginationProps {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+}
+
+interface PostModalProps {
+    post: Post;
+    onClose: () => void;
+    onHidePost: () => void;
+    onClearReports: () => void;
+}
 
 // Helper function to format date
-const formatDate = (dateString) => {
+const formatDate = (dateString: string | number | Date): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
         year: 'numeric',
@@ -15,7 +48,7 @@ const formatDate = (dateString) => {
 };
 
 // Post card component
-const PostCard = ({ post, onClick }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
     return (
         <div
             className="bg-white shadow rounded-lg p-4 mb-4 hover:shadow-md transition-shadow cursor-pointer h-full flex flex-col"
@@ -35,7 +68,7 @@ const PostCard = ({ post, onClick }) => {
 
             <div className="my-3 flex-grow">
                 <p className="text-gray-700 mb-2">{post.content}</p>
-                {post.contentType !== 'text' && (
+                {post.contentType !== 'text' && post.imageUrl && (
                     <div className="mt-2 rounded-md overflow-hidden">
                         <img
                             src={post.imageUrl}
@@ -57,7 +90,7 @@ const PostCard = ({ post, onClick }) => {
 };
 
 // Pagination component
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
     return (
         <div className="flex justify-center items-center mt-6 mb-8">
             <button
@@ -84,7 +117,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
 };
 
 // Modal component for post details
-const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
+const PostModal: React.FC<PostModalProps> = ({ post, onClose, onHidePost, onClearReports }) => {
     const [showHideConfirmModal, setShowHideConfirmModal] = useState(false);
     const [showSuspendModal, setShowSuspendModal] = useState(false);
     const [showSuspensionDuration, setShowSuspensionDuration] = useState(false);
@@ -122,7 +155,7 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
 
                     <p className="text-gray-700 my-4">{post.content}</p>
 
-                    {post.contentType !== 'text' && (
+                    {post.contentType !== 'text' && post.imageUrl && (
                         <div className="mt-2 rounded-md overflow-hidden">
                             <img
                                 src={post.imageUrl}
@@ -295,24 +328,22 @@ const PostModal = ({ post, onClose, onHidePost, onClearReports }) => {
     );
 };
 
-export default function Content() {
-    const [posts, setPosts] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [selectedPost, setSelectedPost] = useState(null);
-    const [sortBy, setSortBy] = useState('reports'); // 'reports' or 'date'
+export default function Content(): JSX.Element {
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+    const [sortBy, setSortBy] = useState<'reports' | 'date'>('reports');
     const postsPerPage = 8;
 
     // Initialize posts from mock data
-    useEffect(() => {
-        setPosts([...initialMockPosts]);
-    }, []);
+    useEffect(() => setPosts([...initialMockPosts] as Post[]), []);
 
     // Filter posts: active AND with reports > 0
     const filteredPosts = posts.filter(post => post.active && post.activeReports > 0).sort((a, b) => {
         if (sortBy === 'reports') {
             return b.activeReports - a.activeReports;
         } else { // sortBy === 'date'
-            return new Date(b.createdAt) - new Date(a.createdAt);
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         }
     });
 
@@ -325,25 +356,27 @@ export default function Content() {
     const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
 
     // Change page
-    const handlePageChange = (pageNumber) => {
+    const handlePageChange = (pageNumber: number): void => {
         setCurrentPage(pageNumber);
     };
 
     // Handle reload
-    const handleReload = () => {
+    const handleReload = (): void => {
         // In a real app, this would fetch fresh data from the endpoint
-        // Mocket for now
-        setPosts([...initialMockPosts]);
+        // Mocked for now
+        setPosts([...initialMockPosts] as Post[]);
         setCurrentPage(1);
     };
 
     // Handle post click
-    const handlePostClick = (post) => {
+    const handlePostClick = (post: Post): void => {
         setSelectedPost(post);
     };
 
     // Handle hide post
-    const handleHidePost = () => {
+    const handleHidePost = (): void => {
+        if (!selectedPost) return;
+
         setPosts(posts.map(post =>
             post.id === selectedPost.id ? { ...post, active: false } : post
         ));
@@ -358,7 +391,9 @@ export default function Content() {
     };
 
     // Handle clear reports
-    const handleClearReports = () => {
+    const handleClearReports = (): void => {
+        if (!selectedPost) return;
+
         setPosts(posts.map(post =>
             post.id === selectedPost.id ? { ...post, activeReports: 0 } : post
         ));
@@ -382,7 +417,7 @@ export default function Content() {
                         <select
                             id="sortBy"
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
+                            onChange={(e) => setSortBy(e.target.value as 'reports' | 'date')}
                             className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-800"
                         >
                             <option value="reports">Reportes</option>
