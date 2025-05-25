@@ -300,14 +300,14 @@ export default function RegisterUser() {
 
             let message = "Ocurrió un error al registrar el usuario.";
 
-            if (err instanceof Error && err.message) {
-                message = err.message;
-            } else if (err.code === "auth/email-already-in-use") {
+            if (err.code === "auth/email-already-in-use") {
                 message = "El correo electrónico ya está en uso.";
             } else if (err.code === "auth/invalid-email") {
                 message = "El correo electrónico no es válido.";
             } else if (err.code === "auth/weak-password") {
                 message = "La contraseña es demasiado débil. Debe tener al menos 8 caracteres.";
+            } else if (err instanceof Error && err.message) {
+                message = err.message;
             }
 
             setErrors(prev => ({
