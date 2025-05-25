@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
+import { getSecondaryAuth } from '@/lib/firebase';
+import { deleteApp } from 'firebase/app';
 
 // Form error types
 type FormErrors = {
@@ -36,8 +38,9 @@ export default function RegisterUser() {
         confirmPassword: false,
     });
     const [successMessage, setSuccessMessage] = useState('');
-    const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmationPassword, setShowConfirmationPassword] = useState(false);
 
     // Configuring Validation
     const validationConfig = {
@@ -73,7 +76,7 @@ export default function RegisterUser() {
                 password: 'La contraseña es obligatoria.',
                 confirmPassword: 'Debes confirmar tu contraseña.',
             };
-        
+
             return requiredMessages[name] || 'Este campo es obligatorio.';
         }
 
@@ -151,44 +154,8 @@ export default function RegisterUser() {
     // Check if its valid
     const isFormValid = (): boolean => {
         const formErrors = validateForm();
-        return Object.keys(formErrors).length === 0 && emailAvailable === true;
+        return Object.keys(formErrors).length === 0;
     };
-
-    // Check email
-    useEffect(() => {
-        setEmailAvailable(null);
-
-        if (!formData.email || validateField('email', formData.email)) {
-            return;
-        }
-
-        const timeoutId = setTimeout(async () => {
-            try {
-                // Uncomment and adapt the following lines to use the actual API endpoint
-                //const res = await fetch(`/api/users/check-email?email=${formData.email}`);
-                //const data = await res.json();
-                //setEmailAvailable(data.available);
-
-                // Simulating an API call with a timeout
-                const res = await new Promise<{ available: boolean }>((resolve) => {
-                    const yaRegistrados = ['admin@ucr.ac.cr', 'user@ucr.ac.cr'];
-                    setTimeout(() => {
-                        resolve({ available: !yaRegistrados.includes(formData.email.toLowerCase()) });
-                    }, 500);
-                });
-
-                setEmailAvailable(res.available);
-                //---------------------------------------
-
-            } catch (error) {
-                console.error("Error al verificar el correo.", error);
-                setEmailAvailable(null);
-            }
-        }, 500); // wait 500ms after the last keystroke
-
-        return () => clearTimeout(timeoutId);
-    }, [formData.email]);
-
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -241,15 +208,81 @@ export default function RegisterUser() {
         const formErrors = validateForm();
         setErrors(formErrors);
 
-        // No errors and Email available
-        if (Object.keys(formErrors).length > 0 || emailAvailable !== true) {
+        // No errors
+        if (Object.keys(formErrors).length > 0) {
             return;
         }
 
         setIsSubmitting(true);
 
         try {
-            // Fetch API to register user
+
+            const { auth: secondaryAuth, app: secondaryApp } = getSecondaryAuth();
+
+            // Create user in Firebase
+            const userCredential = await createUserWithEmailAndPassword(
+                secondaryAuth,
+                formData.email,
+                formData.password
+            );
+
+            const newUser = userCredential.user;
+            const authId = newUser.uid;
+            const newUserToken = await newUser.getIdToken();
+
+            // Send user data to backend api
+            const response = await fetch(`/api/admin/auth/register`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: formData.email,
+                    full_name: formData.name,
+                    auth_id: authId,
+                    auth_token: newUserToken,
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                await deleteUser(newUser); // Delete the user from Firebase if the backend registration fails
+
+                let errorMessage = "Ocurrió un error al registrar el usuario.";
+
+                switch (response.status) {
+                    case 400: // Validation error
+                        if (Array.isArray(err.details)) {
+                            errorMessage = err.details.join(" ");
+                        } else {
+                            errorMessage = "Algunos datos no son válidos. Verifica e intenta de nuevo.";
+                        }
+                        break;
+
+                    case 401: // Not authorized
+                        errorMessage = "No estás autorizado para realizar esta acción.";
+                        break;
+
+                    case 409: // Conflict (Email already in use)
+                        errorMessage = "El correo electrónico ya está registrado como administrador.";
+                        break;
+
+                    case 500: // Internal Server Error
+                        errorMessage = "Hubo un problema en el servidor. Intenta nuevamente más tarde.";
+                        break;
+
+                    default:
+                        // Not cotemplated cases
+                        errorMessage = err.message || "Ocurrió un error inesperado.";
+                        break;
+                }
+                throw new Error(errorMessage);
+            }
+
+            // If the backend registration is successful, sign out the new user from Firebase
+            await secondaryAuth.signOut();
+            await deleteApp(secondaryApp);
+
             setSuccessMessage("Usuario registrado correctamente.");
             setFormData({ name: '', email: '', password: '', confirmPassword: '' });
             setErrors({});
@@ -263,11 +296,23 @@ export default function RegisterUser() {
             setTimeout(() => {
                 setSuccessMessage("");
             }, 3000);
-        } catch (err) {
-            console.error('Error al registrar usuario.', err);
+        } catch (err: any) {
+
+            let message = "Ocurrió un error al registrar el usuario.";
+
+            if (err.code === "auth/email-already-in-use") {
+                message = "El correo electrónico ya está en uso.";
+            } else if (err.code === "auth/invalid-email") {
+                message = "El correo electrónico no es válido.";
+            } else if (err.code === "auth/weak-password") {
+                message = "La contraseña es demasiado débil. Debe tener al menos 8 caracteres.";
+            } else if (err instanceof Error && err.message) {
+                message = err.message;
+            }
+
             setErrors(prev => ({
                 ...prev,
-                form: "Ocurrió un error al registrar el usuario.",
+                form: message,
             }));
         } finally {
             setIsSubmitting(false);
@@ -275,12 +320,12 @@ export default function RegisterUser() {
     };
 
     return (
-        <div>
-            <h2 className="mt-2 text-gray-600">Registrar nuevo usuario</h2>
-            <div className="mt-10 w-full sm:w-11/12 md:w-3/4 lg:w-1/3">
+        <div className="max-w-4xl mx-auto mt-10 bg-white shadow-xl rounded-2xl p-10">
+            <h3 className="text-2xl font-bold text-center text-gray-800 mb-10">Registrar nuevo usuario administrador</h3>
+            <div>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-gray-800">
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="name" className="block text-sm font-semibold text-[#249dd8] mb-1">
                             Nombre <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -299,7 +344,7 @@ export default function RegisterUser() {
                     </div>
 
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="email" className="block text-sm font-semibold text-[#249dd8] mb-1">
                             Correo electrónico <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -310,55 +355,86 @@ export default function RegisterUser() {
                             value={formData.email}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            className={`mt-1 w-full block px-3 py-2 border ${errors.email || emailAvailable === false ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                            className={`mt-1 w-full block px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
                         />
                         {errors.email && touched.email && (
                             <p className="text-red-500 text-sm mt-1">{errors.email}</p>
                         )}
-                        {formData.email && !errors.email && touched.email && (
-                            <p className={`text-sm mt-1 ${emailAvailable === true ? 'text-green-500' : emailAvailable === false ? 'text-red-500' : 'text-gray-500'}`}>
-                                {emailAvailable === true
-                                    ? 'Correo disponible.'
-                                    : emailAvailable === false
-                                        ? 'Este correo ya está registrado.'
-                                        : 'Verificando disponibilidad...'}
-                            </p>
-                        )}
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="password" className="block text-sm font-semibold text-[#249dd8] mb-1">
                             Contraseña <span className="text-red-500">*</span>
                         </label>
-                        <input
-                            id="password"
-                            name="password"
-                            type="password"
-                            placeholder="Mínimo 8 caracteres"
-                            value={formData.password}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            className={`mt-1 w-full block px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        />
+                        <div className="relative">
+                            <input
+                                id="password"
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Mínimo 8 caracteres"
+                                value={formData.password}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                className={`mt-1 w-full block pr-10 px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                aria-label="toggle password visibility"
+                            >
+                                {showPassword ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
                         {errors.password && touched.password && (
                             <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                         )}
                     </div>
 
                     <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="confirmPassword" className="block text-sm font-semibold text-[#249dd8] mb-1">
                             Confirmar Contraseña <span className="text-red-500">*</span>
                         </label>
-                        <input
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            type="password"
-                            placeholder="Repite tu contraseña"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            className={`mt-1 w-full block px-3 py-2 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        />
+                        <div className="relative">
+                            <input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type={showConfirmationPassword ? "text" : "password"}
+                                placeholder="Repite tu contraseña"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                className={`mt-1 w-full block px-3 py-2 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmationPassword(!showConfirmationPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                aria-label="toggle confirmPassword visibility"
+                            >
+                                {showConfirmationPassword ? (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
                         {errors.confirmPassword && touched.confirmPassword && (
                             <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
                         )}
@@ -367,7 +443,7 @@ export default function RegisterUser() {
                     <div className="flex justify-center">
                         <button
                             type="submit"
-                            className="mt-2 w-auto py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 cursor-pointer hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-auto py-3 px-10 rounded-full shadow text-white bg-[#249dd8] cursor-pointer hover:bg-[#1b87b9] disabled:opacity-50 disabled:cursor-not-allowed transition"
                             disabled={!isFormValid() || isSubmitting}
                             title={!isFormValid() ? 'Complete todos los campos correctamente.' : ''}
                         >
@@ -384,7 +460,7 @@ export default function RegisterUser() {
                     )}
 
                     <div className="text-xs text-gray-500 mt-2">
-                        <p>* Campos obligatorios.</p>
+                        <p><span className="text-red-500">*</span> Campos obligatorios.</p>
                     </div>
                 </form>
             </div>

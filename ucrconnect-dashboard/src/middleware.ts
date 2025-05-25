@@ -8,6 +8,7 @@ const privateRoutes = [
   '/notifications',
   '/settings',
   '/users',
+  '/profile',
   '/dashboard'
 ];
 

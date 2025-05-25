@@ -75,4 +75,56 @@ describe('firebase', () => {
     // Verify auth is exported correctly
     expect(auth).toBe(mockAuthObject); // Check if it's the exact mocked object
   });
+
+  it('returns existing secondary app if already initialized', async () => {
+  const mockSecondaryApp = { name: 'SecondaryApp' };
+  const mockGetApps = jest.fn(() => [mockSecondaryApp]);
+  const mockInitializeApp = jest.fn();
+  const mockAuthObject = {};
+  const mockGetAuth = jest.fn(() => mockAuthObject);
+
+  jest.doMock('firebase/app', () => ({
+    getApps: mockGetApps,
+    initializeApp: mockInitializeApp,
+  }));
+
+  jest.doMock('firebase/auth', () => ({
+    getAuth: mockGetAuth,
+  }));
+
+  const firebaseModule = await import('../firebase');
+  const { getSecondaryAuth } = firebaseModule;
+
+  const result = getSecondaryAuth();
+
+  expect(mockInitializeApp).not.toHaveBeenCalled();
+  expect(mockGetAuth).toHaveBeenCalledWith(mockSecondaryApp);
+  expect(result).toEqual({ auth: mockAuthObject, app: mockSecondaryApp });
+});
+
+it('initializes secondary app if not already initialized', async () => {
+  const mockSecondaryApp = { name: 'SecondaryApp' };
+  const mockGetApps = jest.fn(() => []);
+  const mockInitializeApp = jest.fn(() => mockSecondaryApp);
+  const mockAuthObject = {};
+  const mockGetAuth = jest.fn(() => mockAuthObject);
+
+  jest.doMock('firebase/app', () => ({
+    getApps: mockGetApps,
+    initializeApp: mockInitializeApp,
+  }));
+
+  jest.doMock('firebase/auth', () => ({
+    getAuth: mockGetAuth,
+  }));
+
+  const firebaseModule = await import('../firebase');
+  const { getSecondaryAuth } = firebaseModule;
+
+  const result = getSecondaryAuth();
+
+  expect(mockInitializeApp).toHaveBeenCalledWith(expect.any(Object), 'SecondaryApp');
+  expect(mockGetAuth).toHaveBeenCalledWith(mockSecondaryApp);
+  expect(result).toEqual({ auth: mockAuthObject, app: mockSecondaryApp });
+});
 });

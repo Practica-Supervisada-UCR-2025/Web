@@ -593,7 +593,7 @@ describe('Login Page', () => {
     // Mock successful Firebase auth with null displayName
     const mockUser = {
       user: {
-        email: 'bryan.villegasalvarado@ucr.ac.cr',
+        email: 'user123@ucr.ac.cr',
         displayName: null,
         uid: '123',
         getIdToken: jest.fn().mockResolvedValue('mock-token'),
@@ -612,7 +612,7 @@ describe('Login Page', () => {
     await act(async () => {
       // Fill form
       fireEvent.change(screen.getByPlaceholderText('Correo electrónico'), {
-        target: { value: 'bryan.villegasalvarado@ucr.ac.cr' },
+        target: { value: 'user123@ucr.ac.cr' },
       });
       fireEvent.change(screen.getByPlaceholderText('Contraseña'), {
         target: { value: 'password123' },
@@ -630,8 +630,8 @@ describe('Login Page', () => {
         'Authorization': 'Bearer mock-token',
       },
       body: JSON.stringify({
-        email: 'bryan.villegasalvarado@ucr.ac.cr',
-        full_name: 'Bryan Villegasalvarado',
+        email: 'user123@ucr.ac.cr',
+        full_name: 'User123',
         auth_id: '123',
         auth_token: 'mock-token',
       }),
@@ -642,7 +642,7 @@ describe('Login Page', () => {
     // Mock successful Firebase auth with null displayName
     const mockUser = {
       user: {
-        email: 'bryan.villegas.alvarado@ucr.ac.cr',
+        email: 'user123@ucr.ac.cr',
         displayName: null,
         uid: '123',
         getIdToken: jest.fn().mockResolvedValue('mock-token'),
@@ -661,7 +661,7 @@ describe('Login Page', () => {
     await act(async () => {
       // Fill form
       fireEvent.change(screen.getByPlaceholderText('Correo electrónico'), {
-        target: { value: 'bryan.villegas.alvarado@ucr.ac.cr' },
+        target: { value: 'user123@ucr.ac.cr' },
       });
       fireEvent.change(screen.getByPlaceholderText('Contraseña'), {
         target: { value: 'password123' },
@@ -679,8 +679,8 @@ describe('Login Page', () => {
         'Authorization': 'Bearer mock-token',
       },
       body: JSON.stringify({
-        email: 'bryan.villegas.alvarado@ucr.ac.cr',
-        full_name: 'Bryan Villegas Alvarado',
+        email: 'user123@ucr.ac.cr',
+        full_name: 'User123',
         auth_id: '123',
         auth_token: 'mock-token',
       }),

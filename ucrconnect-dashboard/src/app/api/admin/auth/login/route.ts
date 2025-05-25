@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     }
 
     // If backend response is successful, set the cookie and return success
-    const successResponse = NextResponse.json({ message: 'Login successful' });
+    const successResponse = NextResponse.json({ message: 'Login successful', access_token: backendData.access_token }, { status: 200 });
     
     // Set the access token from backend as HTTP-only cookie
     successResponse.cookies.set('access_token', backendData.access_token, {
