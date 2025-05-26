@@ -140,7 +140,7 @@ export default function Header() {
             if (!response.ok) {
                 console.error('Failed to logout from backend');
             }
-
+            
             // Then logout from Firebase
             await signOut(auth);
             
@@ -245,9 +245,18 @@ export default function Header() {
                 transition-opacity duration-150 ${profileVisible ? 'opacity-100' : 'opacity-0'}`}>
                     {/* Content section */}
                     <div className="py-2">
-                        <Link href="/profile" className="text-black text-sm py-2 px-4 block hover:bg-gray-100">
+                        <Link
+                            href="/profile"
+                            onClick={() => {
+                                setProfileVisible(false);
+                                profileTimeoutRef.current = setTimeout(() => {
+                                setOpenProfile(false);
+                                }, 150);
+                            }}
+                            className="text-black text-sm py-2 px-4 block hover:bg-gray-100"
+                            >
                             Ver perfil
-                        </Link>
+                            </Link>
                         <button
                             onClick={handleLogout}
                             className="w-full text-left text-black text-sm py-2 px-4 block hover:bg-gray-100"
