@@ -1,20 +1,28 @@
 'use client';
 import { useState, useEffect, JSX } from 'react';
-import { mockPosts as initialMockPosts } from '../../../../public/data/contentData';
-
 
 // Type definitions
 interface Post {
-    id: number;
+    id: string;
     content: string;
-    contentType: 'text' | 'image' | 'gif';
+    media_type: number; // 0 = text, 1 = image, 2 = gif
     username: string;
     email: string;
-    imageUrl?: string;
-    createdAt: string | number | Date;
-    active: boolean;
-    activeReports: number;
-    totalReports: number;
+    file_url?: string;
+    created_at: string;
+    is_active: boolean;
+    active_reports: string;
+    total_reports: string;
+}
+
+interface ApiResponse {
+    message: string;
+    posts: Post[];
+    metadata: {
+        totalPosts: number;
+        totalPages: number;
+        currentPage: number;
+    };
 }
 
 interface PostCardProps {
@@ -35,8 +43,14 @@ interface PostModalProps {
     onClearReports: () => void;
 }
 
+// Helper function to check if post should be displayed
+const shouldDisplayPost = (post: Post): boolean => {
+    const activeReports = parseInt(post.active_reports);
+    return post.is_active && activeReports > 0;
+};
+
 // Helper function to format date
-const formatDate = (dateString: string | number | Date): string => {
+const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
         year: 'numeric',
@@ -47,8 +61,20 @@ const formatDate = (dateString: string | number | Date): string => {
     });
 };
 
+// Helper function to get content type
+const getContentType = (mediaType: number): 'text' | 'image' | 'gif' => {
+    switch (mediaType) {
+        case 1: return 'image';
+        case 2: return 'gif';
+        default: return 'text';
+    }
+};
+
 // Post card component
 const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
+    const activeReports = parseInt(post.active_reports);
+    const contentType = getContentType(post.media_type);
+
     return (
         <div
             className="bg-white shadow rounded-lg p-4 mb-4 hover:shadow-md transition-shadow cursor-pointer h-full flex flex-col"
@@ -61,17 +87,17 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
                 </div>
                 <div className="text-right">
                     <span className="inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
-                        {post.activeReports} reportes activos
+                        {activeReports} reportes activos
                     </span>
                 </div>
             </div>
 
             <div className="my-3 flex-grow">
                 <p className="text-gray-700 mb-2">{post.content}</p>
-                {post.contentType !== 'text' && post.imageUrl && (
+                {contentType !== 'text' && post.file_url && (
                     <div className="mt-2 rounded-md overflow-hidden">
                         <img
-                            src={post.imageUrl}
+                            src={post.file_url}
                             alt={`Contenido de ${post.username}`}
                             className="w-full h-auto max-h-48 object-cover"
                         />
@@ -80,9 +106,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
             </div>
 
             <div className="flex justify-between items-center text-sm text-gray-500 mt-auto">
-                <span>Creado: {formatDate(post.createdAt)}</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${post.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                    {post.active ? 'Activo' : 'Inactivo'}
+                <span>Creado: {formatDate(post.created_at)}</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${post.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                    {post.is_active ? 'Activo' : 'Inactivo'}
                 </span>
             </div>
         </div>
@@ -123,6 +149,10 @@ const PostModal: React.FC<PostModalProps> = ({ post, onClose, onHidePost, onClea
     const [showSuspensionDuration, setShowSuspensionDuration] = useState(false);
     const [showConfirmClearReports, setShowConfirmClearReports] = useState(false);
 
+    const activeReports = parseInt(post.active_reports);
+    const totalReports = parseInt(post.total_reports);
+    const contentType = getContentType(post.media_type);
+
     return (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg w-full max-w-3xl p-6 relative">
@@ -145,20 +175,20 @@ const PostModal: React.FC<PostModalProps> = ({ post, onClose, onHidePost, onClea
                         </div>
                         <div>
                             <span className="inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
-                                {post.activeReports} reportes activos
+                                {activeReports} reportes activos
                             </span>
                             <p className="text-xs text-gray-500 mt-1 text-right">
-                                {post.totalReports} reportes en total
+                                {totalReports} reportes en total
                             </p>
                         </div>
                     </div>
 
                     <p className="text-gray-700 my-4">{post.content}</p>
 
-                    {post.contentType !== 'text' && post.imageUrl && (
+                    {contentType !== 'text' && post.file_url && (
                         <div className="mt-2 rounded-md overflow-hidden">
                             <img
-                                src={post.imageUrl}
+                                src={post.file_url}
                                 alt={`Contenido de ${post.username}`}
                                 className="w-full h-auto max-h-80 object-contain"
                             />
@@ -166,11 +196,11 @@ const PostModal: React.FC<PostModalProps> = ({ post, onClose, onHidePost, onClea
                     )}
 
                     <div className="mt-4 text-sm text-gray-500">
-                        <p>Creado: {formatDate(post.createdAt)}</p>
+                        <p>Creado: {formatDate(post.created_at)}</p>
                         <p className="mt-1">
                             Estado:
-                            <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${post.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                {post.active ? 'Activo' : 'Inactivo'}
+                            <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${post.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                {post.is_active ? 'Activo' : 'Inactivo'}
                             </span>
                         </p>
                     </div>
@@ -331,41 +361,85 @@ const PostModal: React.FC<PostModalProps> = ({ post, onClose, onHidePost, onClea
 export default function Content(): JSX.Element {
     const [posts, setPosts] = useState<Post[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const [totalPages, setTotalPages] = useState<number>(1);
+    const [totalPosts, setTotalPosts] = useState<number>(0);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [sortBy, setSortBy] = useState<'reports' | 'date'>('reports');
+    const [loading, setLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
     const postsPerPage = 8;
 
-    // Initialize posts from mock data
-    useEffect(() => setPosts([...initialMockPosts] as Post[]), []);
+    // Filter posts that should be displayed
+    const filteredPosts = posts.filter(shouldDisplayPost);
 
-    // Filter posts: active AND with reports > 0
-    const filteredPosts = posts.filter(post => post.active && post.activeReports > 0).sort((a, b) => {
-        if (sortBy === 'reports') {
-            return b.activeReports - a.activeReports;
-        } else { // sortBy === 'date'
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    // Fetch posts from API
+    const fetchPosts = async (page: number, orderBy?: string, orderDirection?: string) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const params = new URLSearchParams({
+                page: page.toString(),
+                limit: postsPerPage.toString(),
+            });
+
+            if (orderBy) {
+                params.append('orderBy', orderBy);
+            }
+            if (orderDirection) {
+                params.append('orderDirection', orderDirection);
+            }
+
+            console.log(`/api/posts/reported?${params.toString()}`);
+            const response = await fetch(`/api/posts/reported?${params.toString()}`);
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error fetching posts');
+            }
+
+            const data: ApiResponse = await response.json();
+
+            // Filter posts on the client side to ensure we only show valid posts
+            const validPosts = data.posts.filter(shouldDisplayPost);
+
+            setPosts(validPosts);
+
+            // Recalculate pagination based on filtered results
+            const totalValidPosts = validPosts.length;
+            const calculatedTotalPages = Math.ceil(totalValidPosts / postsPerPage) || 1;
+
+            setTotalPages(calculatedTotalPages);
+            setTotalPosts(totalValidPosts);
+            setCurrentPage(data.metadata.currentPage);
+
+        } catch (err) {
+            console.error('Error fetching posts:', err);
+            setError(err instanceof Error ? err.message : 'Error desconocido');
+        } finally {
+            setLoading(false);
         }
-    });
+    };
 
-    // Calculate total pages
-    const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+    // Initialize posts on component mount
+    useEffect(() => {
+        const orderBy = sortBy === 'reports' ? 'report_count' : 'date';
+        const orderDirection = 'DESC'; // Always DESC for both - most reports first, newest first
+        fetchPosts(1, orderBy, orderDirection);
+    }, [sortBy]);
 
-    // Get current posts
-    const indexOfLastPost = currentPage * postsPerPage;
-    const indexOfFirstPost = indexOfLastPost - postsPerPage;
-    const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
-
-    // Change page
+    // Handle page change
     const handlePageChange = (pageNumber: number): void => {
-        setCurrentPage(pageNumber);
+        const orderBy = sortBy === 'reports' ? 'report_count' : 'date';
+        const orderDirection = 'DESC';
+        fetchPosts(pageNumber, orderBy, orderDirection);
     };
 
     // Handle reload
     const handleReload = (): void => {
-        // In a real app, this would fetch fresh data from the endpoint
-        // Mocked for now
-        setPosts([...initialMockPosts] as Post[]);
-        setCurrentPage(1);
+        const orderBy = sortBy === 'reports' ? 'report_count' : 'date';
+        const orderDirection = 'DESC';
+        fetchPosts(currentPage, orderBy, orderDirection);
     };
 
     // Handle post click
@@ -377,35 +451,55 @@ export default function Content(): JSX.Element {
     const handleHidePost = (): void => {
         if (!selectedPost) return;
 
-        setPosts(posts.map(post =>
-            post.id === selectedPost.id ? { ...post, active: false } : post
-        ));
+        // Remove the post from the list since it will no longer be active
+        setPosts(posts.filter(post => post.id !== selectedPost.id));
         setSelectedPost(null);
 
-        // Check if current page is empty after this action and go to previous page if needed
-        const remainingPosts = filteredPosts.filter(post => post.id !== selectedPost.id);
-        const remainingPages = Math.ceil(remainingPosts.length / postsPerPage);
-        if (currentPage > 1 && currentPage > remainingPages) {
-            setCurrentPage(currentPage - 1);
-        }
+        // Update total posts count
+        setTotalPosts(prev => Math.max(0, prev - 1));
+
+        // TODO: Make API call to hide the post
+
+        // Reload data to get fresh state
+        setTimeout(() => {
+            handleReload();
+        }, 500);
     };
 
     // Handle clear reports
     const handleClearReports = (): void => {
         if (!selectedPost) return;
 
-        setPosts(posts.map(post =>
-            post.id === selectedPost.id ? { ...post, activeReports: 0 } : post
-        ));
+        // Remove the post from the list since it will no longer have active reports
+        setPosts(posts.filter(post => post.id !== selectedPost.id));
         setSelectedPost(null);
 
-        // Check if current page is empty after this action and go to previous page if needed
-        const remainingPosts = filteredPosts.filter(post => post.id !== selectedPost.id);
-        const remainingPages = Math.ceil(remainingPosts.length / postsPerPage);
-        if (currentPage > 1 && currentPage > remainingPages) {
-            setCurrentPage(currentPage - 1);
-        }
+        // Update total posts count
+        setTotalPosts(prev => Math.max(0, prev - 1));
+
+        // TODO: Make API call to clear reports
+
+        // Reload data to get fresh state
+        setTimeout(() => {
+            handleReload();
+        }, 500);
     };
+
+    // Handle sort change
+    const handleSortChange = (newSortBy: 'reports' | 'date'): void => {
+        setSortBy(newSortBy);
+        setCurrentPage(1); // Reset to first page when sorting changes
+    };
+
+    if (loading && filteredPosts.length === 0) {
+        return (
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <div className="flex justify-center items-center h-64">
+                    <div className="text-gray-500">Cargando publicaciones reportadas...</div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -417,8 +511,9 @@ export default function Content(): JSX.Element {
                         <select
                             id="sortBy"
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as 'reports' | 'date')}
+                            onChange={(e) => handleSortChange(e.target.value as 'reports' | 'date')}
                             className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-800"
+                            disabled={loading}
                         >
                             <option value="reports">Reportes</option>
                             <option value="date">Fecha</option>
@@ -427,29 +522,42 @@ export default function Content(): JSX.Element {
 
                     <button
                         onClick={handleReload}
-                        className="ml-2 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center"
+                        disabled={loading}
+                        className="ml-2 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Recargar"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                     </button>
                 </div>
             </div>
 
+            {error && (
+                <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                    Error: {error}
+                    <button
+                        onClick={handleReload}
+                        className="ml-2 underline hover:no-underline"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            )}
+
             <div className="mb-4 text-sm text-gray-500">
-                Mostrando {currentPosts.length} de {filteredPosts.length} publicaciones reportadas
+                {loading ? 'Cargando...' : `Mostrando ${filteredPosts.length} de ${totalPosts} publicaciones reportadas activas`}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {currentPosts.map(post => (
+                {filteredPosts.map(post => (
                     <PostCard key={post.id} post={post} onClick={handlePostClick} />
                 ))}
             </div>
 
-            {currentPosts.length === 0 && (
+            {!loading && filteredPosts.length === 0 && !error && (
                 <div className="text-center py-10 text-gray-500">
-                    No hay publicaciones reportadas activas.
+                    No hay publicaciones reportadas activas para mostrar.
                 </div>
             )}
 
