@@ -34,24 +34,6 @@ const formatDate = (dateString: string): string => {
     });
 };
 
-// Helper function to get media type label
-const getMediaTypeLabel = (mediaType: number): string => {
-    switch (mediaType) {
-        case 0: return 'Texto';
-        case 1: return 'Imagen';
-        case 2: return 'GIF';
-        default: return 'Desconocido';
-    }
-};
-
-// Helper function to format file size
-const formatFileSize = (bytes: number | null): string => {
-    if (!bytes) return 'N/A';
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
-};
-
 export default function PostDetail(): JSX.Element {
     const [post, setPost] = useState<Post | null>(null);
     const [loading, setLoading] = useState(true);
@@ -183,7 +165,6 @@ export default function PostDetail(): JSX.Element {
                     <div>
                         <h2 className="text-xl font-semibold text-[#249dd8]">{post.username}</h2>
                         <p className="text-gray-600">{post.email}</p>
-                        <p className="text-sm text-gray-500 mt-1">ID: {post.id}</p>
                     </div>
                     <div className="text-right">
                         <span className="inline-block bg-red-100 text-red-800 text-sm font-semibold px-3 py-2 rounded-lg mb-2">
@@ -191,9 +172,6 @@ export default function PostDetail(): JSX.Element {
                         </span>
                         <p className="text-sm text-gray-600">
                             {post.total_reports} reportes en total
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                            Tipo: {getMediaTypeLabel(post.media_type)}
                         </p>
                     </div>
                 </div>
@@ -214,11 +192,6 @@ export default function PostDetail(): JSX.Element {
                                         (e.target as HTMLImageElement).style.display = 'none';
                                     }}
                                 />
-                                {post.file_size && (
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        Tama&ntilde;o del archivo: {formatFileSize(post.file_size)}
-                                    </p>
-                                )}
                             </div>
                         )}
                     </div>
@@ -237,15 +210,6 @@ export default function PostDetail(): JSX.Element {
                                     {post.is_active ? 'Activo' : 'Inactivo'}
                                 </span>
                             </p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h3 className="text-lg font-bold text-[#249dd8] mb-3 ">Usuario</h3>
-                        <div className="space-y-2 text-sm text-gray-600">
-                            <p><span className="font-medium">ID Usuario:</span> {post.user_id}</p>
-                            <p><span className="font-medium">Nombre:</span> {post.username}</p>
-                            <p><span className="font-medium">Email:</span> {post.email}</p>
                         </div>
                     </div>
                 </div>
