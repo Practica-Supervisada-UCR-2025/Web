@@ -1,20 +1,35 @@
 'use client';
 import { useState, useEffect, JSX } from 'react';
-import { mockPosts as initialMockPosts } from '../../../../public/data/contentData';
-
+import { useRouter } from 'next/navigation';
+import { mockApiResponse } from '../../../../public/data/contentData';
 
 // Type definitions
 interface Post {
-    id: number;
+    id: string;
+    user_id: string;
     content: string;
-    contentType: 'text' | 'image' | 'gif';
+    file_url: string | null;
+    file_size: number | null;
+    media_type: number; // 0 = text, 1 = image, 2 = gif
+    is_active: boolean;
+    is_edited: boolean;
+    status: number;
+    created_at: string;
+    updated_at: string;
     username: string;
     email: string;
-    imageUrl?: string;
-    createdAt: string | number | Date;
-    active: boolean;
-    activeReports: number;
-    totalReports: number;
+    active_reports: string;
+    total_reports: string;
+}
+
+interface ApiResponse {
+    message: string;
+    posts: Post[];
+    metadata: {
+        totalPosts: number;
+        totalPages: number;
+        currentPage: number;
+    };
 }
 
 interface PostCardProps {
@@ -28,15 +43,8 @@ interface PaginationProps {
     onPageChange: (page: number) => void;
 }
 
-interface PostModalProps {
-    post: Post;
-    onClose: () => void;
-    onHidePost: () => void;
-    onClearReports: () => void;
-}
-
 // Helper function to format date
-const formatDate = (dateString: string | number | Date): string => {
+const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {
         year: 'numeric',
@@ -45,6 +53,16 @@ const formatDate = (dateString: string | number | Date): string => {
         hour: '2-digit',
         minute: '2-digit'
     });
+};
+
+// Helper function to get media type label
+const getMediaTypeLabel = (mediaType: number): string => {
+    switch (mediaType) {
+        case 0: return 'Texto';
+        case 1: return 'Imagen';
+        case 2: return 'GIF';
+        default: return 'Desconocido';
+    }
 };
 
 // Post card component
@@ -61,28 +79,34 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
                 </div>
                 <div className="text-right">
                     <span className="inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
-                        {post.activeReports} reportes activos
+                        {post.active_reports} reportes activos
                     </span>
+                    <p className="text-xs text-gray-400 mt-1">
+                        {getMediaTypeLabel(post.media_type)}
+                    </p>
                 </div>
             </div>
 
             <div className="my-3 flex-grow">
                 <p className="text-gray-700 mb-2">{post.content}</p>
-                {post.contentType !== 'text' && post.imageUrl && (
+                {post.media_type !== 0 && post.file_url && (
                     <div className="mt-2 rounded-md overflow-hidden">
                         <img
-                            src={post.imageUrl}
+                            src={post.file_url}
                             alt={`Contenido de ${post.username}`}
                             className="w-full h-auto max-h-48 object-cover"
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                            }}
                         />
                     </div>
                 )}
             </div>
 
             <div className="flex justify-between items-center text-sm text-gray-500 mt-auto">
-                <span>Creado: {formatDate(post.createdAt)}</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${post.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                    {post.active ? 'Activo' : 'Inactivo'}
+                <span>Creado: {formatDate(post.created_at)}</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${post.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                    {post.is_active ? 'Activo' : 'Inactivo'}
                 </span>
             </div>
         </div>
@@ -116,236 +140,42 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
     );
 };
 
-// Modal component for post details
-const PostModal: React.FC<PostModalProps> = ({ post, onClose, onHidePost, onClearReports }) => {
-    const [showHideConfirmModal, setShowHideConfirmModal] = useState(false);
-    const [showSuspendModal, setShowSuspendModal] = useState(false);
-    const [showSuspensionDuration, setShowSuspensionDuration] = useState(false);
-    const [showConfirmClearReports, setShowConfirmClearReports] = useState(false);
-
-    return (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-3xl p-6 relative">
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Detalles de la publicaci&oacute;n</h2>
-
-                <div className="mb-6">
-                    <div className="flex justify-between mb-2">
-                        <div>
-                            <h3 className="font-medium text-gray-800">{post.username}</h3>
-                            <p className="text-sm text-gray-500">{post.email}</p>
-                        </div>
-                        <div>
-                            <span className="inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
-                                {post.activeReports} reportes activos
-                            </span>
-                            <p className="text-xs text-gray-500 mt-1 text-right">
-                                {post.totalReports} reportes en total
-                            </p>
-                        </div>
-                    </div>
-
-                    <p className="text-gray-700 my-4">{post.content}</p>
-
-                    {post.contentType !== 'text' && post.imageUrl && (
-                        <div className="mt-2 rounded-md overflow-hidden">
-                            <img
-                                src={post.imageUrl}
-                                alt={`Contenido de ${post.username}`}
-                                className="w-full h-auto max-h-80 object-contain"
-                            />
-                        </div>
-                    )}
-
-                    <div className="mt-4 text-sm text-gray-500">
-                        <p>Creado: {formatDate(post.createdAt)}</p>
-                        <p className="mt-1">
-                            Estado:
-                            <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${post.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                {post.active ? 'Activo' : 'Inactivo'}
-                            </span>
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex space-x-4 mt-6">
-                    <button
-                        onClick={() => setShowHideConfirmModal(true)}
-                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors"
-                    >
-                        Ocultar publicaci&oacute;n
-                    </button>
-                    <button
-                        onClick={() => setShowConfirmClearReports(true)}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md font-medium transition-colors"
-                    >
-                        Eliminar reportes
-                    </button>
-                </div>
-            </div>
-
-            {showHideConfirmModal && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4 text-gray-800">&iquest;Deseas ocultar publicaci&oacute;n?</h3>
-                        <p className="text-gray-600 mb-4">Esta acci&oacute;n esconder&aacute; la publicaci&oacute;n de la vista p&uacute;blica.</p>
-                        <div className="flex justify-end space-x-4 mt-6">
-                            <button
-                                onClick={() => setShowHideConfirmModal(false)}
-                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowHideConfirmModal(false);
-                                    setShowSuspendModal(true);
-                                }}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
-                            >
-                                Ocultar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showSuspendModal && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4 text-gray-800">&iquest;Tambi&eacute;n deseas suspender al usuario?</h3>
-                        <div className="flex justify-end space-x-4 mt-6">
-                            <button
-                                onClick={() => setShowSuspendModal(false)}
-                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowSuspendModal(false);
-                                    onHidePost();
-                                }}
-                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md"
-                            >
-                                Solo ocultar
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowSuspendModal(false);
-                                    setShowSuspensionDuration(true);
-                                }}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
-                            >
-                                Suspender
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showSuspensionDuration && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4 text-gray-800">Selecciona la duraci&oacute;n de la suspensi&oacute;n</h3>
-                        <div className="flex flex-col space-y-3 mt-6">
-                            <div className="flex justify-center space-x-4">
-                                <button
-                                    onClick={() => {
-                                        setShowSuspensionDuration(false);
-                                        onHidePost();
-                                    }}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-                                >
-                                    1 d&iacute;a
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShowSuspensionDuration(false);
-                                        onHidePost();
-                                    }}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-                                >
-                                    3 d&iacute;as
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShowSuspensionDuration(false);
-                                        onHidePost();
-                                    }}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-                                >
-                                    7 d&iacute;as
-                                </button>
-                            </div>
-                            <div className="flex justify-center">
-                                <button
-                                    onClick={() => setShowSuspensionDuration(false)}
-                                    className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {showConfirmClearReports && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4 text-gray-800">Confirmar eliminaci&oacute;n de reportes</h3>
-                        <p className="text-gray-600 mb-4">&iquest;Est&aacute;s seguro de que deseas eliminar todos los reportes activos de esta publicaci&oacute;n?</p>
-                        <div className="flex justify-end space-x-4 mt-6">
-                            <button
-                                onClick={() => setShowConfirmClearReports(false)}
-                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setShowConfirmClearReports(false);
-                                    onClearReports();
-                                }}
-                                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md"
-                            >
-                                Confirmar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
 export default function Content(): JSX.Element {
-    const [posts, setPosts] = useState<Post[]>([]);
+    const [apiData, setApiData] = useState<ApiResponse | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [sortBy, setSortBy] = useState<'reports' | 'date'>('reports');
+    const router = useRouter();
     const postsPerPage = 8;
 
-    // Initialize posts from mock data
-    useEffect(() => setPosts([...initialMockPosts] as Post[]), []);
+    useEffect(() => {
+        const fetchData = async () => {
+            // TODO: API
+            setApiData(mockApiResponse);
+        };
+
+        fetchData();
+    }, []);
+
+    if (!apiData) {
+        return (
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <div className="flex justify-center items-center py-20">
+                    <div className="text-gray-500">Cargando publicaciones...</div>
+                </div>
+            </div>
+        );
+    }
 
     // Filter posts: active AND with reports > 0
-    const filteredPosts = posts.filter(post => post.active && post.activeReports > 0).sort((a, b) => {
-        if (sortBy === 'reports') {
-            return b.activeReports - a.activeReports;
-        } else { // sortBy === 'date'
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        }
-    });
+    const filteredPosts = apiData.posts
+        .filter(post => post.is_active && parseInt(post.active_reports) > 0)
+        .sort((a, b) => {
+            if (sortBy === 'reports') {
+                return parseInt(b.active_reports) - parseInt(a.active_reports);
+            } else { // sortBy === 'date'
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            }
+        });
 
     // Calculate total pages
     const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
@@ -363,48 +193,13 @@ export default function Content(): JSX.Element {
     // Handle reload
     const handleReload = (): void => {
         // In a real app, this would fetch fresh data from the endpoint
-        // Mocked for now
-        setPosts([...initialMockPosts] as Post[]);
+        setApiData({ ...mockApiResponse });
         setCurrentPage(1);
     };
 
-    // Handle post click
+    // Handle post click - navigate to dedicated page
     const handlePostClick = (post: Post): void => {
-        setSelectedPost(post);
-    };
-
-    // Handle hide post
-    const handleHidePost = (): void => {
-        if (!selectedPost) return;
-
-        setPosts(posts.map(post =>
-            post.id === selectedPost.id ? { ...post, active: false } : post
-        ));
-        setSelectedPost(null);
-
-        // Check if current page is empty after this action and go to previous page if needed
-        const remainingPosts = filteredPosts.filter(post => post.id !== selectedPost.id);
-        const remainingPages = Math.ceil(remainingPosts.length / postsPerPage);
-        if (currentPage > 1 && currentPage > remainingPages) {
-            setCurrentPage(currentPage - 1);
-        }
-    };
-
-    // Handle clear reports
-    const handleClearReports = (): void => {
-        if (!selectedPost) return;
-
-        setPosts(posts.map(post =>
-            post.id === selectedPost.id ? { ...post, activeReports: 0 } : post
-        ));
-        setSelectedPost(null);
-
-        // Check if current page is empty after this action and go to previous page if needed
-        const remainingPosts = filteredPosts.filter(post => post.id !== selectedPost.id);
-        const remainingPages = Math.ceil(remainingPosts.length / postsPerPage);
-        if (currentPage > 1 && currentPage > remainingPages) {
-            setCurrentPage(currentPage - 1);
-        }
+        router.push(`/content/${post.id}`);
     };
 
     return (
@@ -427,7 +222,7 @@ export default function Content(): JSX.Element {
 
                     <button
                         onClick={handleReload}
-                        className="ml-2 p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md flex items-center"
+                        className="ml-2 p-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md flex items-center"
                         title="Recargar"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -439,6 +234,9 @@ export default function Content(): JSX.Element {
 
             <div className="mb-4 text-sm text-gray-500">
                 Mostrando {currentPosts.length} de {filteredPosts.length} publicaciones reportadas
+                <span className="ml-4 text-xs">
+                    (Total en sistema: {apiData.metadata.totalPosts})
+                </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -458,15 +256,6 @@ export default function Content(): JSX.Element {
                     currentPage={currentPage}
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
-                />
-            )}
-
-            {selectedPost && (
-                <PostModal
-                    post={selectedPost}
-                    onClose={() => setSelectedPost(null)}
-                    onHidePost={handleHidePost}
-                    onClearReports={handleClearReports}
                 />
             )}
         </div>
