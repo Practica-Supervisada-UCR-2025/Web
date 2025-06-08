@@ -140,7 +140,7 @@ export default function Header() {
             if (!response.ok) {
                 console.error('Failed to logout from backend');
             }
-
+            
             // Then logout from Firebase
             await signOut(auth);
             

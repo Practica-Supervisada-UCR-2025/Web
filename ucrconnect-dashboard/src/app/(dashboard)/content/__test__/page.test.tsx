@@ -2,10 +2,10 @@ import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Content from '../page';
-import { mockPosts } from '../mockData';
+import { mockPosts } from '../../../../../public/data/contentData';
 
 // Mock the entire module with pagination-appropriate data
-jest.mock('../mockData', () => ({
+jest.mock('../../../../../public/data/contentData', () => ({
     mockPosts: [
         {
             id: 1,
