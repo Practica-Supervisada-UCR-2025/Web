@@ -2,6 +2,7 @@
 import { useState, useEffect, JSX } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { mockApiResponse } from '../../../../../public/data/contentData';
+import Link from 'next/link';
 
 // Type definitions
 interface Post {
@@ -163,7 +164,9 @@ export default function PostDetail(): JSX.Element {
                 {/* User Info and Reports */}
                 <div className="flex justify-between items-start mb-6">
                     <div>
-                        <h2 className="text-xl font-semibold text-[#249dd8]">{post.username}</h2>
+                        <Link href={`/users?search=${encodeURIComponent(post.user_id)}&email=${encodeURIComponent(post.email)}`}>
+                            <h2 className="text-xl font-semibold text-[#249dd8] hover:text-[#1b87b9] cursor-pointer">{post.username}</h2>
+                        </Link>
                         <p className="text-gray-600">{post.email}</p>
                     </div>
                     <div className="text-right">
