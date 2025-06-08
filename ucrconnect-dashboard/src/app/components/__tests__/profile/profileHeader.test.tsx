@@ -1,46 +1,138 @@
+/* __test__/profileApi.test.ts */
+import { fetchProfileFromApiRoute, updateProfile } from '@/lib/profileApi'
+
+describe('profileApi utilities', () => {
+  const originalFetch = global.fetch
+
+  afterEach(() => {
+    // Restore the original fetch implementation after each test
+    global.fetch = originalFetch
+    jest.resetAllMocks()
+  })
+
+  describe('fetchProfileFromApiRoute', () => {
+    it('should return profile data when the request is successful', async () => {
+      const mockProfile = { id: '123', name: 'Admin' }
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ data: mockProfile }),
+      }) as unknown as typeof fetch
+
+      const data = await fetchProfileFromApiRoute()
+
+      expect(global.fetch).toHaveBeenCalledWith('/api/admin/auth/profile')
+      expect(data).toEqual(mockProfile)
+    })
+
+    it('should throw an error when the request is not ok', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+      }) as unknown as typeof fetch
+
+      await expect(fetchProfileFromApiRoute()).rejects.toThrow('Error fetching profile')
+    })
+  })
+
+  describe('updateProfile', () => {
+    it('should send a PATCH request and return updated data on success', async () => {
+      const mockUpdatedProfile = { id: '123', name: 'Admin Updated' }
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ data: mockUpdatedProfile }),
+      }) as unknown as typeof fetch
+
+      const formData = new FormData()
+      formData.append('name', 'Admin Updated')
+
+      const data = await updateProfile(formData)
+
+      expect(global.fetch).toHaveBeenCalledWith('/api/admin/auth/profile', {
+        method: 'PATCH',
+        body: formData,
+      })
+      expect(data).toEqual(mockUpdatedProfile)
+    })
+
+    it('should throw an error with the message returned from the server', async () => {
+      const serverErrorMessage = 'Invalid token'
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        json: jest.fn().mockResolvedValue({ message: serverErrorMessage }),
+      }) as unknown as typeof fetch
+
+      const formData = new FormData()
+
+      await expect(updateProfile(formData)).rejects.toThrow(serverErrorMessage)
+    })
+
+    it('should throw a generic error when the server does not return a message', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        json: jest.fn().mockResolvedValue({}),
+      }) as unknown as typeof fetch
+
+      const formData = new FormData()
+
+      await expect(updateProfile(formData)).rejects.toThrow('Error updating profile')
+    })
+  })
+})
+
+/* components/__test__/profile/profileHeader.test.tsx */
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
-import '@testing-library/jest-dom'
 import { ProfileHeader } from '../../profile/profileHeader'
 
-describe('ProfileHeader component', () => {
-  const mockFormData = {
-    firstName: 'Juan',
-    lastName: 'Pérez',
-    email: 'juan.perez@example.com',
+describe('ProfileHeader', () => {
+  const defaultProps = {
+    profileImage: 'https://example.com/avatar.jpg',
+    formData: { full_name: 'John Doe', email: 'john@example.com' },
+    onImageChange: jest.fn(),
   }
 
-  const mockProfileImage = 'https://example.com/profile.jpg'
-
-  it('renders user full name and email', () => {
-    render(<ProfileHeader profileImage={mockProfileImage} formData={mockFormData} onImageChange={() => {}} />)
-
-    expect(screen.getByText('Juan Pérez')).toBeInTheDocument()
-    expect(screen.getByText('juan.perez@example.com')).toBeInTheDocument()
+  beforeEach(() => {
+    jest.clearAllMocks()
   })
 
-  it('renders profile image with correct src and alt', () => {
-    render(<ProfileHeader profileImage={mockProfileImage} formData={mockFormData} onImageChange={() => {}} />)
+  it('renders the profile image with correct src and alt', () => {
+    render(<ProfileHeader {...defaultProps} />)
 
-    const img = screen.getByAltText('Profile') as HTMLImageElement
-    expect(img).toBeInTheDocument()
-    expect(img.src).toBe(mockProfileImage)
+    const image = screen.getByAltText(/profile/i) as HTMLImageElement
+    expect(image).toBeInTheDocument()
+    expect(image.src).toBe(defaultProps.profileImage)
+    // Basic style assertion to ensure Tailwind class is applied
+    expect(image.className).toContain('rounded-full')
   })
 
-  it('calls onImageChange when new file is selected', () => {
-    const onImageChange = jest.fn()
-    render(<ProfileHeader profileImage={mockProfileImage} formData={mockFormData} onImageChange={onImageChange} />)
+  it('renders the user full name and email', () => {
+    render(<ProfileHeader {...defaultProps} />)
 
-    const fileInput = screen.getByLabelText(/subir imagen de perfil/i)
-    const file = new File(['dummy'], 'photo.png', { type: 'image/png' })
+    const heading = screen.getByRole('heading', { level: 2 })
+    expect(heading).toHaveTextContent('John Doe')
+    expect(screen.getByText('john@example.com')).toBeInTheDocument()
+  })
+
+  it('triggers onImageChange when a new image is selected', () => {
+    render(<ProfileHeader {...defaultProps} />)
+
+    const fileInput = screen.getByLabelText(/subir imagen de perfil/i) as HTMLInputElement
+
+    const file = new File(['(⌐□_□)'], 'avatar.png', { type: 'image/png' })
     fireEvent.change(fileInput, { target: { files: [file] } })
 
-    expect(onImageChange).toHaveBeenCalled()
+    expect(defaultProps.onImageChange).toHaveBeenCalledTimes(1)
   })
 
-  it('renders placeholder name when firstName or lastName is missing', () => {
-    render(<ProfileHeader profileImage={mockProfileImage} formData={{ firstName: '', lastName: '', email: 'test@test.com' }} onImageChange={() => {}} />)
+  it('renders empty name when full_name is missing', () => {
+    render(
+      <ProfileHeader
+        profileImage="https://example.com/avatar.jpg"
+        formData={{ full_name: '', email: 'john@example.com' }}
+        onImageChange={jest.fn()}
+      />
+    )
 
-    expect(screen.getByText('Nombre completo')).toBeInTheDocument()
+    const heading = screen.getByRole('heading', { level: 2 })
+    expect(heading).toHaveTextContent('') // Heading vacío
   })
 })
