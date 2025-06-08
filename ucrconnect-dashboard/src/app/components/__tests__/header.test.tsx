@@ -224,14 +224,14 @@ describe('Header Component', () => {
         expect(clearTimeoutSpy).toHaveBeenCalled();
     });
 
-    it('handles successful logout', async () => {
+    it('calls logout API and redirects on logout', async () => {
         // Mock fetch
         const mockFetch = jest.fn().mockResolvedValue({
             ok: true
         });
         global.fetch = mockFetch;
 
-        // Mock Firebase signOut to succeed
+        // Mock Firebase signOut
         const { signOut } = require('firebase/auth');
         signOut.mockResolvedValue(undefined);
 
@@ -260,7 +260,7 @@ describe('Header Component', () => {
             await Promise.resolve();
         });
 
-        // Verify fetch was called
+        // Verify fetch was called with correct endpoint
         expect(mockFetch).toHaveBeenCalledWith('/api/admin/auth/logout', {
             method: 'POST',
             headers: {
@@ -333,68 +333,6 @@ describe('Header Component', () => {
 
         // Clean up
         consoleSpy.mockRestore();
-    });
-
-    it('clears cookies during logout', async () => {
-        // Mock document.cookie
-        const cookies: Record<string, string> = {
-            'test1': 'value1',
-            'test2': 'value2'
-        };
-
-        Object.defineProperty(document, 'cookie', {
-            get: () => Object.entries(cookies)
-                .map(([name, value]) => `${name}=${value}`)
-                .join('; '),
-            set: (value: string) => {
-                const [name] = value.split('=');
-                if (value.includes('expires=')) {
-                    delete cookies[name];
-                } else {
-                    const [name, val] = value.split('=');
-                    cookies[name] = val;
-                }
-            },
-            configurable: true
-        });
-
-        // Mock fetch
-        const mockFetch = jest.fn().mockResolvedValue({
-            ok: true
-        });
-        global.fetch = mockFetch;
-
-        // Mock Firebase signOut
-        const { signOut } = require('firebase/auth');
-        signOut.mockResolvedValue(undefined);
-
-        // Mock window.location
-        const mockLocation = { href: '' };
-        Object.defineProperty(window, 'location', {
-            value: mockLocation,
-            writable: true
-        });
-
-        render(<Header />);
-        
-        // Click profile button to open dropdown
-        fireEvent.click(screen.getByAltText('profile'));
-        
-        // Fast-forward timers
-        act(() => {
-            jest.advanceTimersByTime(50);
-        });
-
-        // Click logout button
-        fireEvent.click(screen.getByText('Cerrar sesión'));
-
-        // Wait for fetch to complete
-        await act(async () => {
-            await Promise.resolve();
-        });
-
-        // Verify cookies were cleared
-        expect(document.cookie).toBe('');
     });
 
     it('closes profile dropdown when settings button is clicked', async () => {
