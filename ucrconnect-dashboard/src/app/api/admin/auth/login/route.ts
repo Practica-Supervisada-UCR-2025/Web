@@ -61,8 +61,9 @@ export async function POST(request: Request) {
     // Set the access token from backend as HTTP-only cookie
     successResponse.cookies.set('access_token', backendData.access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      // secure: process.env.NODE_ENV === 'production',
+      secure: false,
+      sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 // 24 hours
     });
