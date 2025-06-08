@@ -144,11 +144,6 @@ export default function Header() {
             // Then logout from Firebase
             await signOut(auth);
             
-            // Clear all cookies and local storage
-            document.cookie.split(";").forEach(function(c) { 
-                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-            });
-            
             // Redirect to login page with success message
             window.location.href = '/login?logout=success';
         } catch (error) {
