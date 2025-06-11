@@ -59,15 +59,14 @@ export default function NotificationForm() {
                 throw new Error("Formulario inválido: completa los campos requeridos.");
             }
             
-            // Replace with fetch to profile API and extract admin name if needed, since name is optional
-            const adminName = "Administrador";
-
+            // Send the notification to the backend API
+            // name is optional, add if needed using a call to profile API to get the name
             const res = await fetch("/api/admin/auth/notification", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ title, body: description, name: adminName }),
+                body: JSON.stringify({ title, body: description}),
             });
 
             if (!res.ok) throw new Error("Error al enviar notificación");
