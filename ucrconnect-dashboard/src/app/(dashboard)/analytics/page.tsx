@@ -4,6 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import { fetchUserStatsGrowth } from "@/lib/analyticsApi";
+import  Chart  from "@/app/components/analytics/chart"
 
 function formatDate(date: Date) {
   return date.toISOString().split("T")[0];
@@ -101,15 +102,7 @@ export default function Analytics() {
         )}
 
         {data.length > 0 && (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="count" stroke="#249dd8" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
+          <Chart data={data} type="line" xKey="date" yKey=""/>
         )}
       </div>
     </div>
