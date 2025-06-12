@@ -1,10 +1,8 @@
 "use client";
+
 import { useState } from "react";
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from "recharts";
-import { fetchUserStatsGrowth } from "@/lib/analyticsApi";
-import  Chart  from "@/app/components/analytics/chart"
+import { fetchAnalytics } from "@/lib/analyticsApi";
+import Chart from "@/app/components/analytics/chart";
 
 function formatDate(date: Date) {
   return date.toISOString().split("T")[0];
@@ -20,15 +18,29 @@ export default function Analytics() {
   const [startDate, setStartDate] = useState(formatDate(sixMonthsAgo));
   const [endDate, setEndDate] = useState(formatDate(today));
   const [data, setData] = useState([]);
+  const [chartType, setChartType] = useState<"line" | "bar">("line");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
+
     try {
-      const response = await fetchUserStatsGrowth({ interval, startDate, endDate, graphType});
+      const response = await fetchAnalytics({ interval, startDate, endDate, graphType });
+
       setData(response.data?.series || []);
+
+      switch (graphType) {
+        case "volume":
+          setChartType("bar");
+          break;
+        case "growth":
+          setChartType("line");
+          break;
+        default:
+          setChartType("line");
+      }
     } catch (err: any) {
       setError(err.message || "Error desconocido");
       setData([]);
@@ -39,13 +51,13 @@ export default function Analytics() {
 
   return (
     <div className="max-w-5xl mx-auto mt-10 bg-white shadow-xl rounded-2xl p-10">
-      <h2 className="text-2xl font-bold text-center text-gray-800 mb-10">Análisis de crecimiento</h2>
+      <h2 className="text-2xl font-bold text-center text-gray-800 mb-10">Panel de Métricas</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div>
-          <label 
-            className="block text-sm font-semibold text-gray-800 mb-1"
-            >Tipo de gráfico</label>
+          <label className="block text-sm font-semibold text-gray-800 mb-1">
+            Tipo de gráfico
+          </label>
           <select
             value={graphType}
             onChange={(e) => setGraphType(e.target.value)}
@@ -110,7 +122,7 @@ export default function Analytics() {
         )}
 
         {data.length > 0 && (
-          <Chart data={data} type="line" xKey="date" yKey="count"/>
+          <Chart data={data} type={chartType} xKey="date" yKey="count" />
         )}
       </div>
     </div>
