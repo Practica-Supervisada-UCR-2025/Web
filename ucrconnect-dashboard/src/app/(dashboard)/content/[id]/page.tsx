@@ -12,7 +12,7 @@ interface Post {
     media_type: number; // 0 = text, 1 = image, 2 = gif
     is_active: boolean;
     is_edited: boolean;
-    status: number;
+    status?: number;
     created_at: string;
     updated_at: string;
     username: string;
@@ -36,6 +36,17 @@ const formatDate = (dateString: string): string => {
         hour: '2-digit',
         minute: '2-digit'
     });
+};
+
+// Helper function to normalize post data
+const normalizePostData = (postData: any): Post => {
+    return {
+        ...postData,
+        // Assume active by default if is_active is not provided or if status indicates active
+        is_active: postData.is_active ?? (postData.status !== 0),
+        // Set default status based on is_active if not provided
+        status: postData.status ?? (postData.is_active !== false ? 1 : 0)
+    };
 };
 
 export default function PostDetail(): JSX.Element {
@@ -82,10 +93,10 @@ export default function PostDetail(): JSX.Element {
 
                 // Handle different response structures from your backend
                 if (data.post) {
-                    setPost(data.post);
+                    setPost(normalizePostData(data.post));
                 } else if (data.message === 'Success' && (data as any).data) {
                     // Handle case where backend returns data in a different structure
-                    setPost((data as any).data);
+                    setPost(normalizePostData((data as any).data));
                 } else {
                     setError('Estructura de respuesta inesperada');
                 }

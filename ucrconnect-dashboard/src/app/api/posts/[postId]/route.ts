@@ -17,8 +17,8 @@ export async function GET(
             );
         }
 
-        // Get postId from route parameters
-        const { postId } = params;
+        // Await params before using its properties
+        const { postId } = await params;
 
         if (!postId) {
             return NextResponse.json(
@@ -40,7 +40,6 @@ export async function GET(
         if (commentPage) {
             queryParams.append('commentPage', commentPage);
         }
-
         if (commentLimit) {
             queryParams.append('commentLimit', commentLimit);
         }
@@ -78,7 +77,6 @@ export async function GET(
                     { status: backendResponse.status }
                 );
             }
-
             backendData = { message: 'Success', data: textResponse };
         }
 
