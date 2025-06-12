@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, JSX } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockApiResponse } from '../../../../public/data/contentData';
 
 // Type definitions
 interface Post {
@@ -29,6 +28,7 @@ interface ApiResponse {
         totalPosts: number;
         totalPages: number;
         currentPage: number;
+        totalReportedPosts: number;
     };
 }
 
@@ -144,63 +144,117 @@ export default function Content(): JSX.Element {
     const [apiData, setApiData] = useState<ApiResponse | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [sortBy, setSortBy] = useState<'reports' | 'date'>('reports');
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
     const postsPerPage = 8;
 
-    useEffect(() => {
-        const fetchData = async () => {
-            // TODO: API
-            setApiData(mockApiResponse);
-        };
+    // Fetch data function
+    const fetchData = async (page: number = currentPage, sort: 'reports' | 'date' = sortBy) => {
+        try {
+            setLoading(true);
+            setError(null);
 
+            const response = await fetch(
+                `/api/posts/reported?page=${page}&limit=${postsPerPage}&sortBy=${sort}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data: ApiResponse = await response.json();
+            setApiData(data);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            setError(err instanceof Error ? err.message : 'Error desconocido');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Initial data fetch
+    useEffect(() => {
         fetchData();
     }, []);
 
-    if (!apiData) {
-        return (
-            <div className="container mx-auto px-4 py-6 max-w-6xl">
-                <div className="flex justify-center items-center py-20">
-                    <div className="text-gray-500">Cargando publicaciones...</div>
-                </div>
-            </div>
-        );
-    }
+    // Fetch data when page or sort changes
+    useEffect(() => {
+        if (apiData) { // Only fetch if we've already loaded initial data
+            fetchData(currentPage, sortBy);
+        }
+    }, [currentPage, sortBy]);
 
-    // Filter posts: active AND with reports > 0
-    const filteredPosts = apiData.posts
-        .filter(post => post.is_active && parseInt(post.active_reports) > 0)
-        .sort((a, b) => {
-            if (sortBy === 'reports') {
-                return parseInt(b.active_reports) - parseInt(a.active_reports);
-            } else { // sortBy === 'date'
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-            }
-        });
-
-    // Calculate total pages
-    const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
-
-    // Get current posts
-    const indexOfLastPost = currentPage * postsPerPage;
-    const indexOfFirstPost = indexOfLastPost - postsPerPage;
-    const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
-
-    // Change page
+    // Handle page change
     const handlePageChange = (pageNumber: number): void => {
         setCurrentPage(pageNumber);
     };
 
+    // Handle sort change
+    const handleSortChange = (newSort: 'reports' | 'date'): void => {
+        setSortBy(newSort);
+        setCurrentPage(1); // Reset to first page when sorting changes
+    };
+
     // Handle reload
     const handleReload = (): void => {
-        // In a real app, this would fetch fresh data from the endpoint
-        setApiData({ ...mockApiResponse });
         setCurrentPage(1);
+        fetchData(1, sortBy);
     };
 
     // Handle post click - navigate to dedicated page
     const handlePostClick = (post: Post): void => {
         router.push(`/content/${post.id}`);
     };
+
+    // Loading state
+    if (loading) {
+        return (
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <div className="flex justify-center items-center py-20">
+                    <div className="flex items-center space-x-2">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#249dd8]"></div>
+                        <span className="text-gray-500">Cargando publicaciones...</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <div className="flex flex-col justify-center items-center py-20">
+                    <div className="text-red-500 mb-4">Error al cargar las publicaciones: {error}</div>
+                    <button
+                        onClick={handleReload}
+                        className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!apiData) {
+        return (
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <div className="flex justify-center items-center py-20">
+                    <div className="text-gray-500">No hay datos disponibles</div>
+                </div>
+            </div>
+        );
+    }
+
+    const { posts, metadata } = apiData;
 
     return (
         <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -212,8 +266,9 @@ export default function Content(): JSX.Element {
                         <select
                             id="sortBy"
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as 'reports' | 'date')}
+                            onChange={(e) => handleSortChange(e.target.value as 'reports' | 'date')}
                             className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-800"
+                            disabled={loading}
                         >
                             <option value="reports">Reportes</option>
                             <option value="date">Fecha</option>
@@ -222,10 +277,17 @@ export default function Content(): JSX.Element {
 
                     <button
                         onClick={handleReload}
-                        className="ml-2 p-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md flex items-center"
+                        disabled={loading}
+                        className="ml-2 p-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Recargar"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                     </button>
@@ -233,28 +295,28 @@ export default function Content(): JSX.Element {
             </div>
 
             <div className="mb-4 text-sm text-gray-500">
-                Mostrando {currentPosts.length} de {filteredPosts.length} publicaciones reportadas
+                Mostrando {posts.length} de {metadata.totalReportedPosts} publicaciones reportadas
                 <span className="ml-4 text-xs">
-                    (Total en sistema: {apiData.metadata.totalPosts})
+                    (Total en sistema: {metadata.totalPosts})
                 </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {currentPosts.map(post => (
+                {posts.map(post => (
                     <PostCard key={post.id} post={post} onClick={handlePostClick} />
                 ))}
             </div>
 
-            {currentPosts.length === 0 && (
+            {posts.length === 0 && !loading && (
                 <div className="text-center py-10 text-gray-500">
                     No hay publicaciones reportadas activas.
                 </div>
             )}
 
-            {totalPages > 1 && (
+            {metadata.totalPages > 1 && (
                 <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
+                    currentPage={metadata.currentPage}
+                    totalPages={metadata.totalPages}
                     onPageChange={handlePageChange}
                 />
             )}
