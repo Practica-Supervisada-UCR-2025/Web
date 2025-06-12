@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, JSX } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { mockApiResponse } from '../../../../../public/data/contentData';
 
 // Type definitions
 interface Post {
@@ -20,6 +19,11 @@ interface Post {
     email: string;
     active_reports: string;
     total_reports: string;
+}
+
+interface ApiResponse {
+    message: string;
+    post: Post;
 }
 
 // Helper function to format date
@@ -53,18 +57,42 @@ export default function PostDetail(): JSX.Element {
         const fetchPost = async () => {
             try {
                 setLoading(true);
-                // TODO: API call
-                const foundPost = mockApiResponse.posts.find(p => p.id === postId);
+                setError(null);
 
-                if (!foundPost) {
-                    setError('Publicaci&oacute;n no encontrada');
-                    return;
+                const response = await fetch(`/api/posts/${postId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        setError('Publicaci&oacute;n no encontrada');
+                        return;
+                    }
+                    if (response.status === 401) {
+                        setError('No autorizado para ver esta publicaci&oacute;n');
+                        return;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                setPost(foundPost);
+                const data: ApiResponse = await response.json();
+
+                // Handle different response structures from your backend
+                if (data.post) {
+                    setPost(data.post);
+                } else if (data.message === 'Success' && (data as any).data) {
+                    // Handle case where backend returns data in a different structure
+                    setPost((data as any).data);
+                } else {
+                    setError('Estructura de respuesta inesperada');
+                }
+
             } catch (err) {
-                setError('Error al cargar la publicaci&oacute;n');
                 console.error('Error fetching post:', err);
+                setError(err instanceof Error ? err.message : 'Error al cargar la publicaci&oacute;n');
             } finally {
                 setLoading(false);
             }
@@ -75,67 +103,106 @@ export default function PostDetail(): JSX.Element {
         }
     }, [postId]);
 
-    // Handle hide post
-    const handleHidePost = async (suspensionDays?: number): Promise<void> => {
+    // Handle moderation actions
+    const handleModerationAction = async (action: string, suspensionDays?: number): Promise<void> => {
         if (!post) return;
 
         setActionLoading(true);
         try {
-            // TODO: API call
-            setPost({ ...post, is_active: false, status: 0 });
+            const requestBody: any = { action };
+            if (suspensionDays) {
+                requestBody.suspensionDays = suspensionDays;
+            }
 
-            // Redirect
+            const response = await fetch(`/api/posts/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al procesar la acci&oacute;n');
+            }
+
+            const result = await response.json();
+
+            // Update local state based on action
+            switch (action) {
+                case 'hide':
+                    setPost({ ...post, is_active: false, status: 0 });
+                    break;
+                case 'clear_reports':
+                    setPost({ ...post, active_reports: '0' });
+                    break;
+                case 'suspend_user':
+                    setPost({ ...post, is_active: false, status: 0 });
+                    break;
+            }
+
+            // Show success message and redirect
             setTimeout(() => {
                 router.push('/content');
-            }, 10);
+            }, 1000);
+
         } catch (err) {
-            console.error('Error hiding post:', err);
+            console.error('Error processing moderation action:', err);
+            setError(err instanceof Error ? err.message : 'Error al procesar la acci&oacute;n');
         } finally {
             setActionLoading(false);
+        }
+    };
+
+    // Handle hide post
+    const handleHidePost = async (suspensionDays?: number): Promise<void> => {
+        if (suspensionDays) {
+            await handleModerationAction('suspend_user', suspensionDays);
+        } else {
+            await handleModerationAction('hide');
         }
     };
 
     // Handle clear reports
     const handleClearReports = async (): Promise<void> => {
-        if (!post) return;
-
-        setActionLoading(true);
-        try {
-            // TODO: API call
-            setPost({ ...post, active_reports: '0' });
-
-            // Redirect
-            setTimeout(() => {
-                router.push('/content');
-            }, 10);
-        } catch (err) {
-            console.error('Error clearing reports:', err);
-        } finally {
-            setActionLoading(false);
-        }
+        await handleModerationAction('clear_reports');
     };
 
+    // Loading state
     if (loading) {
         return (
             <div className="container mx-auto px-4 py-6 max-w-4xl">
                 <div className="flex justify-center items-center py-20">
-                    <div className="text-gray-500">Cargando publicaci&oacute;n...</div>
+                    <div className="flex items-center space-x-2">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#249dd8]"></div>
+                        <span className="text-gray-500">Cargando publicaci&oacute;n...</span>
+                    </div>
                 </div>
             </div>
         );
     }
 
+    // Error state
     if (error || !post) {
         return (
             <div className="container mx-auto px-4 py-6 max-w-4xl">
                 <div className="text-center py-20">
                     <div className="text-red-500 mb-4">{error || 'Publicaci&oacute;n no encontrada'}</div>
-                    <button
-                        onClick={() => router.push('/content')}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md"
-                    >
-                        Volver al panel
-                    </button>
+                    <div className="flex justify-center space-x-4">
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                        >
+                            Reintentar
+                        </button>
+                        <button
+                            onClick={() => router.push('/content')}
+                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md"
+                        >
+                            Volver al panel
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -157,6 +224,23 @@ export default function PostDetail(): JSX.Element {
                 <h1 className="text-2xl font-bold text-gray-800">Detalles de la Publicaci&oacute;n</h1>
                 <div></div>
             </div>
+
+            {/* Success message */}
+            {actionLoading && (
+                <div className="mb-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-md">
+                    <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2"></div>
+                        Procesando acci&oacute;n...
+                    </div>
+                </div>
+            )}
+
+            {/* Error message */}
+            {error && !loading && (
+                <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                    {error}
+                </div>
+            )}
 
             {/* Main Content */}
             <div className="bg-gray-20 rounded-lg shadow-lg p-6">
@@ -202,7 +286,7 @@ export default function PostDetail(): JSX.Element {
                     <div>
                         <h3 className="text-lg font-bold text-[#249dd8]">Informaci&oacute;n</h3>
                         <div className="space-y-2 text-sm text-gray-600">
-                            <p ><span className="font-medium">Creado:</span> {formatDate(post.created_at)}</p>
+                            <p><span className="font-medium">Creado:</span> {formatDate(post.created_at)}</p>
                             <p><span className="font-medium">Actualizado:</span> {formatDate(post.updated_at)}</p>
                             <p>
                                 <span className="font-medium">Estado:</span>
@@ -244,6 +328,7 @@ export default function PostDetail(): JSX.Element {
                             <button
                                 onClick={() => setShowHideConfirmModal(false)}
                                 className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                                disabled={actionLoading}
                             >
                                 Cancelar
                             </button>
@@ -253,6 +338,7 @@ export default function PostDetail(): JSX.Element {
                                     setShowSuspendModal(true);
                                 }}
                                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+                                disabled={actionLoading}
                             >
                                 Continuar
                             </button>
@@ -269,6 +355,7 @@ export default function PostDetail(): JSX.Element {
                             <button
                                 onClick={() => setShowSuspendModal(false)}
                                 className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                                disabled={actionLoading}
                             >
                                 Cancelar
                             </button>
@@ -278,6 +365,7 @@ export default function PostDetail(): JSX.Element {
                                     handleHidePost();
                                 }}
                                 className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                                disabled={actionLoading}
                             >
                                 Solo ocultar
                             </button>
@@ -287,6 +375,7 @@ export default function PostDetail(): JSX.Element {
                                     setShowSuspensionDuration(true);
                                 }}
                                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+                                disabled={actionLoading}
                             >
                                 Suspender
                             </button>
@@ -307,6 +396,7 @@ export default function PostDetail(): JSX.Element {
                                         handleHidePost(1);
                                     }}
                                     className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                                    disabled={actionLoading}
                                 >
                                     1 d&iacute;a
                                 </button>
@@ -316,6 +406,7 @@ export default function PostDetail(): JSX.Element {
                                         handleHidePost(3);
                                     }}
                                     className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                                    disabled={actionLoading}
                                 >
                                     3 d&iacute;as
                                 </button>
@@ -325,6 +416,7 @@ export default function PostDetail(): JSX.Element {
                                         handleHidePost(7);
                                     }}
                                     className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                                    disabled={actionLoading}
                                 >
                                     7 d&iacute;as
                                 </button>
@@ -333,6 +425,7 @@ export default function PostDetail(): JSX.Element {
                                 <button
                                     onClick={() => setShowSuspensionDuration(false)}
                                     className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                                    disabled={actionLoading}
                                 >
                                     Cancelar
                                 </button>
@@ -351,6 +444,7 @@ export default function PostDetail(): JSX.Element {
                             <button
                                 onClick={() => setShowConfirmClearReports(false)}
                                 className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                                disabled={actionLoading}
                             >
                                 Cancelar
                             </button>
@@ -360,6 +454,7 @@ export default function PostDetail(): JSX.Element {
                                     handleClearReports();
                                 }}
                                 className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                                disabled={actionLoading}
                             >
                                 Confirmar
                             </button>
