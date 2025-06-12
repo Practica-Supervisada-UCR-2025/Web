@@ -1,11 +1,9 @@
-/* __test__/profileApi.test.ts */
 import { fetchProfileFromApiRoute, updateProfile } from '@/lib/profileApi'
 
 describe('profileApi utilities', () => {
   const originalFetch = global.fetch
 
   afterEach(() => {
-    // Restore the original fetch implementation after each test
     global.fetch = originalFetch
     jest.resetAllMocks()
   })
@@ -75,64 +73,5 @@ describe('profileApi utilities', () => {
 
       await expect(updateProfile(formData)).rejects.toThrow('Error updating profile')
     })
-  })
-})
-
-/* components/__test__/profile/profileHeader.test.tsx */
-import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { ProfileHeader } from '../../profile/profileHeader'
-
-describe('ProfileHeader', () => {
-  const defaultProps = {
-    profileImage: 'https://example.com/avatar.jpg',
-    formData: { full_name: 'John Doe', email: 'john@example.com' },
-    onImageChange: jest.fn(),
-  }
-
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
-
-  it('renders the profile image with correct src and alt', () => {
-    render(<ProfileHeader {...defaultProps} />)
-
-    const image = screen.getByAltText(/profile/i) as HTMLImageElement
-    expect(image).toBeInTheDocument()
-    expect(image.src).toBe(defaultProps.profileImage)
-    // Basic style assertion to ensure Tailwind class is applied
-    expect(image.className).toContain('rounded-full')
-  })
-
-  it('renders the user full name and email', () => {
-    render(<ProfileHeader {...defaultProps} />)
-
-    const heading = screen.getByRole('heading', { level: 2 })
-    expect(heading).toHaveTextContent('John Doe')
-    expect(screen.getByText('john@example.com')).toBeInTheDocument()
-  })
-
-  it('triggers onImageChange when a new image is selected', () => {
-    render(<ProfileHeader {...defaultProps} />)
-
-    const fileInput = screen.getByLabelText(/subir imagen de perfil/i) as HTMLInputElement
-
-    const file = new File(['(⌐□_□)'], 'avatar.png', { type: 'image/png' })
-    fireEvent.change(fileInput, { target: { files: [file] } })
-
-    expect(defaultProps.onImageChange).toHaveBeenCalledTimes(1)
-  })
-
-  it('renders empty name when full_name is missing', () => {
-    render(
-      <ProfileHeader
-        profileImage="https://example.com/avatar.jpg"
-        formData={{ full_name: '', email: 'john@example.com' }}
-        onImageChange={jest.fn()}
-      />
-    )
-
-    const heading = screen.getByRole('heading', { level: 2 })
-    expect(heading).toHaveTextContent('') // Heading vacío
   })
 })

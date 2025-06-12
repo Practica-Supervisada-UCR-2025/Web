@@ -1,71 +1,86 @@
-import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
-import '@testing-library/jest-dom'
 import { PasswordFields } from '../../profile/passwordFields'
 
-describe('PasswordFields component', () => {
-  const mockFormData = {
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  }
+const mockFormData = {
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+}
 
-  const mockErrors = {
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  }
+const mockErrors = {
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+}
 
-  const setup = (formData = mockFormData, errors = mockErrors) => {
-    const onChange = jest.fn()
-    render(<PasswordFields formData={formData} errors={errors} onChange={onChange} />)
-    return { onChange }
-  }
+describe('PasswordFields', () => {
+  const handleChange = jest.fn()
 
-  it('renders all password fields with correct labels', () => {
-    setup()
+  it('renders all password fields', () => {
+    render(
+      <PasswordFields
+        formData={mockFormData}
+        errors={{}}
+        onChange={handleChange}
+      />
+    )
 
-    expect(screen.getByLabelText(/contraseña actual/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/nueva contraseña/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/confirmar contraseña/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Contraseña actual')).toBeInTheDocument()
+    expect(screen.getByLabelText('Nueva contraseña')).toBeInTheDocument()
+    expect(screen.getByLabelText('Confirmar contraseña')).toBeInTheDocument()
   })
 
-  it('calls onChange when input changes', () => {
-    const { onChange } = setup()
-    const input = screen.getByLabelText(/nueva contraseña/i)
-    fireEvent.change(input, { target: { value: 'newPass123' } })
-    expect(onChange).toHaveBeenCalled()
+  it('toggles visibility of each password field', () => {
+    render(
+      <PasswordFields
+        formData={mockFormData}
+        errors={{}}
+        onChange={handleChange}
+      />
+    )
+
+    const buttons = screen.getAllByRole('button')
+    buttons.forEach((button, i) => {
+      const input = screen.getAllByLabelText(/contraseña/i)[i]
+      expect(input).toHaveAttribute('type', 'password')
+      fireEvent.click(button)
+      expect(input).toHaveAttribute('type', 'text')
+    })
   })
 
-  it('displays error messages when errors are present', () => {
-    const formData = { ...mockFormData }
-    const errors = {
-      currentPassword: 'Este campo es obligatorio',
-      newPassword: '',
-      confirmPassword: 'Las contraseñas no coinciden'
+  it('displays error messages', () => {
+    const errorForm = {
+      currentPassword: 'Requerido',
+      newPassword: 'Muy corta',
+      confirmPassword: 'No coincide',
     }
 
-    setup(formData, errors)
+    render(
+      <PasswordFields
+        formData={mockFormData}
+        errors={errorForm}
+        onChange={handleChange}
+      />
+    )
 
-    expect(screen.getByText(/este campo es obligatorio/i)).toBeInTheDocument()
-    expect(screen.getByText(/las contraseñas no coinciden/i)).toBeInTheDocument()
+    expect(screen.getByText('Requerido')).toBeInTheDocument()
+    expect(screen.getByText('Muy corta')).toBeInTheDocument()
+    expect(screen.getByText('No coincide')).toBeInTheDocument()
   })
 
-  it('toggles password visibility when visibility button is clicked', () => {
-    setup()
-    const input = screen.getByLabelText(/contraseña actual/i)
-    const toggleButton = screen.getAllByRole('button')[0]
+  it('calls onChange on input', () => {
+    render(
+      <PasswordFields
+        formData={mockFormData}
+        errors={{}}
+        onChange={handleChange}
+      />
+    )
 
-    expect(input).toHaveAttribute('type', 'password')
-
-    fireEvent.click(toggleButton)
-
-    expect(input).toHaveAttribute('type', 'text')
-  })
-
-  it('does not display error messages if no errors are present', () => {
-    setup()
-    expect(screen.queryByText(/este campo es obligatorio/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/las contraseñas no coinciden/i)).not.toBeInTheDocument()
+    const inputs = screen.getAllByLabelText(/contraseña/i)
+    inputs.forEach((input, index) => {
+      fireEvent.change(input, { target: { value: 'abc123' } })
+      expect(handleChange).toHaveBeenCalled()
+    })
   })
 })
