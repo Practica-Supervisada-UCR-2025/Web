@@ -60,8 +60,8 @@ const mockComments = [
     {
         id: '2',
         user_id: 'user2',
-        username: 'María García',
-        email: 'maria.garcia@ucr.ac.cr',
+        username: 'María Rodríguez',
+        email: 'maria.rodriguez@ucr.ac.cr',
         content: 'Este es un comentario de prueba 2',
         created_at: '2024-03-20T09:00:00Z',
         updated_at: '2024-03-20T09:00:00Z'
@@ -69,8 +69,8 @@ const mockComments = [
     {
         id: '3',
         user_id: 'user3',
-        username: 'Carlos López',
-        email: 'carlos.lopez@ucr.ac.cr',
+        username: 'Carlos Mendez',
+        email: 'carlos.mendez@ucr.ac.cr',
         content: 'Este es un comentario de prueba 3',
         created_at: '2024-03-20T08:00:00Z',
         updated_at: '2024-03-20T08:00:00Z'
@@ -363,7 +363,7 @@ export default function PostDetail(): JSX.Element {
                                 >
                                     <div className="flex items-center gap-2 mb-2">
                                         <Link 
-                                            href={`/users/${comment.user_id}`}
+                                            href={`/users?search=${encodeURIComponent(comment.user_id)}&email=${encodeURIComponent(comment.email)}`}
                                             className="font-semibold text-[#249dd8] hover:underline"
                                             data-testid="user-profile-link"
                                         >
