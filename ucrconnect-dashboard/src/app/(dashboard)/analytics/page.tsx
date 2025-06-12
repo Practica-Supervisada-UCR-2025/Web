@@ -15,6 +15,7 @@ const sixMonthsAgo = new Date();
 sixMonthsAgo.setMonth(today.getMonth() - 6);
 
 export default function Analytics() {
+  const [graphType, setGraphType] = useState("growth");
   const [interval, setInterval] = useState("daily");
   const [startDate, setStartDate] = useState(formatDate(sixMonthsAgo));
   const [endDate, setEndDate] = useState(formatDate(today));
@@ -26,7 +27,7 @@ export default function Analytics() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchUserStatsGrowth({ interval, startDate, endDate });
+      const response = await fetchUserStatsGrowth({ interval, startDate, endDate, graphType});
       setData(response.data?.series || []);
     } catch (err: any) {
       setError(err.message || "Error desconocido");
@@ -42,9 +43,16 @@ export default function Analytics() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div>
-          <label className="block text-sm font-semibold text-gray-800 mb-1">Tipo de gráfico</label>
-          <select className="w-full border p-2 rounded text-gray-700 bg-gray-100" disabled>
-            <option>Crecimiento de Usuarios</option>
+          <label 
+            className="block text-sm font-semibold text-gray-800 mb-1"
+            >Tipo de gráfico</label>
+          <select
+            value={graphType}
+            onChange={(e) => setGraphType(e.target.value)}
+            className="w-full border p-2 rounded text-gray-700"
+          >
+            <option value="growth">Crecimiento de Usuarios</option>
+            <option value="volume">Volumen de reportes</option>
           </select>
         </div>
 
@@ -102,7 +110,7 @@ export default function Analytics() {
         )}
 
         {data.length > 0 && (
-          <Chart data={data} type="line" xKey="date" yKey=""/>
+          <Chart data={data} type="line" xKey="date" yKey="count"/>
         )}
       </div>
     </div>
