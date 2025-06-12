@@ -1,7 +1,17 @@
 // lib/analyticsApi.ts
-export async function fetchUserStatsGrowth({ interval, startDate, endDate }: { interval: string; startDate: string; endDate: string }) {
+export async function fetchUserStatsGrowth({ interval, startDate, endDate, graphType }: { interval: string; startDate: string; endDate: string; graphType: string }) {
   const query = new URLSearchParams({ interval, startDate, endDate }).toString();
-  const res = await fetch(`/api/analytics/user-stats/growth?${query}`);
+  let res: Response;
+  switch (graphType) {
+    case 'growth':
+      res = await fetch(`/api/analytics/user-stats${graphType}?${query}`);
+      break;
+    case 'volume':
+      res = await fetch(`/api/analytics/posts-stats${graphType}?${query}`);
+      break;
+    default:
+      throw new Error(`Tipo de gráfico no soportado: ${graphType}`);
+  }
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);
