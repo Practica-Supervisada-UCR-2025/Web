@@ -58,6 +58,7 @@ export default function PostDetail(): JSX.Element {
     const [showSuspensionDuration, setShowSuspensionDuration] = useState(false);
     const [showConfirmClearReports, setShowConfirmClearReports] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     const router = useRouter();
     const params = useParams();
@@ -79,11 +80,11 @@ export default function PostDetail(): JSX.Element {
 
                 if (!response.ok) {
                     if (response.status === 404) {
-                        setError('Publicaci&oacute;n no encontrada');
+                        setError('Publicaci\u00f3n no encontrada');
                         return;
                     }
                     if (response.status === 401) {
-                        setError('No autorizado para ver esta publicaci&oacute;n');
+                        setError('No autorizado para ver esta publicaci\u00f3n');
                         return;
                     }
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -103,7 +104,7 @@ export default function PostDetail(): JSX.Element {
 
             } catch (err) {
                 console.error('Error fetching post:', err);
-                setError(err instanceof Error ? err.message : 'Error al cargar la publicaci&oacute;n');
+                setError(err instanceof Error ? err.message : 'Error al cargar la publicaci\u00f3n');
             } finally {
                 setLoading(false);
             }
@@ -113,6 +114,88 @@ export default function PostDetail(): JSX.Element {
             fetchPost();
         }
     }, [postId]);
+    // Handle delete post (soft delete)
+    const handleDeletePost = async (): Promise<void> => {
+        if (!post) return;
+        setActionLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('/api/admin/reported/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    postId: post.id,
+                    authorUsername: post.username,
+                    moderatorUsername: 'admin' // TODO
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error('No tienes permisos para realizar esta acci\u00f3n');
+                } else if (response.status === 400) {
+                    throw new Error('Error de validaci\u00f3n');
+                } else {
+                    throw new Error(result.message || 'Error al ocultar la publicaci\u00f3n');
+                }
+            }
+            // Update local state
+            setPost({ ...post, is_active: false, status: 0 });
+            setSuccessMessage('Publicaci\u00f3n ocultada exitosamente');
+            // Redirect after success
+            setTimeout(() => {
+                router.push('/content');
+            }, 2000);
+        } catch (err) {
+            console.error('Error deleting post:', err);
+            setError(err instanceof Error ? err.message : 'Error al ocultar la publicaci\u00f3n');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+    // Handle restore post
+    const handleRestorePost = async (): Promise<void> => {
+        if (!post) return;
+        setActionLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('/api/admin/reported/restore', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    postId: post.id,
+                    authorUsername: post.username,
+                    moderatorUsername: 'admin' // TODO
+                }),
+            });
+            const result = await response.json();
+            if (!response.ok) {
+                if (response.status === 403) {
+                    throw new Error('No tienes permisos para realizar esta acci\u00f3n');
+                } else if (response.status === 400) {
+                    throw new Error('Error de validaci\u00f3n');
+                } else {
+                    throw new Error(result.message || 'Error al restaurar la publicaci\u00f3n');
+                }
+            }
+            // Update local state
+            setPost({ ...post, is_active: true, status: 1 });
+            setSuccessMessage('Publicaci\u00f3n restaurada exitosamente');
+            // Redirect after success
+            setTimeout(() => {
+                router.push('/content');
+            }, 2000);
+        } catch (err) {
+            console.error('Error restoring post:', err);
+            setError(err instanceof Error ? err.message : 'Error al restaurar la publicaci\u00f3n');
+        } finally {
+            setActionLoading(false);
+        }
+    };
 
     // Handle moderation actions
     const handleModerationAction = async (action: string, suspensionDays?: number): Promise<void> => {
@@ -135,21 +218,20 @@ export default function PostDetail(): JSX.Element {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Error al procesar la acci&oacute;n');
+                throw new Error(errorData.message || 'Error al procesar la acci\u00f3n');
             }
 
             const result = await response.json();
 
             // Update local state based on action
             switch (action) {
-                case 'hide':
-                    setPost({ ...post, is_active: false, status: 0 });
-                    break;
                 case 'clear_reports':
                     setPost({ ...post, active_reports: '0' });
+                    setSuccessMessage('Reportes eliminados exitosamente');
                     break;
                 case 'suspend_user':
                     setPost({ ...post, is_active: false, status: 0 });
+                    setSuccessMessage(`Usuario suspendido por ${suspensionDays} d\u00edas exitosamente`);
                     break;
             }
 
@@ -160,26 +242,32 @@ export default function PostDetail(): JSX.Element {
 
         } catch (err) {
             console.error('Error processing moderation action:', err);
-            setError(err instanceof Error ? err.message : 'Error al procesar la acci&oacute;n');
+            setError(err instanceof Error ? err.message : 'Error al procesar la acci\u00f3n');
         } finally {
             setActionLoading(false);
         }
     };
-
     // Handle hide post
     const handleHidePost = async (suspensionDays?: number): Promise<void> => {
         if (suspensionDays) {
             await handleModerationAction('suspend_user', suspensionDays);
         } else {
-            await handleModerationAction('hide');
+            await handleDeletePost();
         }
     };
-
     // Handle clear reports
     const handleClearReports = async (): Promise<void> => {
         await handleModerationAction('clear_reports');
     };
-
+    // Clear messages after timeout
+    useEffect(() => {
+        if (successMessage) {
+            const timer = setTimeout(() => {
+                setSuccessMessage(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [successMessage]);
     // Loading state
     if (loading) {
         return (
@@ -193,13 +281,12 @@ export default function PostDetail(): JSX.Element {
             </div>
         );
     }
-
     // Error state
-    if (error || !post) {
+    if (error && !post) {
         return (
             <div className="container mx-auto px-4 py-6 max-w-4xl">
                 <div className="text-center py-20">
-                    <div className="text-red-500 mb-4">{error || 'Publicaci&oacute;n no encontrada'}</div>
+                    <div className="text-red-500 mb-4">{error || 'Publicaci\u00f3n no encontrada'}</div>
                     <div className="flex justify-center space-x-4">
                         <button
                             onClick={() => window.location.reload()}
@@ -214,6 +301,21 @@ export default function PostDetail(): JSX.Element {
                             Volver al panel
                         </button>
                     </div>
+                </div>
+            </div>
+        );
+    }
+    if (!post) {
+        return (
+            <div className="container mx-auto px-4 py-6 max-w-4xl">
+                <div className="text-center py-20">
+                    <div className="text-red-500 mb-4">Publicaci&oacute;n no encontrada</div>
+                    <button
+                        onClick={() => router.push('/content')}
+                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md"
+                    >
+                        Volver al panel
+                    </button>
                 </div>
             </div>
         );
@@ -237,6 +339,17 @@ export default function PostDetail(): JSX.Element {
             </div>
 
             {/* Success message */}
+            {successMessage && (
+                <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
+                    <div className="flex items-center">
+                        <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        {successMessage}
+                    </div>
+                </div>
+            )}
+            {/* Loading message */}
             {actionLoading && (
                 <div className="mb-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-md">
                     <div className="flex items-center">
@@ -247,7 +360,7 @@ export default function PostDetail(): JSX.Element {
             )}
 
             {/* Error message */}
-            {error && !loading && (
+            {error && (
                 <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
                     {error}
                 </div>
@@ -310,22 +423,28 @@ export default function PostDetail(): JSX.Element {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-4 pt-6 border-t">
-                    <button
-                        onClick={() => setShowHideConfirmModal(true)}
-                        disabled={actionLoading || !post.is_active}
-                        className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
-                    >
-                        {actionLoading ? 'Procesando...' : 'Ocultar publicaci\u00f3n'}
-                    </button>
+                <div className="flex flex-wrap gap-4 pt-6 border-t">
+                    {post.is_active ? (
+                        <>
+                            <button
+                                onClick={() => setShowHideConfirmModal(true)}
+                                disabled={actionLoading}
+                                className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
+                            >
+                                {actionLoading ? 'Procesando...' : 'Ocultar publicaci\u00f3n'}
+                            </button>
 
-                    <button
-                        onClick={() => setShowConfirmClearReports(true)}
-                        disabled={actionLoading || parseInt(post.active_reports) === 0}
-                        className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
-                    >
-                        {actionLoading ? 'Procesando...' : 'Eliminar reportes'}
-                    </button>
+                            <button
+                                onClick={() => setShowConfirmClearReports(true)}
+                                disabled={actionLoading || parseInt(post.active_reports) === 0}
+                                className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
+                            >
+                                {actionLoading ? 'Procesando...' : 'Eliminar reportes'}
+                            </button>
+                        </>
+                    ) : (
+                        <div></div>
+                    )}
                 </div>
             </div>
 
@@ -394,7 +513,6 @@ export default function PostDetail(): JSX.Element {
                     </div>
                 </div>
             )}
-
             {showSuspensionDuration && (
                 <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
@@ -445,7 +563,6 @@ export default function PostDetail(): JSX.Element {
                     </div>
                 </div>
             )}
-
             {showConfirmClearReports && (
                 <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
@@ -462,7 +579,7 @@ export default function PostDetail(): JSX.Element {
                             <button
                                 onClick={() => {
                                     setShowConfirmClearReports(false);
-                                    handleClearReports();
+                                    handleRestorePost();
                                 }}
                                 className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
                                 disabled={actionLoading}
