@@ -125,4 +125,69 @@ describe('Analytics Component', () => {
       expect(screen.getByText('No hay datos para mostrar.')).toBeInTheDocument();
     });
   });
+
+  test('parses data from response.data.data correctly', async () => {
+    (fetchAnalytics as jest.Mock).mockResolvedValue({
+      data: {
+        data: [
+          { label: '2024-01-01', count: 7 },
+          { label: '2024-01-02', count: 14 },
+        ],
+      },
+    });
+
+    render(<Analytics />);
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('chart-mock')).toBeInTheDocument();
+      expect(screen.getByTestId('chart-mock')).toHaveTextContent('dataLength: 2');
+    });
+  });
+
+  test('throws error for unrecognized data format', async () => {
+    (fetchAnalytics as jest.Mock).mockResolvedValue({
+      data: {
+        otroCampo: [],
+      },
+    });
+
+    render(<Analytics />);
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Formato de datos no reconocido')).toBeInTheDocument();
+    });
+  });
+
+  test('sets chart type to line when graphType is total', async () => {
+    (fetchAnalytics as jest.Mock).mockResolvedValue({
+      data: {
+        series: [{ date: '2024-01-01', count: 10 }],
+      },
+    });
+
+    render(<Analytics />);
+    fireEvent.change(screen.getByLabelText('Tipo de gráfico'), {
+      target: { value: 'total' },
+    });
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('chart-mock')).toHaveTextContent('Chart: line');
+    });
+  });
+
+  test('throws error when response.data exists but has no series or data', async () => {
+    (fetchAnalytics as jest.Mock).mockResolvedValue({
+      data: {},
+    });
+
+    render(<Analytics />);
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Formato de datos no reconocido')).toBeInTheDocument();
+    });
+  });
 });

@@ -68,4 +68,18 @@ describe('fetchAnalytics', () => {
       fetchAnalytics({ ...params, graphType: 'volume' })
     ).rejects.toThrow('Error al obtener datos');
   });
+
+  it('fetches total data correctly with reversed date format', async () => {
+    (fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: [{ date: '01-01-2024', count: 3 }] }),
+    });
+
+    const data = await fetchAnalytics({ ...params, graphType: 'total' });
+
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/analytics/posts/stats/total?start_date=01-01-2024&end_date=10-01-2024&period=daily'
+    );
+    expect(data).toEqual([{ date: '01-01-2024', count: 3 }]);
+  });
 });
