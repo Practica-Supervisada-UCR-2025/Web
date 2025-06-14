@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { fetchAnalytics } from "@/lib/analyticsApi";
-import Chart from "@/app/components/analytics/chart";
+import { useState } from 'react';
+import { fetchAnalytics } from '@/lib/analyticsApi';
+import Chart from '@/app/components/analytics/chart';
 
 function formatDate(date: Date) {
-  return date.toISOString().split("T")[0];
+  return date.toISOString().split('T')[0];
 }
 
 const today = new Date();
@@ -13,12 +13,12 @@ const sixMonthsAgo = new Date();
 sixMonthsAgo.setMonth(today.getMonth() - 6);
 
 export default function Analytics() {
-  const [graphType, setGraphType] = useState("growth");
-  const [interval, setInterval] = useState("daily");
+  const [graphType, setGraphType] = useState('growth');
+  const [interval, setInterval] = useState('daily');
   const [startDate, setStartDate] = useState(formatDate(sixMonthsAgo));
   const [endDate, setEndDate] = useState(formatDate(today));
   const [data, setData] = useState([]);
-  const [chartType, setChartType] = useState<"line" | "bar">("line");
+  const [chartType, setChartType] = useState<'line' | 'bar'>('line');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,21 +28,20 @@ export default function Analytics() {
 
     try {
       const response = await fetchAnalytics({ interval, startDate, endDate, graphType });
-
       setData(response.data?.series || []);
 
       switch (graphType) {
-        case "volume":
-          setChartType("bar");
+        case 'volume':
+          setChartType('bar');
           break;
-        case "growth":
-          setChartType("line");
+        case 'growth':
+          setChartType('line');
           break;
         default:
-          setChartType("line");
+          setChartType('line');
       }
     } catch (err: any) {
-      setError(err.message || "Error desconocido");
+      setError(err.message || 'Error desconocido');
       setData([]);
     } finally {
       setLoading(false);
@@ -55,10 +54,11 @@ export default function Analytics() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div>
-          <label className="block text-sm font-semibold text-gray-800 mb-1">
+          <label htmlFor="graphType" className="block text-sm font-semibold text-gray-800 mb-1">
             Tipo de gráfico
           </label>
           <select
+            id="graphType"
             value={graphType}
             onChange={(e) => setGraphType(e.target.value)}
             className="w-full border p-2 rounded text-gray-700"
@@ -69,8 +69,9 @@ export default function Analytics() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-800 mb-1">Intervalo</label>
+          <label htmlFor="interval" className="block text-sm font-semibold text-gray-800 mb-1">Intervalo</label>
           <select
+            id="interval"
             value={interval}
             onChange={(e) => setInterval(e.target.value)}
             className="w-full border p-2 rounded text-gray-700"
@@ -82,8 +83,9 @@ export default function Analytics() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-800 mb-1">Inicio</label>
+          <label htmlFor="startDate" className="block text-sm font-semibold text-gray-800 mb-1">Inicio</label>
           <input
+            id="startDate"
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
@@ -92,8 +94,9 @@ export default function Analytics() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-800 mb-1">Fin</label>
+          <label htmlFor="endDate" className="block text-sm font-semibold text-gray-800 mb-1">Fin</label>
           <input
+            id="endDate"
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
@@ -108,7 +111,7 @@ export default function Analytics() {
           className="bg-[#249dd8] text-white px-10 py-3 rounded-full shadow hover:bg-[#1b87b9] transition"
           disabled={loading}
         >
-          {loading ? "Cargando..." : "Solicitar"}
+          {loading ? 'Cargando...' : 'Solicitar'}
         </button>
       </div>
 
