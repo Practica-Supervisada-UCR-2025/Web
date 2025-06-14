@@ -59,6 +59,7 @@ export default function PostDetail(): JSX.Element {
     const [showConfirmClearReports, setShowConfirmClearReports] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [hideButtons, setHideButtons] = useState(false);
 
     const router = useRouter();
     const params = useParams();
@@ -144,6 +145,7 @@ export default function PostDetail(): JSX.Element {
             // Update local state
             setPost({ ...post, is_active: false, status: 0 });
             setSuccessMessage('Publicaci\u00f3n ocultada exitosamente');
+            setHideButtons(true);
             // Redirect after success
             setTimeout(() => {
                 router.push('/content');
@@ -185,6 +187,7 @@ export default function PostDetail(): JSX.Element {
             // Update local state
             setPost({ ...post, is_active: true, status: 1 });
             setSuccessMessage('Publicaci\u00f3n restaurada exitosamente');
+            setHideButtons(true);
             // Redirect after success
             setTimeout(() => {
                 router.push('/content');
@@ -228,10 +231,12 @@ export default function PostDetail(): JSX.Element {
                 case 'clear_reports':
                     setPost({ ...post, active_reports: '0' });
                     setSuccessMessage('Reportes eliminados exitosamente');
+                    setHideButtons(true);
                     break;
                 case 'suspend_user':
                     setPost({ ...post, is_active: false, status: 0 });
                     setSuccessMessage(`Usuario suspendido por ${suspensionDays} d\u00edas exitosamente`);
+                    setHideButtons(true);
                     break;
             }
 
@@ -250,7 +255,12 @@ export default function PostDetail(): JSX.Element {
     // Handle hide post
     const handleHidePost = async (suspensionDays?: number): Promise<void> => {
         if (suspensionDays) {
-            await handleModerationAction('suspend_user', suspensionDays);
+            // Show "not implemented" message for user suspension
+            setSuccessMessage('Funcionalidad de suspensi\u00f3n de usuario no implementada a\u00fan');
+            setHideButtons(true);
+            setTimeout(() => {
+                router.push('/content');
+            }, 2000);
         } else {
             await handleDeletePost();
         }
@@ -422,30 +432,26 @@ export default function PostDetail(): JSX.Element {
                     </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-wrap gap-4 pt-6 border-t">
-                    {post.is_active ? (
-                        <>
-                            <button
-                                onClick={() => setShowHideConfirmModal(true)}
-                                disabled={actionLoading}
-                                className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
-                            >
-                                {actionLoading ? 'Procesando...' : 'Ocultar publicaci\u00f3n'}
-                            </button>
+                {/* Action Buttons*/}
+                {!hideButtons && post.is_active && (
+                    <div className="flex flex-wrap gap-4 pt-6 border-t">
+                        <button
+                            onClick={() => setShowHideConfirmModal(true)}
+                            disabled={actionLoading}
+                            className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
+                        >
+                            {actionLoading ? 'Procesando...' : 'Ocultar publicaci\u00f3n'}
+                        </button>
 
-                            <button
-                                onClick={() => setShowConfirmClearReports(true)}
-                                disabled={actionLoading || parseInt(post.active_reports) === 0}
-                                className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
-                            >
-                                {actionLoading ? 'Procesando...' : 'Eliminar reportes'}
-                            </button>
-                        </>
-                    ) : (
-                        <div></div>
-                    )}
-                </div>
+                        <button
+                            onClick={() => setShowConfirmClearReports(true)}
+                            disabled={actionLoading || parseInt(post.active_reports) === 0}
+                            className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
+                        >
+                            {actionLoading ? 'Procesando...' : 'Eliminar reportes'}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Modals */}
