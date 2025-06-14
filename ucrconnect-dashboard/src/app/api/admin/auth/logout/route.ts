@@ -9,8 +9,8 @@ export async function POST() {
         // Clear the access token cookie
         response.cookies.set('access_token', '', {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: false,
+            sameSite: 'lax',
             path: '/',
             maxAge: 0 // Expire immediately
         });

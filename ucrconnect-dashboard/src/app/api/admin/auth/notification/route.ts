@@ -1,14 +1,27 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function POST(req: Request) {
-  const body = await req.json();
-  const { title, description, topic } = body;
-
-  if (!title || !description || !topic) {
-    return NextResponse.json({ message: "Faltan campos obligatorios" }, { status: 400 });
+export async function POST(request: NextRequest) {
+  const token = request.cookies.get('access_token')?.value;
+  
+  if (!token) {
+    return NextResponse.json({ message: 'No se pudo obtener el token' }, { status: 401 });
   }
 
-  await new Promise((res) => setTimeout(res, 1000));
+  const body = await request.json();
 
-  return NextResponse.json({ message: "Notificación enviada correctamente (mock)" });
+  const backendResponse = await fetch(`${process.env.NEXT_PUBLIC_NOTIFICATIONS_URL}/api/push-notifications/send-to-all`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const data = await backendResponse.json();
+
+  return new NextResponse(JSON.stringify(data), {
+    status: backendResponse.status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
