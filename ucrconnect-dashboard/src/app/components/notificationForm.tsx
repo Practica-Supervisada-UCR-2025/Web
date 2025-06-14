@@ -60,13 +60,16 @@ export default function NotificationForm() {
             }
             
             // Send the notification to the backend API
-            // name is optional, add if needed using a call to profile API to get the name
+            // name is optional, add if needed using a call to profile API to get the real name
+
+            const adminName = "Administrador"; // Placeholder for admin name
+
             const res = await fetch("/api/admin/auth/notification", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ title, body: description}),
+                body: JSON.stringify({ title, body: description, name: adminName}),
             });
 
             if (!res.ok) throw new Error("Error al enviar notificación");
