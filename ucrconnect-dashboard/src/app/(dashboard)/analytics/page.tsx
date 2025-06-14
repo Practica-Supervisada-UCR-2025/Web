@@ -28,14 +28,33 @@ export default function Analytics() {
 
     try {
       const response = await fetchAnalytics({ interval, startDate, endDate, graphType });
-      setData(response.data?.series || []);
+      let normalizedData = [];
+
+      if (response.data?.series) {
+        // Formato 1
+        normalizedData = response.data.series.map((item: any) => ({
+          date: item.date,
+          count: item.count,
+        }));
+      } else if (response.data?.data) {
+        // Formato 2
+        normalizedData = response.data.data.map((item: any) => ({
+          date: item.label,
+          count: item.count,
+        }));
+      } else {
+        throw new Error('Formato de datos no reconocido');
+      }
+
+      setData(normalizedData);
 
       switch (graphType) {
+        case 'growth':
+        case 'total':
+          setChartType('line');
+          break;
         case 'volume':
           setChartType('bar');
-          break;
-        case 'growth':
-          setChartType('line');
           break;
         default:
           setChartType('line');
@@ -64,6 +83,7 @@ export default function Analytics() {
             className="w-full border p-2 rounded text-gray-700"
           >
             <option value="growth">Crecimiento de Usuarios</option>
+            <option value="total">Total de Publicaciones</option>
             <option value="volume">Volumen de reportes</option>
           </select>
         </div>

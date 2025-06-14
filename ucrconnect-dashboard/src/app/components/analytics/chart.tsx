@@ -16,11 +16,7 @@ type ChartProps = {
 };
 
 export default function Chart({
-  data,
-  type = "line",
-  xKey,
-  yKey,
-  color = "#249dd8",
+  data, type = "line", xKey, yKey, color = "#249dd8",
   barColors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#a0522d', '#00bcd4', '#ff69b4', '#7b68ee'],
   margin = { top: 20, right: 30, left: 20, bottom: 30 },
 }: ChartProps) {
@@ -54,12 +50,15 @@ export default function Chart({
           <Line
             type="monotone"
             dataKey={yKey}
+            name="Cantidad"
             stroke="url(#lineGradient)"
             strokeWidth={3}
             dot={{ stroke: color, strokeWidth: 2, r: 4, fill: "white" }}
             activeDot={{ r: 6, strokeWidth: 3, stroke: color, fill: "white" }}
           />
-          <Legend />
+          <Legend
+            wrapperStyle={{ color: '#000' }}
+          />
         </LineChart>
       </ResponsiveContainer>
     );
@@ -72,12 +71,14 @@ export default function Chart({
         <XAxis dataKey={xKey} stroke="#8884d8" />
         <YAxis stroke="#8884d8" />
         <Tooltip wrapperStyle={tooltipStyle} />
-        <Legend />
-        <Bar dataKey={yKey}>
+        <Bar dataKey={yKey} name="Cantidad">
           {data.map((_, index) => (
             <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} />
           ))}
         </Bar>
+        <Legend
+          wrapperStyle={{ color: '#000' }}
+        />
       </BarChart>
     </ResponsiveContainer>
   );
