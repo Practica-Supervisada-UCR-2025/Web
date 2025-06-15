@@ -43,6 +43,11 @@ interface PaginationProps {
     onPageChange: (page: number) => void;
 }
 
+interface ModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
 // Helper function to format date
 const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -63,6 +68,50 @@ const getMediaTypeLabel = (mediaType: number): string => {
         case 2: return 'GIF';
         default: return 'Desconocido';
     }
+};
+
+// Modal component
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-gray-300 bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+            <div
+                className="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="text-center">
+                    <div className="mb-4">
+                        <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                            />
+                        </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Sin implementar a&uacute;n
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                        Esta funcionalidad no est&aacute; disponible para posts inactivos.
+                    </p>
+                    <button
+                        onClick={onClose}
+                        className="w-full px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md transition-colors"
+                    >
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 // Post card component
@@ -146,6 +195,7 @@ export default function Content(): JSX.Element {
     const [sortBy, setSortBy] = useState<'reports' | 'date'>('reports');
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const router = useRouter();
     const postsPerPage = 8;
 
@@ -208,9 +258,18 @@ export default function Content(): JSX.Element {
         fetchData(1, sortBy);
     };
 
-    // Handle post click - navigate to dedicated page
+    // Handle post click - navigate to dedicated page or show modal
     const handlePostClick = (post: Post): void => {
-        router.push(`/content/${post.id}`);
+        if (post.is_active) {
+            router.push(`/content/${post.id}`);
+        } else {
+            setIsModalOpen(true);
+        }
+    };
+
+    // Handle modal close
+    const handleModalClose = (): void => {
+        setIsModalOpen(false);
     };
 
     // Loading state
@@ -320,6 +379,8 @@ export default function Content(): JSX.Element {
                     onPageChange={handlePageChange}
                 />
             )}
+
+            <Modal isOpen={isModalOpen} onClose={handleModalClose} />
         </div>
     );
 }
