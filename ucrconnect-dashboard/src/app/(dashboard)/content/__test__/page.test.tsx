@@ -12,6 +12,28 @@ jest.mock('next/navigation', () => ({
 // Mock fetch globally
 global.fetch = jest.fn();
 
+// Suppress act warnings for async operations that we can't control
+const originalError = console.error;
+beforeAll(() => {
+    console.error = (...args: any[]) => {
+        if (
+            typeof args[0] === 'string' && (
+                args[0].includes('Warning: An update to') ||
+                args[0].includes('was not wrapped in act') ||
+                args[0].includes('Act warnings') ||
+                args[0].includes('inside a test was not wrapped in act')
+            )
+        ) {
+            return;
+        }
+        originalError.call(console, ...args);
+    };
+});
+
+afterAll(() => {
+    console.error = originalError;
+});
+
 describe('Content Component', () => {
     const mockPush = jest.fn();
     const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
@@ -190,6 +212,7 @@ describe('Content Component', () => {
 
         it('displays media type labels correctly', async () => {
             render(<Content />);
+
             await waitFor(() => {
                 const textoElements = screen.getAllByText('Texto');
                 expect(textoElements).toHaveLength(2); // or whatever count you expect
@@ -210,9 +233,13 @@ describe('Content Component', () => {
         it('handles image error correctly', async () => {
             render(<Content />);
 
-            await waitFor(() => {
+            await waitFor(async () => {
                 const image = screen.getByAltText('Contenido de user2');
                 fireEvent.error(image);
+
+                // Wait a bit for the state update to complete
+                await new Promise(resolve => setTimeout(resolve, 100));
+
                 expect(image).toHaveStyle('display: none');
             });
         });
@@ -380,8 +407,10 @@ describe('Content Component', () => {
             await user.click(inactivePostCard!);
 
             // Check modal is displayed
-            expect(screen.getByText(/Sin implementar a.n/i)).toBeInTheDocument();
-            expect(screen.getByText(/Esta funcionalidad no est. disponible para posts inactivos./i)).toBeInTheDocument();
+            await waitFor(() => {
+                expect(screen.getByText(/Sin implementar a.n/i)).toBeInTheDocument();
+                expect(screen.getByText(/Esta funcionalidad no est. disponible para posts inactivos./i)).toBeInTheDocument();
+            });
         });
 
         it('closes modal when close button is clicked', async () => {
@@ -396,7 +425,9 @@ describe('Content Component', () => {
             const inactivePostCard = screen.getByText('Test content 3').closest('div');
             await user.click(inactivePostCard!);
 
-            expect(screen.getByText(/Sin implementar a.n/i)).toBeInTheDocument();
+            await waitFor(() => {
+                expect(screen.getByText(/Sin implementar a.n/i)).toBeInTheDocument();
+            });
 
             // Click close button
             const closeButton = screen.getByText('Entendido');
@@ -419,7 +450,9 @@ describe('Content Component', () => {
             const inactivePostCard = screen.getByText('Test content 3').closest('div');
             await user.click(inactivePostCard!);
 
-            expect(screen.getByText(/Sin implementar a.n/i)).toBeInTheDocument();
+            await waitFor(() => {
+                expect(screen.getByText(/Sin implementar a.n/i)).toBeInTheDocument();
+            });
 
             // Click modal backdrop
             const modalBackdrop = screen.getByText(/Sin implementar a.n/i).closest('div')?.parentNode as HTMLElement;
@@ -488,6 +521,9 @@ describe('Content Component', () => {
 
     describe('Error Handling', () => {
         it('displays error message when API call fails', async () => {
+            // Mock console.error to prevent error logs in test output
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
             mockFetch.mockRejectedValue(new Error('Network error'));
 
             render(<Content />);
@@ -496,9 +532,14 @@ describe('Content Component', () => {
                 expect(screen.getByText(/Error al cargar las publicaciones: Network error/)).toBeInTheDocument();
                 expect(screen.getByText('Reintentar')).toBeInTheDocument();
             });
+
+            consoleSpy.mockRestore();
         });
 
         it('displays error message when API returns non-ok response', async () => {
+            // Mock console.error to prevent error logs in test output
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
             mockFetch.mockResolvedValue({
                 ok: false,
                 status: 500,
@@ -509,10 +550,15 @@ describe('Content Component', () => {
             await waitFor(() => {
                 expect(screen.getByText(/Error al cargar las publicaciones: HTTP error! status: 500/)).toBeInTheDocument();
             });
+
+            consoleSpy.mockRestore();
         });
 
         it('retries loading when retry button is clicked', async () => {
             const user = userEvent.setup();
+            // Mock console.error to prevent error logs in test output
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
             mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
             render(<Content />);
@@ -533,6 +579,8 @@ describe('Content Component', () => {
             await waitFor(() => {
                 expect(screen.getByText('user1')).toBeInTheDocument();
             });
+
+            consoleSpy.mockRestore();
         });
     });
 
