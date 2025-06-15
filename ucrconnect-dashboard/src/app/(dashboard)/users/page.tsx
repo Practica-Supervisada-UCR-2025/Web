@@ -1,11 +1,22 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import StatCard from '../../components/statCard';
 import Link from 'next/link';
 import { PostsChart, ReportsChart, UsersChart } from '../../components/charts';
 import { mockUsers } from './mockUsers';
+import { useSearchParams } from 'next/navigation';
 
-export default function Users() {
+interface User {
+  id?: string;
+  name: string;
+  email: string;
+  type: string;
+  status: string;
+  suspensionDays: number;
+}
+
+function UsersContent() {
+  const searchParams = useSearchParams();
   const [dashboardStats, setDashboardStats] = useState([
     {
       title: 'Usuarios',
@@ -19,9 +30,23 @@ export default function Users() {
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 6;
 
-  const filteredUsers = mockUsers.filter(user => 
+  // Set initial search query from URL parameters
+  useEffect(() => {
+    const emailParam = searchParams.get('email');
+    const searchParam = searchParams.get('search');
+    
+    // Prioritize email search when coming from a post
+    if (emailParam) {
+      setSearchQuery(emailParam);
+    } else if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, [searchParams]);
+
+  const filteredUsers = mockUsers.filter((user: User) => 
+    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    (user.id && user.id.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Calculate pagination
@@ -66,7 +91,7 @@ export default function Users() {
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
+            className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
             placeholder="Buscar usuarios..."
             value={searchQuery}
             onChange={(e) => {
@@ -107,7 +132,7 @@ export default function Users() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {currentUsers.map((user, index) => (
+              {currentUsers.map((user: User, index: number) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="text-[#2980B9] px-4 sm:px-6 py-4 whitespace-nowrap">{user.name}</td>
                   <td className="text-gray-900 px-4 sm:px-6 py-4 whitespace-nowrap">{user.email}</td>
@@ -173,5 +198,13 @@ export default function Users() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Users() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UsersContent />
+    </Suspense>
   );
 }

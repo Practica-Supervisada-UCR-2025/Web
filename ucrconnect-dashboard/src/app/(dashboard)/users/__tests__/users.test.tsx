@@ -1,11 +1,31 @@
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Users from '../page';
 import { mockUsers } from '../mockUsers';
+import { useSearchParams } from 'next/navigation';
+
+// Mock the useSearchParams hook
+jest.mock('next/navigation', () => ({
+  useSearchParams: jest.fn(() => new URLSearchParams())
+}));
+
+// Mock next/link
+jest.mock('next/link', () => {
+  return ({ children, href }: { children: React.ReactNode; href: string }) => (
+    <a href={href}>{children}</a>
+  );
+});
 
 describe('Users Page', () => {
   beforeEach(() => {
+    cleanup();
+    // Reset the mock implementation before each test
+    (useSearchParams as jest.Mock).mockReturnValue(new URLSearchParams());
     render(<Users />);
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it('displays dashboard stats correctly', () => {
@@ -186,5 +206,100 @@ describe('Users Page', () => {
     // Blur input
     fireEvent.blur(searchInput);
     expect(searchInput).toHaveClass('border-gray-300');
+  });
+
+  it('sets search query from email URL parameter', async () => {
+    cleanup();
+    // Mock the useSearchParams hook to return an email parameter
+    const mockSearchParams = new URLSearchParams();
+    mockSearchParams.set('email', 'juan.perez@ucr.ac.cr');
+    (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
+    
+    // Re-render with the mock search params
+    render(<Users />);
+
+    // Wait for the search input to be populated with the email
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    await waitFor(() => {
+      expect(searchInput).toHaveValue('juan.perez@ucr.ac.cr');
+    });
+
+    // Verify that only the matching user is shown
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    expect(screen.queryByText('María Rodríguez')).not.toBeInTheDocument();
+    expect(screen.queryByText('Carlos Méndez')).not.toBeInTheDocument();
+  });
+
+  it('sets search query from search URL parameter when no email is present', async () => {
+    cleanup();
+    // Mock the useSearchParams hook to return a search parameter
+    const mockSearchParams = new URLSearchParams();
+    mockSearchParams.set('search', 'María');
+    (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
+    
+    // Re-render with the mock search params
+    render(<Users />);
+
+    // Wait for the search input to be populated with the search term
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    await waitFor(() => {
+      expect(searchInput).toHaveValue('María');
+    });
+
+    // Verify that only the matching user is shown
+    expect(screen.getByText('María Rodríguez')).toBeInTheDocument();
+    expect(screen.queryByText('Juan Pérez')).not.toBeInTheDocument();
+    expect(screen.queryByText('Carlos Méndez')).not.toBeInTheDocument();
+  });
+
+  it('prioritizes email parameter over search parameter', async () => {
+    cleanup();
+    // Mock the useSearchParams hook to return both email and search parameters
+    const mockSearchParams = new URLSearchParams();
+    mockSearchParams.set('email', 'juan.perez@ucr.ac.cr');
+    mockSearchParams.set('search', 'María');
+    (useSearchParams as jest.Mock).mockReturnValue(mockSearchParams);
+    
+    // Re-render with the mock search params
+    render(<Users />);
+
+    // Wait for the search input to be populated with the email
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    await waitFor(() => {
+      expect(searchInput).toHaveValue('juan.perez@ucr.ac.cr');
+    });
+
+    // Verify that only the email-matched user is shown
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    expect(screen.queryByText('María Rodríguez')).not.toBeInTheDocument();
+    expect(screen.queryByText('Carlos Méndez')).not.toBeInTheDocument();
+  });
+
+  it('handles page change correctly', async () => {
+    // Get all pagination buttons
+    const buttons = screen.getAllByRole('button');
+    const paginationButtons = buttons.filter(button => 
+      button.className.includes('rounded-lg') && 
+      !button.textContent?.includes('Registrar') && 
+      !button.textContent?.includes('Suspender')
+    );
+    
+    // First button is previous, last button is next
+    const prevButton = paginationButtons[0];
+    const nextButton = paginationButtons[paginationButtons.length - 1];
+    
+    // Click next button
+    fireEvent.click(nextButton);
+
+    // Verify we're on page 2
+    const page2Button = screen.getByRole('button', { name: '2' });
+    expect(page2Button).toHaveClass('bg-[#204C6F]', 'text-white');
+
+    // Click previous button
+    fireEvent.click(prevButton);
+
+    // Verify we're back on page 1
+    const page1Button = screen.getByRole('button', { name: '1' });
+    expect(page1Button).toHaveClass('bg-[#204C6F]', 'text-white');
   });
 });

@@ -124,5 +124,12 @@ export const mockUsers = [
         type: 'Estudiante',
         status: 'Activo',
         suspensionDays: 0
+    },
+    {
+        name: 'Usuario 4',
+        email: 'usuario4@example.com',
+        type: 'Estudiante',
+        status: 'Activo',
+        suspensionDays: 0
     }
 ]; 
