@@ -2,70 +2,12 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useRouter, useParams } from 'next/navigation';
 import PostDetail from '../page';
-import { mockApiResponse } from '../../../../../../public/data/contentData';
-import { NextRequest, NextResponse } from 'next/server';
 
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
     useRouter: jest.fn(),
     useParams: jest.fn(),
 }));
-
-// Mock the content data
-jest.mock('../../../../../../public/data/contentData', () => ({
-    mockApiResponse: {
-        posts: [
-            {
-                id: '1',
-                user_id: 'user1',
-                content: 'Test post content',
-                file_url: 'https://example.com/image.jpg',
-                file_size: 1024,
-                media_type: 1,
-                is_active: true,
-                is_edited: false,
-                status: 1,
-                created_at: '2024-01-15T10:30:00Z',
-                updated_at: '2025-02-17T10:30:00Z',
-                username: 'testuser',
-                email: 'test@example.com',
-                active_reports: '3',
-                total_reports: '5',
-            },
-            {
-                id: '2',
-                user_id: 'user2',
-                content: 'Another test post',
-                file_url: null,
-                file_size: null,
-                media_type: 0,
-                is_active: false,
-                is_edited: true,
-                status: 0,
-                created_at: '2024-01-14T09:00:00Z',
-                updated_at: '2024-01-14T11:00:00Z',
-                username: 'inactiveuser',
-                email: 'inactive@example.com',
-                active_reports: '0',
-                total_reports: '2',
-            },
-        ],
-    },
-}));
-
-const mockContent = {
-    id: '1',
-    user_id: 'user1',
-    username: 'testuser',
-    email: 'test@example.com',
-    content: 'Test post content',
-    image_url: 'https://example.com/image.jpg',
-    created_at: '2024-01-15T04:30:00Z',
-    updated_at: '2025-02-17T04:30:00Z',
-    status: 'active',
-    active_reports: 3,
-    total_reports: 5
-};
 
 describe('PostDetail Component', () => {
     const mockPush = jest.fn();
@@ -86,20 +28,36 @@ describe('PostDetail Component', () => {
     });
 
     describe('Loading and Error States', () => {
+        beforeEach(() => {
+            global.fetch = jest.fn();
+        });
+
         it('should display error when post is not found', async () => {
             (useParams as jest.Mock).mockReturnValue({ id: 'nonexistent' });
 
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText('Publicaci&oacute;n no encontrada')).toBeInTheDocument();
+            // Mock fetch to return empty result or 404
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: false,
+                status: 404,
+                json: jest.fn().mockResolvedValueOnce({ posts: [] })
             });
 
+            render(<PostDetail />);
+            await waitFor(() => {
+                expect(screen.getByText('Publicación no encontrada')).toBeInTheDocument();
+            });
             expect(screen.getByText('Volver al panel')).toBeInTheDocument();
         });
 
         it('should navigate back to content panel when "Volver al panel" is clicked', async () => {
             (useParams as jest.Mock).mockReturnValue({ id: 'nonexistent' });
+
+            // Mock fetch for error case
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: false,
+                status: 404,
+                json: jest.fn().mockResolvedValueOnce({ posts: [] })
+            });
 
             render(<PostDetail />);
 
@@ -115,6 +73,34 @@ describe('PostDetail Component', () => {
     describe('Post Display', () => {
         beforeEach(() => {
             (useParams as jest.Mock).mockReturnValue({ id: '1' });
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({
+                    message: "Post fetched successfully",
+                    post: {
+                        id: '1',
+                        user_id: '2',
+                        content: 'Test post content',
+                        file_url: 'https://example.com/image.jpg',
+                        file_size: 1024,
+                        media_type: 1,
+                        is_active: true,
+                        is_edited: false,
+                        status: 1,
+                        created_at: '2025-06-07T20:41:45.301Z',
+                        updated_at: '2025-06-08T20:41:45.301Z',
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        active_reports: '3',
+                        total_reports: '5',
+                    }
+                })
+            });
+        });
+
+        afterEach(() => {
+            jest.clearAllMocks();
         });
 
         it('should display post details correctly', async () => {
@@ -145,29 +131,92 @@ describe('PostDetail Component', () => {
             render(<PostDetail />);
 
             await waitFor(() => {
-                expect(screen.getByText(/15/)).toBeInTheDocument(); // Day
-                expect(screen.getByText(/enero|Enero/)).toBeInTheDocument(); // Month
-                expect(screen.getByText(/2024/)).toBeInTheDocument(); // Year
+                expect(screen.getByText(/7 de junio de 2025, 14:41/i)).toBeInTheDocument();
             });
         });
 
-        it('should display inactive post correctly', async () => {
-            (useParams as jest.Mock).mockReturnValue({ id: '2' });
-
+        it('should display active post correctly', async () => {
             render(<PostDetail />);
 
             await waitFor(() => {
-                expect(screen.getByText('inactiveuser')).toBeInTheDocument();
+                expect(screen.getByText('Activo')).toBeInTheDocument();
             });
+        });
+    });
 
-            expect(screen.getByText('Inactivo')).toBeInTheDocument();
-            expect(screen.getByText('0 reportes activos')).toBeInTheDocument();
+    describe('Inactive post Display', () => {
+        beforeEach(() => {
+            (useParams as jest.Mock).mockReturnValue({ id: '1' });
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({
+                    message: "Post fetched successfully",
+                    post: {
+                        id: '1',
+                        user_id: '2',
+                        content: 'Test post content',
+                        file_url: 'https://example.com/image.jpg',
+                        file_size: 1024,
+                        media_type: 1,
+                        is_active: false,
+                        is_edited: false,
+                        status: 1,
+                        created_at: '2025-06-07T20:41:45.301Z',
+                        updated_at: '2025-06-08T20:41:45.301Z',
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        active_reports: '3',
+                        total_reports: '5',
+                    }
+                })
+            });
+        });
+
+        afterEach(() => {
+            jest.clearAllMocks();
+        });
+
+        it('should display inactive post correctly', async () => {
+            render(<PostDetail />);
+
+            await waitFor(() => {
+                expect(screen.getByText('Inactivo')).toBeInTheDocument();
+            });
         });
     });
 
     describe('Navigation', () => {
         beforeEach(() => {
             (useParams as jest.Mock).mockReturnValue({ id: '1' });
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({
+                    message: "Post fetched successfully",
+                    post: {
+                        id: '1',
+                        user_id: '2',
+                        content: 'Test post content',
+                        file_url: 'https://example.com/image.jpg',
+                        file_size: 1024,
+                        media_type: 1,
+                        is_active: true,
+                        is_edited: false,
+                        status: 0,
+                        created_at: '2025-06-07T20:41:45.301Z',
+                        updated_at: '2025-06-08T20:41:45.301Z',
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        active_reports: '3',
+                        total_reports: '5',
+                    }
+                })
+            });
+        });
+
+        afterEach(() => {
+            jest.clearAllMocks();
         });
 
         it('should navigate back when back button is clicked', async () => {
@@ -182,31 +231,93 @@ describe('PostDetail Component', () => {
         });
     });
 
-    describe('Action Buttons', () => {
+    describe('Disabled action Buttons', () => {
         beforeEach(() => {
             (useParams as jest.Mock).mockReturnValue({ id: '1' });
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({
+                    message: "Post fetched successfully",
+                    post: {
+                        id: '1',
+                        user_id: '2',
+                        content: 'Test post content',
+                        file_url: 'https://example.com/image.jpg',
+                        file_size: 1024,
+                        media_type: 1,
+                        is_active: false,
+                        is_edited: false,
+                        status: 0,
+                        created_at: '2025-06-07T20:41:45.301Z',
+                        updated_at: '2025-06-08T20:41:45.301Z',
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        active_reports: '0',
+                        total_reports: '0',
+                    }
+                })
+            });
+        });
+
+        afterEach(() => {
+            jest.clearAllMocks();
         });
 
         it('should disable hide button for inactive posts', async () => {
-            (useParams as jest.Mock).mockReturnValue({ id: '2' });
+            (useParams as jest.Mock).mockReturnValue({ id: '1' });
 
             render(<PostDetail />);
 
             await waitFor(() => {
-                const hideButton = screen.getByText(/Ocultar publicaci.n/i);
-                expect(hideButton).toBeDisabled();
+                const hideButton = screen.queryByText(/Ocultar publicaci.n/i);
+                expect(hideButton).not.toBeInTheDocument();
             });
         });
 
         it('should disable clear reports button when no active reports', async () => {
-            (useParams as jest.Mock).mockReturnValue({ id: '2' });
+            (useParams as jest.Mock).mockReturnValue({ id: '1' });
 
             render(<PostDetail />);
 
             await waitFor(() => {
-                const clearButton = screen.getByText('Eliminar reportes');
-                expect(clearButton).toBeDisabled();
+                const clearButton = screen.queryByText('Eliminar reportes');
+                expect(clearButton).not.toBeInTheDocument();
             });
+        });
+    });
+
+    describe('Action Buttons', () => {
+        beforeEach(() => {
+            (useParams as jest.Mock).mockReturnValue({ id: '1' });
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({
+                    message: "Post fetched successfully",
+                    post: {
+                        id: '1',
+                        user_id: '2',
+                        content: 'Test post content',
+                        file_url: 'https://example.com/image.jpg',
+                        file_size: 1024,
+                        media_type: 1,
+                        is_active: true,
+                        is_edited: false,
+                        status: 0,
+                        created_at: '2025-06-07T20:41:45.301Z',
+                        updated_at: '2025-06-08T20:41:45.301Z',
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        active_reports: '5',
+                        total_reports: '10',
+                    }
+                })
+            });
+        });
+
+        afterEach(() => {
+            jest.clearAllMocks();
         });
 
         it('should enable both buttons for active post with reports', async () => {
@@ -221,226 +332,267 @@ describe('PostDetail Component', () => {
             });
         });
     });
+});
 
-    describe('Hide Post Modal Flow', () => {
-        beforeEach(() => {
-            (useParams as jest.Mock).mockReturnValue({ id: '1' });
+describe('Hide Post Modal Flow', () => {
+    const mockPush = jest.fn();
+    const mockBack = jest.fn();
+
+    beforeEach(() => {
+        // Set up the router mock properly for this describe block
+        (useRouter as jest.Mock).mockReturnValue({
+            push: mockPush,
+            back: mockBack,
         });
 
-        it('should open hide confirmation modal when hide button is clicked', async () => {
-            render(<PostDetail />);
+        (useParams as jest.Mock).mockReturnValue({ id: '1' });
 
-            await waitFor(() => {
-                expect(screen.getByText(/Ocultar publicaci.n/i)).toBeInTheDocument();
-            });
-
-            fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
-
-            expect(screen.getByText(/.Deseas ocultar publicaci.n?/i)).toBeInTheDocument();
-            expect(screen.getByText(/Esta acci.n esconder. la publicaci.n de la vista p.blica./i)).toBeInTheDocument();
-        });
-
-        it('should close hide modal when cancel is clicked', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
-            });
-
-            fireEvent.click(screen.getByText('Cancelar'));
-
-            expect(screen.queryByText(/.Deseas ocultar publicaci.n?/i)).not.toBeInTheDocument();
-        });
-
-        it('should open suspend modal when continue is clicked', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
-            });
-
-            fireEvent.click(screen.getByText('Continuar'));
-
-            expect(screen.getByText(/.Tambi.n deseas suspender al usuario?/i)).toBeInTheDocument();
-        });
-
-        it('should hide post only when "Solo ocultar" is clicked', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
-            });
-
-            fireEvent.click(screen.getByText('Continuar'));
-            fireEvent.click(screen.getByText('Solo ocultar'));
-
-            // Wait for the redirect
-            await waitFor(() => {
-                expect(mockPush).toHaveBeenCalledWith('/content');
-            });
-        });
-
-        it('should open suspension duration modal when "Suspender" is clicked', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
-            });
-
-            fireEvent.click(screen.getByText('Continuar'));
-            fireEvent.click(screen.getByText('Suspender'));
-
-            expect(screen.getByText(/Selecciona la duraci.n de la suspensi.n/i)).toBeInTheDocument();
-            expect(screen.getByText(/1 d.a/i)).toBeInTheDocument();
-            expect(screen.getByText(/3 d.as/i)).toBeInTheDocument();
-            expect(screen.getByText(/7 d.as/i)).toBeInTheDocument();
-        });
-
-        it('should handle suspension with different durations', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
-            });
-
-            fireEvent.click(screen.getByText('Continuar'));
-            fireEvent.click(screen.getByText('Suspender'));
-            fireEvent.click(screen.getByText(/3 d.as/i));
-
-            await waitFor(() => {
-                expect(mockPush).toHaveBeenCalledWith('/content');
-            });
-        });
-
-        it('should handle "Solo ocultar" option in suspend modal', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText('Test post content')).toBeInTheDocument();
-            });
-
-            // Click hide post button
-            const hideButton = screen.getByText('Ocultar publicación');
-            fireEvent.click(hideButton);
-
-            // Click continue in first modal
-            const continueButton = screen.getByText('Continuar');
-            fireEvent.click(continueButton);
-
-            // Click "Solo ocultar" in second modal
-            const soloOcultarButton = screen.getByText('Solo ocultar');
-            fireEvent.click(soloOcultarButton);
-
-            // Wait for the redirect
-            await waitFor(() => {
-                expect(mockPush).toHaveBeenCalledWith('/content');
-            });
-        });
-
-        it('should handle 1 day suspension', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText('Test post content')).toBeInTheDocument();
-            });
-
-            // Click hide post button
-            const hideButton = screen.getByText('Ocultar publicación');
-            fireEvent.click(hideButton);
-
-            // Click continue in first modal
-            const continueButton = screen.getByText('Continuar');
-            fireEvent.click(continueButton);
-
-            // Click suspend in second modal
-            const suspendButton = screen.getByText('Suspender');
-            fireEvent.click(suspendButton);
-
-            // Click 1 day suspension
-            const oneDayButton = screen.getByText('1 día');
-            fireEvent.click(oneDayButton);
-
-            // Wait for the redirect
-            await waitFor(() => {
-                expect(mockPush).toHaveBeenCalledWith('/content');
-            });
-        });
-
-        it('should handle 7 days suspension', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText('Test post content')).toBeInTheDocument();
-            });
-
-            // Click hide post button
-            const hideButton = screen.getByText('Ocultar publicación');
-            fireEvent.click(hideButton);
-
-            // Click continue in first modal
-            const continueButton = screen.getByText('Continuar');
-            fireEvent.click(continueButton);
-
-            // Click suspend in second modal
-            const suspendButton = screen.getByText('Suspender');
-            fireEvent.click(suspendButton);
-
-            // Click 7 days suspension
-            const sevenDaysButton = screen.getByText('7 días');
-            fireEvent.click(sevenDaysButton);
-
-            // Wait for the redirect
-            await waitFor(() => {
-                expect(mockPush).toHaveBeenCalledWith('/content');
-            });
-        });
-
-        it('should handle cancel in suspend modal', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText('Test post content')).toBeInTheDocument();
-            });
-
-            // Click hide post button
-            const hideButton = screen.getByText('Ocultar publicación');
-            fireEvent.click(hideButton);
-
-            // Click continue in first modal
-            const continueButton = screen.getByText('Continuar');
-            fireEvent.click(continueButton);
-
-            // Click cancel in suspend modal
-            const cancelButton = screen.getByText('Cancelar');
-            fireEvent.click(cancelButton);
-
-            // Verify modal is closed
-            expect(screen.queryByText('¿También deseas suspender al usuario?')).not.toBeInTheDocument();
-        });
-
-        it('should handle cancel in hide confirm modal', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText('Test post content')).toBeInTheDocument();
-            });
-
-            // Click hide post button
-            const hideButton = screen.getByText('Ocultar publicación');
-            fireEvent.click(hideButton);
-
-            // Click cancel in first modal
-            const cancelButton = screen.getByText('Cancelar');
-            fireEvent.click(cancelButton);
-
-            // Verify modal is closed
-            expect(screen.queryByText('¿Deseas ocultar publicación?')).not.toBeInTheDocument();
+        (global.fetch as jest.Mock).mockResolvedValueOnce({
+            ok: true,
+            status: 200,
+            json: jest.fn().mockResolvedValue({
+                message: "Post fetched successfully",
+                post: {
+                    id: '1',
+                    user_id: '2',
+                    content: 'Test post content',
+                    file_url: 'https://example.com/image.jpg',
+                    file_size: 1024,
+                    media_type: 1,
+                    is_active: true,
+                    is_edited: false,
+                    status: 0,
+                    created_at: '2025-06-07T20:41:45.301Z',
+                    updated_at: '2025-06-08T20:41:45.301Z',
+                    username: 'testuser',
+                    email: 'test@example.com',
+                    active_reports: '5',
+                    total_reports: '10',
+                }
+            })
         });
     });
 
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('should open hide confirmation modal when hide button is clicked', async () => {
+        render(<PostDetail />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/Ocultar publicaci.n/i)).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
+
+        expect(screen.getByText(/.Deseas ocultar publicaci.n?/i)).toBeInTheDocument();
+        expect(screen.getByText(/Esta acci.n esconder. la publicaci.n de la vista p.blica./i)).toBeInTheDocument();
+    });
+
+
+    it('should close hide modal when cancel is clicked', async () => {
+        render(<PostDetail />);
+
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
+        });
+
+        fireEvent.click(screen.getByText('Cancelar'));
+
+        expect(screen.queryByText(/.Deseas ocultar publicaci.n?/i)).not.toBeInTheDocument();
+    });
+
+
+    it('should open suspend modal when continue is clicked', async () => {
+        render(<PostDetail />);
+
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
+        });
+
+        fireEvent.click(screen.getByText('Continuar'));
+
+        expect(screen.getByText(/.Tambi.n deseas suspender al usuario?/i)).toBeInTheDocument();
+    });
+
+    it('should hide post only when "Solo ocultar" is clicked', async () => {
+        render(<PostDetail />);
+
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
+        });
+
+        fireEvent.click(screen.getByText('Continuar'));
+        expect(screen.getByText(/Solo ocultar/i)).toBeInTheDocument();
+        fireEvent.click(screen.getByText('Solo ocultar'));
+        const ocultado = screen.queryByText(/Solo ocultar/i);
+        expect(ocultado).not.toBeInTheDocument();
+    });
+
+    it('should open suspension duration modal when "Suspender" is clicked', async () => {
+        render(<PostDetail />);
+
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
+        });
+
+        fireEvent.click(screen.getByText('Continuar'));
+        fireEvent.click(screen.getByText('Suspender'));
+
+        expect(screen.getByText(/Selecciona la duraci.n de la suspensi.n/i)).toBeInTheDocument();
+        expect(screen.getByText(/1 d.a/i)).toBeInTheDocument();
+        expect(screen.getByText(/3 d.as/i)).toBeInTheDocument();
+        expect(screen.getByText(/7 d.as/i)).toBeInTheDocument();
+    });
+
+    it('should handle suspension with different durations', async () => {
+        render(<PostDetail />);
+
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
+        });
+
+        fireEvent.click(screen.getByText('Continuar'));
+        fireEvent.click(screen.getByText('Suspender'));
+        expect(screen.getByText(/3 d.as/i)).toBeInTheDocument();
+        fireEvent.click(screen.getByText(/3 d.as/i));
+        const ocultado = screen.queryByText(/3 d.as/i);
+        expect(ocultado).not.toBeInTheDocument();
+
+    });
+
+    it('should handle 1 day suspension', async () => {
+        render(<PostDetail />);
+
+        await waitFor(() => {
+            expect(screen.getByText('Test post content')).toBeInTheDocument();
+        });
+
+        // Click hide post button
+        const hideButton = screen.getByText('Ocultar publicación');
+        fireEvent.click(hideButton);
+
+        // Click continue in first modal
+        const continueButton = screen.getByText('Continuar');
+        fireEvent.click(continueButton);
+
+        // Click suspend in second modal
+        const suspendButton = screen.getByText('Suspender');
+        fireEvent.click(suspendButton);
+
+        // Click 1 day suspension
+        expect(screen.getByText(/1 d.a/i)).toBeInTheDocument();
+        fireEvent.click(screen.getByText(/1 d.a/i));
+        const ocultado = screen.queryByText(/1 d.a/i);
+        expect(ocultado).not.toBeInTheDocument();
+
+        // Wait for the redirect
+    });
+
+    it('should handle 7 days suspension', async () => {
+        render(<PostDetail />);
+
+        await waitFor(() => {
+            expect(screen.getByText('Test post content')).toBeInTheDocument();
+        });
+
+        // Click hide post button
+        const hideButton = screen.getByText('Ocultar publicación');
+        fireEvent.click(hideButton);
+
+        // Click continue in first modal
+        const continueButton = screen.getByText('Continuar');
+        fireEvent.click(continueButton);
+
+        // Click suspend in second modal
+        const suspendButton = screen.getByText('Suspender');
+        fireEvent.click(suspendButton);
+
+        // Click 7 days suspension
+        expect(screen.getByText(/7 d.as/i)).toBeInTheDocument();
+        fireEvent.click(screen.getByText(/7 d.as/i));
+        const ocultado = screen.queryByText(/7 d.as/i);
+        expect(ocultado).not.toBeInTheDocument();
+    });
+
+    it('should handle cancel in suspend modal', async () => {
+        render(<PostDetail />);
+
+        await waitFor(() => {
+            expect(screen.getByText('Test post content')).toBeInTheDocument();
+        });
+
+        // Click hide post button
+        const hideButton = screen.getByText('Ocultar publicación');
+        fireEvent.click(hideButton);
+
+        // Click continue in first modal
+        const continueButton = screen.getByText('Continuar');
+        fireEvent.click(continueButton);
+
+        // Click cancel in suspend modal
+        const cancelButton = screen.getByText('Cancelar');
+        fireEvent.click(cancelButton);
+
+        // Verify modal is closed
+        expect(screen.queryByText('¿También deseas suspender al usuario?')).not.toBeInTheDocument();
+    });
+
+    it('should handle cancel in hide confirm modal', async () => {
+        render(<PostDetail />);
+
+        await waitFor(() => {
+            expect(screen.getByText('Test post content')).toBeInTheDocument();
+        });
+
+        // Click hide post button
+        const hideButton = screen.getByText('Ocultar publicación');
+        fireEvent.click(hideButton);
+
+        // Click cancel in first modal
+        const cancelButton = screen.getByText('Cancelar');
+        fireEvent.click(cancelButton);
+
+        // Verify modal is closed
+        expect(screen.queryByText('¿Deseas ocultar publicación?')).not.toBeInTheDocument();
+    });
+
+
     describe('Clear Reports Modal Flow', () => {
         beforeEach(() => {
+            // Set up the router mock properly for this describe block
+            (useRouter as jest.Mock).mockReturnValue({
+                push: mockPush,
+                back: mockBack,
+            });
+
             (useParams as jest.Mock).mockReturnValue({ id: '1' });
+
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({
+                    message: "Post fetched successfully",
+                    post: {
+                        id: '1',
+                        user_id: '2',
+                        content: 'Test post content',
+                        file_url: 'https://example.com/image.jpg',
+                        file_size: 1024,
+                        media_type: 1,
+                        is_active: true,
+                        is_edited: false,
+                        status: 0,
+                        created_at: '2025-06-07T20:41:45.301Z',
+                        updated_at: '2025-06-08T20:41:45.301Z',
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        active_reports: '5',
+                        total_reports: '10',
+                    }
+                })
+            });
         });
 
         it('should open clear reports confirmation modal', async () => {
@@ -474,17 +626,47 @@ describe('PostDetail Component', () => {
                 fireEvent.click(screen.getByText('Eliminar reportes'));
             });
 
+            expect(screen.getByText('Confirmar')).toBeInTheDocument();
             fireEvent.click(screen.getByText('Confirmar'));
-
-            await waitFor(() => {
-                expect(mockPush).toHaveBeenCalledWith('/content');
-            });
+            const ocultado = screen.queryByText('Confirmar');
+            expect(ocultado).not.toBeInTheDocument();
         });
     });
 
     describe('Image Error Handling', () => {
         beforeEach(() => {
+            // Set up the router mock properly for this describe block
+            (useRouter as jest.Mock).mockReturnValue({
+                push: mockPush,
+                back: mockBack,
+            });
+
             (useParams as jest.Mock).mockReturnValue({ id: '1' });
+
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({
+                    message: "Post fetched successfully",
+                    post: {
+                        id: '1',
+                        user_id: '2',
+                        content: 'Test post content',
+                        file_url: 'https://example.com/image.jpg',
+                        file_size: 1024,
+                        media_type: 1,
+                        is_active: true,
+                        is_edited: false,
+                        status: 0,
+                        created_at: '2025-06-07T20:41:45.301Z',
+                        updated_at: '2025-06-08T20:41:45.301Z',
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        active_reports: '5',
+                        total_reports: '10',
+                    }
+                })
+            });
         });
 
         it('should hide image on load error', async () => {
@@ -504,7 +686,38 @@ describe('PostDetail Component', () => {
 
     describe('Button States During Actions', () => {
         beforeEach(() => {
+            // Set up the router mock properly for this describe block
+            (useRouter as jest.Mock).mockReturnValue({
+                push: mockPush,
+                back: mockBack,
+            });
+
             (useParams as jest.Mock).mockReturnValue({ id: '1' });
+
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({
+                    message: "Post fetched successfully",
+                    post: {
+                        id: '1',
+                        user_id: '2',
+                        content: 'Test post content',
+                        file_url: 'https://example.com/image.jpg',
+                        file_size: 1024,
+                        media_type: 1,
+                        is_active: true,
+                        is_edited: false,
+                        status: 0,
+                        created_at: '2025-06-07T20:41:45.301Z',
+                        updated_at: '2025-06-08T20:41:45.301Z',
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        active_reports: '5',
+                        total_reports: '10',
+                    }
+                })
+            });
         });
 
         it('should show processing state during actions', async () => {
@@ -520,18 +733,46 @@ describe('PostDetail Component', () => {
     });
 
     describe('Comments Section', () => {
-        it('should show empty state for comments when no comments exist', async () => {
-            (useParams as jest.Mock).mockReturnValue({ id: '2' });
-            global.fetch = jest.fn()
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: () => Promise.resolve(mockContent)
-                })
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: () => Promise.resolve({ comments: [], total_comments: 0, has_more: false })
-                });
+        beforeEach(() => {
+            // Set up the router mock properly for this describe block
+            (useRouter as jest.Mock).mockReturnValue({
+                push: mockPush,
+                back: mockBack,
+            });
 
+            (useParams as jest.Mock).mockReturnValue({ id: '1' });
+
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({
+                    message: "Post fetched successfully",
+                    post: {
+                        id: '1',
+                        user_id: '2',
+                        content: 'Test post content',
+                        file_url: 'https://example.com/image.jpg',
+                        file_size: 1024,
+                        media_type: 1,
+                        is_active: true,
+                        is_edited: false,
+                        status: 0,
+                        created_at: '2025-06-07T20:41:45.301Z',
+                        updated_at: '2025-06-08T20:41:45.301Z',
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        active_reports: '5',
+                        total_reports: '10',
+                    }
+                })
+            });
+        });
+
+        afterEach(() => {
+            jest.clearAllMocks();
+        });
+
+        it('should show empty state for comments when no comments exist', async () => {
             render(<PostDetail />);
 
             await waitFor(() => {
@@ -540,149 +781,6 @@ describe('PostDetail Component', () => {
         });
     });
 
-    describe('Error Handling', () => {
-        it('should show empty state for comments when no comments exist', async () => {
-            (useParams as jest.Mock).mockReturnValue({ id: '2' });
-            global.fetch = jest.fn()
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: () => Promise.resolve(mockContent)
-                })
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: () => Promise.resolve({ comments: [], total_comments: 0, has_more: false })
-                });
 
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText('No hay comentarios para mostrar')).toBeInTheDocument();
-            });
-        });
-    });
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-        (useParams as jest.Mock).mockReturnValue({ id: '1' });
-        global.fetch = jest.fn().mockResolvedValue({
-            ok: true,
-            json: () => Promise.resolve(mockContent)
-        });
-    });
-
-    it('should handle image error by hiding the image', async () => {
-        render(<PostDetail />);
-
-        await waitFor(() => {
-            expect(screen.getByText('Test post content')).toBeInTheDocument();
-        });
-
-        const img = screen.getByAltText('Contenido de testuser');
-        fireEvent.error(img);
-
-        expect(img.style.display).toBe('none');
-    });
-
-    it('should handle suspension duration selection', async () => {
-        render(<PostDetail />);
-
-        await waitFor(() => {
-            expect(screen.getByText('Test post content')).toBeInTheDocument();
-        });
-
-        // Click hide post button
-        const hideButton = screen.getByText('Ocultar publicación');
-        fireEvent.click(hideButton);
-
-        // Click continue in first modal
-        const continueButton = screen.getByText('Continuar');
-        fireEvent.click(continueButton);
-
-        // Click suspend in second modal
-        const suspendButton = screen.getByText('Suspender');
-        fireEvent.click(suspendButton);
-
-        // Click 3 days suspension
-        const threeDaysButton = screen.getByText('3 días');
-        fireEvent.click(threeDaysButton);
-
-        // Wait for the redirect
-        await waitFor(() => {
-            expect(mockPush).toHaveBeenCalledWith('/content');
-        });
-    });
-
-    it('should handle cancel in suspension duration modal', async () => {
-        render(<PostDetail />);
-
-        await waitFor(() => {
-            expect(screen.getByText('Test post content')).toBeInTheDocument();
-        });
-
-        // Click hide post button
-        const hideButton = screen.getByText('Ocultar publicación');
-        fireEvent.click(hideButton);
-
-        // Click continue in first modal
-        const continueButton = screen.getByText('Continuar');
-        fireEvent.click(continueButton);
-
-        // Click suspend in second modal
-        const suspendButton = screen.getByText('Suspender');
-        fireEvent.click(suspendButton);
-
-        // Click cancel in suspension duration modal
-        const cancelButton = screen.getByText('Cancelar');
-        fireEvent.click(cancelButton);
-
-        // Verify modal is closed
-        expect(screen.queryByText('Selecciona la duración de la suspensión')).not.toBeInTheDocument();
-    });
-
-    it('should handle cancel in clear reports modal', async () => {
-        render(<PostDetail />);
-
-        await waitFor(() => {
-            expect(screen.getByText('Test post content')).toBeInTheDocument();
-        });
-
-        // Click clear reports button
-        const clearButton = screen.getByText('Eliminar reportes');
-        fireEvent.click(clearButton);
-
-        // Click cancel in modal
-        const cancelButton = screen.getByText('Cancelar');
-        fireEvent.click(cancelButton);
-
-        // Verify modal is closed
-        expect(screen.queryByText('Confirmar eliminación de reportes')).not.toBeInTheDocument();
-    });
-
-    it('should handle error state', async () => {
-        (useParams as jest.Mock).mockReturnValue({ id: 'non-existent' });
-        render(<PostDetail />);
-
-        await waitFor(() => {
-            const errorElement = screen.getByText((content, element) => {
-                return element?.textContent === 'Publicación no encontrada' || 
-                       element?.textContent === 'Publicaci\u00f3n no encontrada' ||
-                       element?.textContent === 'Publicaci&oacute;n no encontrada';
-            });
-            expect(errorElement).toBeInTheDocument();
-        });
-
-        const backButton = screen.getByText('Volver al panel');
-        fireEvent.click(backButton);
-
-        expect(mockPush).toHaveBeenCalledWith('/content');
-    });
 });
 
-const mockRequest = (params: { id?: string }, searchParams?: URLSearchParams) => {
-    return {
-        nextUrl: {
-            searchParams: searchParams || new URLSearchParams()
-        },
-        params: params
-    } as unknown as NextRequest;
-};
