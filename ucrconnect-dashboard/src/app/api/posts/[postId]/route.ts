@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { postId: string } }
+    { params }: { params: Promise<{ postId: string }> }
 ) {
     try {
         // Get the access token from cookies
