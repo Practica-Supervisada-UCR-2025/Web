@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, JSX } from 'react';
 import { useRouter } from 'next/navigation';
-import { mockApiResponse } from '../../../../public/data/contentData';
 
 // Type definitions
 interface Post {
@@ -29,6 +28,7 @@ interface ApiResponse {
         totalPosts: number;
         totalPages: number;
         currentPage: number;
+        totalReportedPosts: number;
     };
 }
 
@@ -41,6 +41,11 @@ interface PaginationProps {
     currentPage: number;
     totalPages: number;
     onPageChange: (page: number) => void;
+}
+
+interface ModalProps {
+    isOpen: boolean;
+    onClose: () => void;
 }
 
 // Helper function to format date
@@ -63,6 +68,50 @@ const getMediaTypeLabel = (mediaType: number): string => {
         case 2: return 'GIF';
         default: return 'Desconocido';
     }
+};
+
+// Modal component
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-gray-300 bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+            <div
+                className="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="text-center">
+                    <div className="mb-4">
+                        <svg
+                            className="mx-auto h-12 w-12 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                            />
+                        </svg>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                        Sin implementar a&uacute;n
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                        Esta funcionalidad no est&aacute; disponible para posts inactivos.
+                    </p>
+                    <button
+                        onClick={onClose}
+                        className="w-full px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md transition-colors"
+                    >
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 // Post card component
@@ -144,63 +193,127 @@ export default function Content(): JSX.Element {
     const [apiData, setApiData] = useState<ApiResponse | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [sortBy, setSortBy] = useState<'reports' | 'date'>('reports');
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const router = useRouter();
     const postsPerPage = 8;
 
-    useEffect(() => {
-        const fetchData = async () => {
-            // TODO: API
-            setApiData(mockApiResponse);
-        };
+    // Fetch data function
+    const fetchData = async (page: number = currentPage, sort: 'reports' | 'date' = sortBy) => {
+        try {
+            setLoading(true);
+            setError(null);
 
+            const response = await fetch(
+                `/api/posts/reported?page=${page}&limit=${postsPerPage}&sortBy=${sort}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data: ApiResponse = await response.json();
+            setApiData(data);
+        } catch (err) {
+            console.error('Error fetching data:', err);
+            setError(err instanceof Error ? err.message : 'Error desconocido');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Initial data fetch
+    useEffect(() => {
         fetchData();
     }, []);
 
-    if (!apiData) {
+    // Fetch data when page or sort changes
+    useEffect(() => {
+        if (apiData) { // Only fetch if we've already loaded initial data
+            fetchData(currentPage, sortBy);
+        }
+    }, [currentPage, sortBy]);
+
+    // Handle page change
+    const handlePageChange = (pageNumber: number): void => {
+        setCurrentPage(pageNumber);
+    };
+
+    // Handle sort change
+    const handleSortChange = (newSort: 'reports' | 'date'): void => {
+        setSortBy(newSort);
+        setCurrentPage(1); // Reset to first page when sorting changes
+    };
+
+    // Handle reload
+    const handleReload = (): void => {
+        setCurrentPage(1);
+        fetchData(1, sortBy);
+    };
+
+    // Handle post click - navigate to dedicated page or show modal
+    const handlePostClick = (post: Post): void => {
+        if (post.is_active) {
+            router.push(`/content/${post.id}`);
+        } else {
+            setIsModalOpen(true);
+        }
+    };
+
+    // Handle modal close
+    const handleModalClose = (): void => {
+        setIsModalOpen(false);
+    };
+
+    // Loading state
+    if (loading) {
         return (
             <div className="container mx-auto px-4 py-6 max-w-6xl">
                 <div className="flex justify-center items-center py-20">
-                    <div className="text-gray-500">Cargando publicaciones...</div>
+                    <div className="flex items-center space-x-2">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#249dd8]"></div>
+                        <span className="text-gray-500">Cargando publicaciones...</span>
+                    </div>
                 </div>
             </div>
         );
     }
 
-    // Filter posts: active AND with reports > 0
-    const filteredPosts = apiData.posts
-        .filter(post => post.is_active && parseInt(post.active_reports) > 0)
-        .sort((a, b) => {
-            if (sortBy === 'reports') {
-                return parseInt(b.active_reports) - parseInt(a.active_reports);
-            } else { // sortBy === 'date'
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-            }
-        });
+    // Error state
+    if (error) {
+        return (
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <div className="flex flex-col justify-center items-center py-20">
+                    <div className="text-red-500 mb-4">Error al cargar las publicaciones: {error}</div>
+                    <button
+                        onClick={handleReload}
+                        className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
-    // Calculate total pages
-    const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+    if (!apiData) {
+        return (
+            <div className="container mx-auto px-4 py-6 max-w-6xl">
+                <div className="flex justify-center items-center py-20">
+                    <div className="text-gray-500">No hay datos disponibles</div>
+                </div>
+            </div>
+        );
+    }
 
-    // Get current posts
-    const indexOfLastPost = currentPage * postsPerPage;
-    const indexOfFirstPost = indexOfLastPost - postsPerPage;
-    const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
-
-    // Change page
-    const handlePageChange = (pageNumber: number): void => {
-        setCurrentPage(pageNumber);
-    };
-
-    // Handle reload
-    const handleReload = (): void => {
-        // In a real app, this would fetch fresh data from the endpoint
-        setApiData({ ...mockApiResponse });
-        setCurrentPage(1);
-    };
-
-    // Handle post click - navigate to dedicated page
-    const handlePostClick = (post: Post): void => {
-        router.push(`/content/${post.id}`);
-    };
+    const { posts, metadata } = apiData;
 
     return (
         <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -212,8 +325,9 @@ export default function Content(): JSX.Element {
                         <select
                             id="sortBy"
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as 'reports' | 'date')}
+                            onChange={(e) => handleSortChange(e.target.value as 'reports' | 'date')}
                             className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-800"
+                            disabled={loading}
                         >
                             <option value="reports">Reportes</option>
                             <option value="date">Fecha</option>
@@ -222,10 +336,17 @@ export default function Content(): JSX.Element {
 
                     <button
                         onClick={handleReload}
-                        className="ml-2 p-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md flex items-center"
+                        disabled={loading}
+                        className="ml-2 p-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Recargar"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                     </button>
@@ -233,31 +354,33 @@ export default function Content(): JSX.Element {
             </div>
 
             <div className="mb-4 text-sm text-gray-500">
-                Mostrando {currentPosts.length} de {filteredPosts.length} publicaciones reportadas
+                Mostrando {posts.length} de {metadata.totalReportedPosts} publicaciones reportadas
                 <span className="ml-4 text-xs">
-                    (Total en sistema: {apiData.metadata.totalPosts})
+                    (Total en sistema: {metadata.totalPosts})
                 </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {currentPosts.map(post => (
+                {posts.map(post => (
                     <PostCard key={post.id} post={post} onClick={handlePostClick} />
                 ))}
             </div>
 
-            {currentPosts.length === 0 && (
+            {posts.length === 0 && !loading && (
                 <div className="text-center py-10 text-gray-500">
                     No hay publicaciones reportadas activas.
                 </div>
             )}
 
-            {totalPages > 1 && (
+            {metadata.totalPages > 1 && (
                 <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
+                    currentPage={metadata.currentPage}
+                    totalPages={metadata.totalPages}
                     onPageChange={handlePageChange}
                 />
             )}
+
+            <Modal isOpen={isModalOpen} onClose={handleModalClose} />
         </div>
     );
 }
