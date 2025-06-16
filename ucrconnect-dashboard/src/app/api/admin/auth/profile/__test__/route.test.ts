@@ -1,5 +1,4 @@
 import { GET, PATCH } from '@/app/api/admin/auth/profile/route';
-import { NextResponse } from 'next/server';
 
 const originalConsole = { ...console };
 beforeAll(() => {
