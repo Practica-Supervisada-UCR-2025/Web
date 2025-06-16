@@ -12,6 +12,9 @@ export async function GET() {
             url: `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/system/health`
         });
     } catch (error) {
-        return NextResponse.json({ error: error.message });
+        // Properly handle the unknown error type
+        return NextResponse.json({
+            error: error instanceof Error ? error.message : 'An unknown error occurred'
+        });
     }
 }

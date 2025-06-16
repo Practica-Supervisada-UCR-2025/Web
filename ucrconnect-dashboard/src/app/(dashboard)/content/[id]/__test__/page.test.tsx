@@ -384,7 +384,9 @@ describe('Hide Post Modal Flow', () => {
             expect(screen.getByText(/Ocultar publicaci.n/i)).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
+        });
 
         expect(screen.getByText(/.Deseas ocultar publicaci.n?/i)).toBeInTheDocument();
         expect(screen.getByText(/Esta acci.n esconder. la publicaci.n de la vista p.blica./i)).toBeInTheDocument();
@@ -398,7 +400,9 @@ describe('Hide Post Modal Flow', () => {
             fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
         });
 
-        fireEvent.click(screen.getByText('Cancelar'));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Cancelar'));
+        });
 
         expect(screen.queryByText(/.Deseas ocultar publicaci.n?/i)).not.toBeInTheDocument();
     });
@@ -411,7 +415,9 @@ describe('Hide Post Modal Flow', () => {
             fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
         });
 
-        fireEvent.click(screen.getByText('Continuar'));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Continuar'));
+        });
 
         expect(screen.getByText(/.Tambi.n deseas suspender al usuario?/i)).toBeInTheDocument();
     });
@@ -423,9 +429,14 @@ describe('Hide Post Modal Flow', () => {
             fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
         });
 
-        fireEvent.click(screen.getByText('Continuar'));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Continuar'));
+        });
         expect(screen.getByText(/Solo ocultar/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByText('Solo ocultar'));
+
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Solo ocultar'));
+        });
         const ocultado = screen.queryByText(/Solo ocultar/i);
         expect(ocultado).not.toBeInTheDocument();
     });
@@ -436,9 +447,12 @@ describe('Hide Post Modal Flow', () => {
         await waitFor(() => {
             fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
         });
-
-        fireEvent.click(screen.getByText('Continuar'));
-        fireEvent.click(screen.getByText('Suspender'));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Continuar'));
+        });
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Suspender'));
+        });
 
         expect(screen.getByText(/Selecciona la duraci.n de la suspensi.n/i)).toBeInTheDocument();
         expect(screen.getByText(/1 d.a/i)).toBeInTheDocument();
@@ -453,10 +467,16 @@ describe('Hide Post Modal Flow', () => {
             fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
         });
 
-        fireEvent.click(screen.getByText('Continuar'));
-        fireEvent.click(screen.getByText('Suspender'));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Continuar'));
+        });
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Suspender'));
+        });
         expect(screen.getByText(/3 d.as/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByText(/3 d.as/i));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/3 d.as/i));
+        });
         const ocultado = screen.queryByText(/3 d.as/i);
         expect(ocultado).not.toBeInTheDocument();
 
@@ -471,19 +491,27 @@ describe('Hide Post Modal Flow', () => {
 
         // Click hide post button
         const hideButton = screen.getByText('Ocultar publicación');
-        fireEvent.click(hideButton);
+        await waitFor(() => {
+            fireEvent.click(hideButton);
+        });
 
         // Click continue in first modal
         const continueButton = screen.getByText('Continuar');
-        fireEvent.click(continueButton);
+        await waitFor(() => {
+            fireEvent.click(continueButton);
+        });
 
         // Click suspend in second modal
         const suspendButton = screen.getByText('Suspender');
-        fireEvent.click(suspendButton);
+        await waitFor(() => {
+            fireEvent.click(suspendButton);
+        });
 
         // Click 1 day suspension
         expect(screen.getByText(/1 d.a/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByText(/1 d.a/i));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/1 d.a/i));
+        });
         const ocultado = screen.queryByText(/1 d.a/i);
         expect(ocultado).not.toBeInTheDocument();
 
@@ -499,19 +527,27 @@ describe('Hide Post Modal Flow', () => {
 
         // Click hide post button
         const hideButton = screen.getByText('Ocultar publicación');
-        fireEvent.click(hideButton);
+        await waitFor(() => {
+            fireEvent.click(hideButton);
+        });
 
         // Click continue in first modal
         const continueButton = screen.getByText('Continuar');
-        fireEvent.click(continueButton);
+        await waitFor(() => {
+            fireEvent.click(continueButton);
+        });
 
         // Click suspend in second modal
         const suspendButton = screen.getByText('Suspender');
-        fireEvent.click(suspendButton);
+        await waitFor(() => {
+            fireEvent.click(suspendButton);
+        });
 
         // Click 7 days suspension
         expect(screen.getByText(/7 d.as/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByText(/7 d.as/i));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/7 d.as/i));
+        });
         const ocultado = screen.queryByText(/7 d.as/i);
         expect(ocultado).not.toBeInTheDocument();
     });
@@ -525,15 +561,21 @@ describe('Hide Post Modal Flow', () => {
 
         // Click hide post button
         const hideButton = screen.getByText('Ocultar publicación');
-        fireEvent.click(hideButton);
+        await waitFor(() => {
+            fireEvent.click(hideButton);
+        });
 
         // Click continue in first modal
         const continueButton = screen.getByText('Continuar');
-        fireEvent.click(continueButton);
+        await waitFor(() => {
+            fireEvent.click(continueButton);
+        });
 
         // Click cancel in suspend modal
         const cancelButton = screen.getByText('Cancelar');
-        fireEvent.click(cancelButton);
+        await waitFor(() => {
+            fireEvent.click(cancelButton);
+        });
 
         // Verify modal is closed
         expect(screen.queryByText('¿También deseas suspender al usuario?')).not.toBeInTheDocument();
@@ -548,11 +590,15 @@ describe('Hide Post Modal Flow', () => {
 
         // Click hide post button
         const hideButton = screen.getByText('Ocultar publicación');
-        fireEvent.click(hideButton);
+        await waitFor(() => {
+            fireEvent.click(hideButton);
+        });
 
         // Click cancel in first modal
         const cancelButton = screen.getByText('Cancelar');
-        fireEvent.click(cancelButton);
+        await waitFor(() => {
+            fireEvent.click(cancelButton);
+        });
 
         // Verify modal is closed
         expect(screen.queryByText('¿Deseas ocultar publicación?')).not.toBeInTheDocument();
@@ -614,7 +660,10 @@ describe('Hide Post Modal Flow', () => {
             });
 
             const cancelButtons = screen.getAllByText('Cancelar');
-            fireEvent.click(cancelButtons[0]);
+
+            await waitFor(() => {
+                fireEvent.click(cancelButtons[0]);
+            });
 
             expect(screen.queryByText(/Confirmar eliminaci.n de reportes/i)).not.toBeInTheDocument();
         });
@@ -627,7 +676,9 @@ describe('Hide Post Modal Flow', () => {
             });
 
             expect(screen.getByText('Confirmar')).toBeInTheDocument();
-            fireEvent.click(screen.getByText('Confirmar'));
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Confirmar'));
+            });
             const ocultado = screen.queryByText('Confirmar');
             expect(ocultado).not.toBeInTheDocument();
         });
@@ -677,7 +728,7 @@ describe('Hide Post Modal Flow', () => {
                 expect(image).toBeInTheDocument();
 
                 // Simulate image load error
-                fireEvent.error(image);
+                    fireEvent.error(image);
 
                 expect(image.style.display).toBe('none');
             });
@@ -726,13 +777,161 @@ describe('Hide Post Modal Flow', () => {
             await waitFor(() => {
                 fireEvent.click(screen.getByText(/Ocultar publicaci.n/));
             });
-
-            fireEvent.click(screen.getByText('Continuar'));
-            fireEvent.click(screen.getByText('Solo ocultar'));
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Continuar'));
+            });
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Solo ocultar'));
+            });
         });
     });
 
     describe('Comments Section', () => {
+        beforeEach(() => {
+            // Set up the router mock properly for this describe block
+            (useRouter as jest.Mock).mockReturnValue({
+                push: mockPush,
+                back: mockBack,
+            });
+
+            (useParams as jest.Mock).mockReturnValue({ id: '1' });
+
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValue({
+                    message: "Post fetched successfully",
+                    post: {
+                        id: '1',
+                        user_id: '2',
+                        content: 'Test post content',
+                        file_url: 'https://example.com/image.jpg',
+                        file_size: 1024,
+                        media_type: 1,
+                        is_active: true,
+                        is_edited: false,
+                        status: 0,
+                        created_at: '2025-06-07T20:41:45.301Z',
+                        updated_at: '2025-06-08T20:41:45.301Z',
+                        username: 'testuser',
+                        email: 'test@example.com',
+                        active_reports: '5',
+                        total_reports: '10',
+                    }
+                })
+            });
+        });
+
+        afterEach(() => {
+            jest.clearAllMocks();
+        });
+
+        it('should show empty state for comments when no comments exist', async () => {
+            render(<PostDetail />);
+
+            await waitFor(() => {
+                expect(screen.getByText('No hay comentarios para mostrar')).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe('API Error Handling', () => {
+        const mockPush = jest.fn();
+        const mockBack = jest.fn();
+
+        beforeEach(() => {
+            (useRouter as jest.Mock).mockReturnValue({
+                push: mockPush,
+                back: mockBack,
+            });
+            (useParams as jest.Mock).mockReturnValue({ id: '1' });
+            global.fetch = jest.fn();
+        });
+
+        afterEach(() => {
+            jest.clearAllMocks();
+        });
+
+        it('should display unauthorized error on 401 status', async () => {
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: false,
+                status: 401,
+                json: jest.fn().mockResolvedValueOnce({ message: 'Unauthorized' }),
+            });
+
+            render(<PostDetail />);
+
+            await waitFor(() => {
+                expect(screen.getByText(/No autorizado para ver esta publicaci.n/i)).toBeInTheDocument();
+            });
+        });
+
+        it('should display a generic error message for other failed requests', async () => {
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: false,
+                status: 500,
+                json: jest.fn().mockResolvedValueOnce({ message: 'Internal Server Error' }),
+            });
+
+            render(<PostDetail />);
+
+            await waitFor(() => {
+                expect(screen.getByText(/HTTP error! status: 500/i)).toBeInTheDocument();
+            });
+        });
+
+        it('should display an error for unexpected response structure', async () => {
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                status: 200,
+                json: jest.fn().mockResolvedValueOnce({ message: 'Success but no post data' }), // Missing 'post' object
+            });
+
+            render(<PostDetail />);
+
+            await waitFor(() => {
+                expect(screen.getByText(/Estructura de respuesta inesperada/i)).toBeInTheDocument();
+            });
+        });
+
+        it('should handle network errors during fetch', async () => {
+            (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network failure'));
+
+            render(<PostDetail />);
+
+            await waitFor(() => {
+                expect(screen.getByText(/Reintentar/i)).toBeInTheDocument();
+            });
+        });
+
+        it('should allow user to retry on fetch error', async () => {
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: false,
+                status: 500,
+            });
+            const reload = jest.fn();
+            Object.defineProperty(window, 'location', {
+                value: { reload },
+                writable: true,
+            });
+
+            render(<PostDetail />);
+
+            await waitFor(() => {
+                expect(screen.getByText('Reintentar')).toBeInTheDocument();
+            });
+
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Reintentar'));
+            });
+            expect(reload).toHaveBeenCalled();
+        });
+    });
+
+    describe('Comments Section', () => {
+        const mockPush = jest.fn();
+        const mockBack = jest.fn();
+
         beforeEach(() => {
             (useRouter as jest.Mock).mockReturnValue({ push: mockPush, back: mockBack });
             (useParams as jest.Mock).mockReturnValue({ id: 'h33e5h59-dd84-7eg3-cc86-7d7c379d857d' });
@@ -850,8 +1049,12 @@ describe('Hide Post Modal Flow', () => {
             await waitFor(() => {
                 fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
             });
-            fireEvent.click(screen.getByText('Continuar'));
-            fireEvent.click(screen.getByText('Solo ocultar'));
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Continuar'));
+            });
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Solo ocultar'));
+            });
 
             await waitFor(() => {
                 expect(screen.getByText(/Publicaci.n ocultada exitosamente/i)).toBeInTheDocument();

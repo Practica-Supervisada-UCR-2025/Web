@@ -148,7 +148,6 @@ export default function PostDetail(): JSX.Element {
                 }
 
             } catch (err) {
-                console.error('Error fetching post:', err);
                 setError(err instanceof Error ? err.message : 'Error al cargar la publicaci\u00f3n');
             } finally {
                 setLoading(false);
@@ -227,7 +226,6 @@ export default function PostDetail(): JSX.Element {
                 router.push('/content');
             }, 2000);
         } catch (err) {
-            console.error('Error deleting post:', err);
             setError(err instanceof Error ? err.message : 'Error al ocultar la publicaci\u00f3n');
         } finally {
             setActionLoading(false);
@@ -269,7 +267,6 @@ export default function PostDetail(): JSX.Element {
                 router.push('/content');
             }, 2000);
         } catch (err) {
-            console.error('Error restoring post:', err);
             setError(err instanceof Error ? err.message : 'Error al restaurar la publicaci\u00f3n');
         } finally {
             setActionLoading(false);
@@ -322,7 +319,6 @@ export default function PostDetail(): JSX.Element {
             }, 1000);
 
         } catch (err) {
-            console.error('Error processing moderation action:', err);
             setError(err instanceof Error ? err.message : 'Error al procesar la acci\u00f3n');
         } finally {
             setActionLoading(false);
