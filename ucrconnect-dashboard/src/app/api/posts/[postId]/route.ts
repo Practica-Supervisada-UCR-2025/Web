@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { postId: string } }
+    context: { params: { postId: string } }
 ) {
     try {
         // Get the access token from cookies
@@ -17,8 +17,9 @@ export async function GET(
             );
         }
 
-        // Get postId from params
-        const postId = params.postId;
+        // Get postId from params - properly await the params
+        const params = await context.params;
+        const { postId } = params;
         if (!postId) {
             return NextResponse.json(
                 { message: 'Bad Request', details: 'Post ID is required' },
