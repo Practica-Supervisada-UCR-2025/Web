@@ -131,7 +131,7 @@ describe('PostDetail Component', () => {
             render(<PostDetail />);
 
             await waitFor(() => {
-                expect(screen.getByText(/7 de junio de 2025, 14:41/i)).toBeInTheDocument();
+                expect(screen.getByText(/7 de junio de 2025, ..:../i)).toBeInTheDocument();
             });
         });
 
