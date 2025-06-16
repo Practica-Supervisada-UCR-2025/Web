@@ -384,7 +384,9 @@ describe('Hide Post Modal Flow', () => {
             expect(screen.getByText(/Ocultar publicaci.n/i)).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
+        });
 
         expect(screen.getByText(/.Deseas ocultar publicaci.n?/i)).toBeInTheDocument();
         expect(screen.getByText(/Esta acci.n esconder. la publicaci.n de la vista p.blica./i)).toBeInTheDocument();
@@ -398,7 +400,9 @@ describe('Hide Post Modal Flow', () => {
             fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
         });
 
-        fireEvent.click(screen.getByText('Cancelar'));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Cancelar'));
+        });
 
         expect(screen.queryByText(/.Deseas ocultar publicaci.n?/i)).not.toBeInTheDocument();
     });
@@ -411,7 +415,9 @@ describe('Hide Post Modal Flow', () => {
             fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
         });
 
-        fireEvent.click(screen.getByText('Continuar'));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Continuar'));
+        });
 
         expect(screen.getByText(/.Tambi.n deseas suspender al usuario?/i)).toBeInTheDocument();
     });
@@ -423,9 +429,14 @@ describe('Hide Post Modal Flow', () => {
             fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
         });
 
-        fireEvent.click(screen.getByText('Continuar'));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Continuar'));
+        });
         expect(screen.getByText(/Solo ocultar/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByText('Solo ocultar'));
+
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Solo ocultar'));
+        });
         const ocultado = screen.queryByText(/Solo ocultar/i);
         expect(ocultado).not.toBeInTheDocument();
     });
@@ -436,9 +447,12 @@ describe('Hide Post Modal Flow', () => {
         await waitFor(() => {
             fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
         });
-
-        fireEvent.click(screen.getByText('Continuar'));
-        fireEvent.click(screen.getByText('Suspender'));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Continuar'));
+        });
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Suspender'));
+        });
 
         expect(screen.getByText(/Selecciona la duraci.n de la suspensi.n/i)).toBeInTheDocument();
         expect(screen.getByText(/1 d.a/i)).toBeInTheDocument();
@@ -453,10 +467,16 @@ describe('Hide Post Modal Flow', () => {
             fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
         });
 
-        fireEvent.click(screen.getByText('Continuar'));
-        fireEvent.click(screen.getByText('Suspender'));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Continuar'));
+        });
+        await waitFor(() => {
+            fireEvent.click(screen.getByText('Suspender'));
+        });
         expect(screen.getByText(/3 d.as/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByText(/3 d.as/i));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/3 d.as/i));
+        });
         const ocultado = screen.queryByText(/3 d.as/i);
         expect(ocultado).not.toBeInTheDocument();
 
@@ -471,19 +491,27 @@ describe('Hide Post Modal Flow', () => {
 
         // Click hide post button
         const hideButton = screen.getByText('Ocultar publicación');
-        fireEvent.click(hideButton);
+        await waitFor(() => {
+            fireEvent.click(hideButton);
+        });
 
         // Click continue in first modal
         const continueButton = screen.getByText('Continuar');
-        fireEvent.click(continueButton);
+        await waitFor(() => {
+            fireEvent.click(continueButton);
+        });
 
         // Click suspend in second modal
         const suspendButton = screen.getByText('Suspender');
-        fireEvent.click(suspendButton);
+        await waitFor(() => {
+            fireEvent.click(suspendButton);
+        });
 
         // Click 1 day suspension
         expect(screen.getByText(/1 d.a/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByText(/1 d.a/i));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/1 d.a/i));
+        });
         const ocultado = screen.queryByText(/1 d.a/i);
         expect(ocultado).not.toBeInTheDocument();
 
@@ -499,19 +527,27 @@ describe('Hide Post Modal Flow', () => {
 
         // Click hide post button
         const hideButton = screen.getByText('Ocultar publicación');
-        fireEvent.click(hideButton);
+        await waitFor(() => {
+            fireEvent.click(hideButton);
+        });
 
         // Click continue in first modal
         const continueButton = screen.getByText('Continuar');
-        fireEvent.click(continueButton);
+        await waitFor(() => {
+            fireEvent.click(continueButton);
+        });
 
         // Click suspend in second modal
         const suspendButton = screen.getByText('Suspender');
-        fireEvent.click(suspendButton);
+        await waitFor(() => {
+            fireEvent.click(suspendButton);
+        });
 
         // Click 7 days suspension
         expect(screen.getByText(/7 d.as/i)).toBeInTheDocument();
-        fireEvent.click(screen.getByText(/7 d.as/i));
+        await waitFor(() => {
+            fireEvent.click(screen.getByText(/7 d.as/i));
+        });
         const ocultado = screen.queryByText(/7 d.as/i);
         expect(ocultado).not.toBeInTheDocument();
     });
@@ -525,15 +561,21 @@ describe('Hide Post Modal Flow', () => {
 
         // Click hide post button
         const hideButton = screen.getByText('Ocultar publicación');
-        fireEvent.click(hideButton);
+        await waitFor(() => {
+            fireEvent.click(hideButton);
+        });
 
         // Click continue in first modal
         const continueButton = screen.getByText('Continuar');
-        fireEvent.click(continueButton);
+        await waitFor(() => {
+            fireEvent.click(continueButton);
+        });
 
         // Click cancel in suspend modal
         const cancelButton = screen.getByText('Cancelar');
-        fireEvent.click(cancelButton);
+        await waitFor(() => {
+            fireEvent.click(cancelButton);
+        });
 
         // Verify modal is closed
         expect(screen.queryByText('¿También deseas suspender al usuario?')).not.toBeInTheDocument();
@@ -548,11 +590,15 @@ describe('Hide Post Modal Flow', () => {
 
         // Click hide post button
         const hideButton = screen.getByText('Ocultar publicación');
-        fireEvent.click(hideButton);
+        await waitFor(() => {
+            fireEvent.click(hideButton);
+        });
 
         // Click cancel in first modal
         const cancelButton = screen.getByText('Cancelar');
-        fireEvent.click(cancelButton);
+        await waitFor(() => {
+            fireEvent.click(cancelButton);
+        });
 
         // Verify modal is closed
         expect(screen.queryByText('¿Deseas ocultar publicación?')).not.toBeInTheDocument();
@@ -614,7 +660,10 @@ describe('Hide Post Modal Flow', () => {
             });
 
             const cancelButtons = screen.getAllByText('Cancelar');
-            fireEvent.click(cancelButtons[0]);
+
+            await waitFor(() => {
+                fireEvent.click(cancelButtons[0]);
+            });
 
             expect(screen.queryByText(/Confirmar eliminaci.n de reportes/i)).not.toBeInTheDocument();
         });
@@ -627,7 +676,9 @@ describe('Hide Post Modal Flow', () => {
             });
 
             expect(screen.getByText('Confirmar')).toBeInTheDocument();
-            fireEvent.click(screen.getByText('Confirmar'));
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Confirmar'));
+            });
             const ocultado = screen.queryByText('Confirmar');
             expect(ocultado).not.toBeInTheDocument();
         });
@@ -677,7 +728,7 @@ describe('Hide Post Modal Flow', () => {
                 expect(image).toBeInTheDocument();
 
                 // Simulate image load error
-                fireEvent.error(image);
+                    fireEvent.error(image);
 
                 expect(image.style.display).toBe('none');
             });
@@ -726,9 +777,12 @@ describe('Hide Post Modal Flow', () => {
             await waitFor(() => {
                 fireEvent.click(screen.getByText(/Ocultar publicaci.n/));
             });
-
-            fireEvent.click(screen.getByText('Continuar'));
-            fireEvent.click(screen.getByText('Solo ocultar'));
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Continuar'));
+            });
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Solo ocultar'));
+            });
         });
     });
 
@@ -867,7 +921,9 @@ describe('Hide Post Modal Flow', () => {
                 expect(screen.getByText('Reintentar')).toBeInTheDocument();
             });
 
-            fireEvent.click(screen.getByText('Reintentar'));
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Reintentar'));
+            });
             expect(reload).toHaveBeenCalled();
         });
     });
@@ -1007,8 +1063,12 @@ describe('Hide Post Modal Flow', () => {
             await waitFor(() => {
                 fireEvent.click(screen.getByText(/Ocultar publicaci.n/i));
             });
-            fireEvent.click(screen.getByText('Continuar'));
-            fireEvent.click(screen.getByText('Solo ocultar'));
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Continuar'));
+            });
+            await waitFor(() => {
+                fireEvent.click(screen.getByText('Solo ocultar'));
+            });
 
             await waitFor(() => {
                 expect(screen.getByText(/Publicaci.n ocultada exitosamente/i)).toBeInTheDocument();
