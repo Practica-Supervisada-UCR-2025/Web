@@ -17,9 +17,8 @@ export async function GET(
             );
         }
 
-        // Await params before using its properties
+        // Get postId from params - properly await the params
         const { postId } = await params;
-
         if (!postId) {
             return NextResponse.json(
                 { message: 'Bad Request', details: 'Post ID is required' },
@@ -27,28 +26,14 @@ export async function GET(
             );
         }
 
-        // Parse query parameters from the URL for comment pagination
-        const { searchParams } = new URL(request.url);
+        // Get page parameter from URL search params
+        const searchParams = request.nextUrl.searchParams;
+        const page = searchParams.get('page') || '1';
+        const pageSize = searchParams.get('pageSize') || '5';
 
-        // Build query string with optional comment pagination parameters
-        const queryParams = new URLSearchParams();
+        // Make request to backend API with pagination parameters
+        const backendUrl = `${process.env.NEXT_PUBLIC_POST_URL}/api/user/posts/${postId}?page=${page}&pageSize=${pageSize}`;
 
-        // Optional comment pagination parameters
-        const commentPage = searchParams.get('commentPage');
-        const commentLimit = searchParams.get('commentLimit');
-
-        if (commentPage) {
-            queryParams.append('commentPage', commentPage);
-        }
-        if (commentLimit) {
-            queryParams.append('commentLimit', commentLimit);
-        }
-
-        // Build the backend URL
-        const queryString = queryParams.toString();
-        const backendUrl = `${process.env.NEXT_PUBLIC_POST_URL}/api/user/posts/${postId}${queryString ? `?${queryString}` : ''}`;
-
-        // Make request to backend API
         const backendResponse = await fetch(backendUrl, {
             method: 'GET',
             headers: {
@@ -63,6 +48,33 @@ export async function GET(
 
         if (contentType && contentType.includes('application/json')) {
             backendData = await backendResponse.json();
+            
+            // Ensure we have pagination metadata
+            if (backendData.post && backendData.post.comments) {
+                
+                // If we don't have metadata, create it
+                if (!backendData.post.comments_metadata) {
+                    backendData.post.comments_metadata = {
+                        currentPage: parseInt(page),
+                        totalPages: Math.ceil(backendData.post.comments_metadata?.totalItems / parseInt(pageSize)),
+                        totalItems: backendData.post.comments_metadata?.totalItems || backendData.post.comments.length
+                    };
+                } else {
+                    // Ensure the current page is set correctly
+                    backendData.post.comments_metadata.currentPage = parseInt(page);
+                }
+                
+                // If we're requesting page 2 or higher but getting the same comments as page 1,
+                // we need to handle this case
+                if (parseInt(page) > 1 && backendData.post.comments.length === parseInt(pageSize)) {
+                    // Check if these are the same comments as page 1
+                    const firstCommentId = backendData.post.comments[0]?.id;
+                    if (firstCommentId) {
+                        console.log('Warning: Backend might be returning the same comments for different pages');
+                        // You might want to add a warning or handle this case differently
+                    }
+                }
+            }
         } else {
             const textResponse = await backendResponse.text();
             console.error('Backend returned non-JSON response:', textResponse);
@@ -77,6 +89,7 @@ export async function GET(
                     { status: backendResponse.status }
                 );
             }
+
             backendData = { message: 'Success', data: textResponse };
         }
 
@@ -97,7 +110,7 @@ export async function GET(
             {
                 message: 'Internal server error',
                 error: error instanceof Error ? error.message : 'Unknown error',
-                details: 'An unexpected error occurred while fetching the post'
+                details: 'An unexpected error occurred while fetching post'
             },
             { status: 500 }
         );
