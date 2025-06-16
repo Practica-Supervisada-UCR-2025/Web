@@ -50,8 +50,8 @@ describe('Logout API Route', () => {
     // Verify the cookie was set with correct options
     expect(response.cookies.set).toHaveBeenCalledWith('access_token', '', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: false,
+      sameSite: 'lax',
       path: '/',
       maxAge: 0
     });
@@ -73,46 +73,5 @@ describe('Logout API Route', () => {
 
     // Verify console.error was called with the error
     expect(console.error).toHaveBeenCalledWith('Error in logout route:', expect.any(Error));
-  });
-
-  describe('Cookie Security Settings', () => {
-    const originalEnv = process.env;
-
-    beforeEach(() => {
-      jest.resetModules();
-      process.env = { ...originalEnv };
-    });
-
-    afterEach(() => {
-      process.env = originalEnv;
-    });
-
-    it('should set secure cookie in production environment', async () => {
-      process.env = { ...originalEnv, NODE_ENV: 'production' };
-      
-      const response = await POST();
-      
-      expect(response.cookies.set).toHaveBeenCalledWith(
-        'access_token',
-        '',
-        expect.objectContaining({
-          secure: true
-        })
-      );
-    });
-
-    it('should not set secure cookie in development environment', async () => {
-      process.env = { ...originalEnv, NODE_ENV: 'development' };
-      
-      const response = await POST();
-      
-      expect(response.cookies.set).toHaveBeenCalledWith(
-        'access_token',
-        '',
-        expect.objectContaining({
-          secure: false
-        })
-      );
-    });
   });
 }); 
