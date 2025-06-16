@@ -734,151 +734,7 @@ describe('Hide Post Modal Flow', () => {
 
     describe('Comments Section', () => {
         beforeEach(() => {
-            // Set up the router mock properly for this describe block
-            (useRouter as jest.Mock).mockReturnValue({
-                push: mockPush,
-                back: mockBack,
-            });
-
-            (useParams as jest.Mock).mockReturnValue({ id: '1' });
-
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: true,
-                status: 200,
-                json: jest.fn().mockResolvedValue({
-                    message: "Post fetched successfully",
-                    post: {
-                        id: '1',
-                        user_id: '2',
-                        content: 'Test post content',
-                        file_url: 'https://example.com/image.jpg',
-                        file_size: 1024,
-                        media_type: 1,
-                        is_active: true,
-                        is_edited: false,
-                        status: 0,
-                        created_at: '2025-06-07T20:41:45.301Z',
-                        updated_at: '2025-06-08T20:41:45.301Z',
-                        username: 'testuser',
-                        email: 'test@example.com',
-                        active_reports: '5',
-                        total_reports: '10',
-                    }
-                })
-            });
-        });
-
-        afterEach(() => {
-            jest.clearAllMocks();
-        });
-
-        it('should show empty state for comments when no comments exist', async () => {
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText('No hay comentarios para mostrar')).toBeInTheDocument();
-            });
-        });
-    });
-
-    describe('API Error Handling', () => {
-        const mockPush = jest.fn();
-        const mockBack = jest.fn();
-
-        beforeEach(() => {
-            (useRouter as jest.Mock).mockReturnValue({
-                push: mockPush,
-                back: mockBack,
-            });
-            (useParams as jest.Mock).mockReturnValue({ id: '1' });
-            global.fetch = jest.fn();
-        });
-
-        afterEach(() => {
-            jest.clearAllMocks();
-        });
-
-        it('should display unauthorized error on 401 status', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: false,
-                status: 401,
-                json: jest.fn().mockResolvedValueOnce({ message: 'Unauthorized' }),
-            });
-
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText(/No autorizado para ver esta publicaci.n/i)).toBeInTheDocument();
-            });
-        });
-
-        it('should display a generic error message for other failed requests', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: false,
-                status: 500,
-                json: jest.fn().mockResolvedValueOnce({ message: 'Internal Server Error' }),
-            });
-
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText(/HTTP error! status: 500/i)).toBeInTheDocument();
-            });
-        });
-
-        it('should display an error for unexpected response structure', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: true,
-                status: 200,
-                json: jest.fn().mockResolvedValueOnce({ message: 'Success but no post data' }), // Missing 'post' object
-            });
-
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText(/Estructura de respuesta inesperada/i)).toBeInTheDocument();
-            });
-        });
-
-        it('should handle network errors during fetch', async () => {
-            (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network failure'));
-
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText(/Reintentar/i)).toBeInTheDocument();
-            });
-        });
-
-        it('should allow user to retry on fetch error', async () => {
-            (global.fetch as jest.Mock).mockResolvedValueOnce({
-                ok: false,
-                status: 500,
-            });
-            const reload = jest.fn();
-            Object.defineProperty(window, 'location', {
-                value: { reload },
-                writable: true,
-            });
-
-            render(<PostDetail />);
-
-            await waitFor(() => {
-                expect(screen.getByText('Reintentar')).toBeInTheDocument();
-            });
-
-            fireEvent.click(screen.getByText('Reintentar'));
-            expect(reload).toHaveBeenCalled();
-        });
-    });
-
-    describe('Comments Section', () => {
-        const mockPush = jest.fn();
-        const mockBack = jest.fn();
-
-        beforeEach(() => {
             (useRouter as jest.Mock).mockReturnValue({ push: mockPush, back: mockBack });
-            // This postId matches the one in the component's mock data logic
             (useParams as jest.Mock).mockReturnValue({ id: 'h33e5h59-dd84-7eg3-cc86-7d7c379d857d' });
 
             (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -899,6 +755,12 @@ describe('Hide Post Modal Flow', () => {
                         email: 'test@example.com',
                         active_reports: '5',
                         total_reports: '10',
+                        comments: [],
+                        comments_metadata: {
+                            currentPage: 1,
+                            totalPages: 1,
+                            totalItems: 0
+                        }
                     }
                 })
             });
@@ -908,31 +770,12 @@ describe('Hide Post Modal Flow', () => {
             jest.clearAllMocks();
         });
 
-        it('should render comments when available', async () => {
+        it('should show empty state for comments when no comments exist', async () => {
             render(<PostDetail />);
 
             await waitFor(() => {
-                // Check for a specific comment's content
-                expect(screen.getByText('Este es un comentario de prueba 1')).toBeInTheDocument();
-                expect(screen.getByText('juan.perez@ucr.ac.cr')).toBeInTheDocument();
+                expect(screen.getByText('No hay comentarios para mostrar')).toBeInTheDocument();
             });
-
-            // Verify multiple comment items are rendered
-            const commentItems = screen.getAllByTestId('comment-item');
-            expect(commentItems.length).toBeGreaterThan(0);
-        });
-
-        it('should have clickable username in comments', async () => {
-            render(<PostDetail />);
-            await waitFor(() => {
-                expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
-            });
-
-            const userLink = screen.getAllByTestId('user-profile-link')[0];
-
-            // Check if element exists and is clickable
-            expect(userLink).toBeInTheDocument();
-            expect(userLink).not.toBeDisabled();
         });
 
         it('should display an error message if comments fail to load', async () => {

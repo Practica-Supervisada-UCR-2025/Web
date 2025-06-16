@@ -32,6 +32,11 @@ interface Post {
     active_reports: string;
     total_reports: string;
     comments?: Comment[];
+    comments_metadata?: {
+        currentPage: number;
+        totalPages: number;
+        totalItems: number;
+    };
 }
 
 interface ApiResponse {
@@ -49,81 +54,6 @@ const formatDate = (dateString: string): string => {
         hour: '2-digit',
         minute: '2-digit'
     });
-};
-
-// Mock data for comments
-const mockComments = [
-    {
-        id: '1',
-        user_id: 'user1',
-        username: 'Juan Pérez',
-        email: 'juan.perez@ucr.ac.cr',
-        content: 'Este es un comentario de prueba 1',
-        created_at: '2024-03-20T10:00:00Z',
-        updated_at: '2024-03-20T10:00:00Z'
-    },
-    {
-        id: '2',
-        user_id: 'user2',
-        username: 'María Rodríguez',
-        email: 'maria.rodriguez@ucr.ac.cr',
-        content: 'Este es un comentario de prueba 2',
-        created_at: '2024-03-20T09:00:00Z',
-        updated_at: '2024-03-20T09:00:00Z'
-    },
-    {
-        id: '3',
-        user_id: 'user3',
-        username: 'Carlos Mendez',
-        email: 'carlos.mendez@ucr.ac.cr',
-        content: 'Este es un comentario de prueba 3',
-        created_at: '2024-03-20T08:00:00Z',
-        updated_at: '2024-03-20T08:00:00Z'
-    },
-    {
-        id: '4',
-        user_id: 'user4',
-        username: 'Ana Martínez',
-        email: 'ana.martinez@ucr.ac.cr',
-        content: 'Este es un comentario de prueba 4',
-        created_at: '2024-03-20T07:00:00Z',
-        updated_at: '2024-03-20T07:00:00Z'
-    },
-    {
-        id: '5',
-        user_id: 'user5',
-        username: 'Roberto Sánchez',
-        email: 'roberto.sanchez@ucr.ac.cr',
-        content: 'Este es un comentario de prueba 5',
-        created_at: '2024-03-20T06:00:00Z',
-        updated_at: '2024-03-20T06:00:00Z'
-    },
-    {
-        id: '6',
-        user_id: 'user6',
-        username: 'Laura Rodríguez',
-        email: 'laura.rodriguez@ucr.ac.cr',
-        content: 'Este es un comentario de prueba 6',
-        created_at: '2024-03-20T05:00:00Z',
-        updated_at: '2024-03-20T05:00:00Z'
-    },
-    {
-        id: '7',
-        user_id: 'user7',
-        username: 'Pedro Gómez',
-        email: 'pedro.gomez@ucr.ac.cr',
-        content: 'Este es un comentario de prueba 7',
-        created_at: '2024-03-20T04:00:00Z',
-        updated_at: '2024-03-20T04:00:00Z'
-    }
-];
-
-// Function to simulate errors in tests
-const simulateError = {
-    shouldError: false,
-    setError: (value: boolean) => {
-        simulateError.shouldError = value;
-    }
 };
 
 // Helper function to normalize post data
@@ -151,6 +81,8 @@ export default function PostDetail(): JSX.Element {
     const [hasMore, setHasMore] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [hideButtons, setHideButtons] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [loadingMore, setLoadingMore] = useState(false);
 
     const router = useRouter();
     const params = useParams();
@@ -163,7 +95,8 @@ export default function PostDetail(): JSX.Element {
                 setLoading(true);
                 setError(null);
 
-                const response = await fetch(`/api/posts/${postId}`, {
+                // Fetch all comments at once by using a large pageSize
+                const response = await fetch(`/api/posts/${postId}?page=1&pageSize=100`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -186,10 +119,30 @@ export default function PostDetail(): JSX.Element {
 
                 // Handle different response structures from your backend
                 if (data.post) {
-                    setPost(normalizePostData(data.post));
+                    const normalizedPost = normalizePostData(data.post);
+                    setPost(normalizedPost);
+                    
+                    // Set comments from the post data
+                    if (data.post.comments) {
+                        // Store all comments but only show the first 5
+                        const allComments = data.post.comments;
+                        // Get unique comments by ID
+                        const uniqueComments = Array.from(new Map(allComments.map(c => [c.id, c])).values());
+                        setComments(uniqueComments.slice(0, 5));
+                        
+                        // Set pagination metadata
+                        if (data.post.comments_metadata) {
+                            // Use the actual number of unique comments
+                            setTotalComments(uniqueComments.length);
+                            setCurrentPage(1);
+                            // Show "Load More" if we have more than 5 unique comments
+                            setHasMore(uniqueComments.length > 5);
+                        }
+                    }
                 } else if (data.message === 'Success' && (data as any).data) {
                     // Handle case where backend returns data in a different structure
-                    setPost(normalizePostData((data as any).data));
+                    const normalizedPost = normalizePostData((data as any).data);
+                    setPost(normalizedPost);
                 } else {
                     setError('Estructura de respuesta inesperada');
                 }
@@ -207,40 +160,36 @@ export default function PostDetail(): JSX.Element {
         }
     }, [postId]);
 
-    useEffect(() => {
-        const fetchComments = async () => {
-            try {
-                setLoading(true);
-                // Simulamos un pequeño delay para mostrar el estado de carga
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Simulate error if flag is set
-                if (simulateError.shouldError) {
-                    throw new Error('Simulated error');
-                }
-                
-                // Solo mostramos los comentarios mockeados para el post específico
-                if (postId === 'h33e5h59-dd84-7eg3-cc86-7d7c379d857d') {
-                    setComments(mockComments);
-                    setTotalComments(mockComments.length);
-                    setHasMore(false);
-                } else {
-                    // Para otros posts, mostramos lista vacía
-                    setComments([]);
-                    setTotalComments(0);
-                    setHasMore(false);
-                }
-            } catch (error) {
-                console.error('Error al cargar los comentarios:', error);
-                setError('Error al cargar los comentarios');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchComments();
-    }, [postId]);
-
+    // Function to load more comments
+    const loadMoreComments = async () => {
+        if (!post || loadingMore) return;
+        
+        try {
+            setLoadingMore(true);
+            const nextPage = currentPage + 1;
+            const commentsPerPage = 5;
+            
+            // Calculate how many comments to show
+            const startIndex = 0;
+            const endIndex = nextPage * commentsPerPage;
+            
+            // Get all comments from the post and ensure they're unique
+            const allComments = Array.from(new Map((post.comments || []).map(c => [c.id, c])).values());
+            
+            // Show more comments
+            setComments(allComments.slice(startIndex, endIndex));
+            setCurrentPage(nextPage);
+            
+            // Check if we have more comments to show
+            setHasMore(endIndex < allComments.length);
+            
+        } catch (err) {
+            console.error('Error loading more comments:', err);
+            setError(err instanceof Error ? err.message : 'Error al cargar m\u00e1s comentarios');
+        } finally {
+            setLoadingMore(false);
+        }
+    };
 
     // Handle delete post (soft delete)
     const handleDeletePost = async (): Promise<void> => {
@@ -563,7 +512,7 @@ export default function PostDetail(): JSX.Element {
 
                 {/* Sección de Comentarios */}
                 <div className="mt-8 border-t pt-6">
-                    <h3 className="text-lg font-bold text-[#249dd8] mb-4">Comentarios</h3>
+                    <h3 className="text-lg font-bold text-[#249dd8] mb-4">Comentarios ({totalComments})</h3>
                     
                     {loading ? (
                         <div className="text-center py-8 bg-gray-50 rounded-lg">
@@ -574,6 +523,7 @@ export default function PostDetail(): JSX.Element {
                             <p className="text-red-500">{error}</p>
                         </div>
                     ) : comments.length > 0 ? (
+                        <>
                         <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                             {comments.map((comment) => (
                                 <div 
@@ -607,6 +557,25 @@ export default function PostDetail(): JSX.Element {
                                 </div>
                             ))}
                         </div>
+                            {hasMore && (
+                                <div className="mt-4 text-center">
+                                    <button
+                                        onClick={loadMoreComments}
+                                        disabled={loadingMore}
+                                        className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md disabled:bg-gray-400"
+                                    >
+                                        {loadingMore ? (
+                                            <span className="flex items-center justify-center">
+                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                Cargando...
+                                            </span>
+                                        ) : (
+                                            'Cargar m\u00e1s comentarios'
+                                        )}
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <div className="text-center py-8 bg-gray-50 rounded-lg">
                             <p className="text-gray-500">No hay comentarios para mostrar</p>
