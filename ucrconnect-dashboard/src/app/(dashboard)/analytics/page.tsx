@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { fetchAnalytics } from '@/lib/analyticsApi';
 import Chart from '@/app/components/analytics/chart';
 
+import AppDynamicsRealUserMonitoring from '../../components/app_dynamics_instrumentation/AppDynamicsRealUserMonitoring'; // RUM instrumentation for AppDynamics
+
 function formatDate(date: Date) {
   return date.toISOString().split('T')[0];
 }
@@ -69,6 +71,7 @@ export default function Analytics() {
 
   return (
     <div className="max-w-5xl mx-auto mt-10 bg-white shadow-xl rounded-2xl p-10">
+      <AppDynamicsRealUserMonitoring />
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-10">Panel de Métricas</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

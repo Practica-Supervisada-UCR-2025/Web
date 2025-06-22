@@ -4,6 +4,8 @@ import StatCard from '../../components/statCard';
 import Link from 'next/link';
 import { PostsChart, ReportsChart, UsersChart } from '../../components/charts';
 
+import AppDynamicsRealUserMonitoring from '../../components/app_dynamics_instrumentation/AppDynamicsRealUserMonitoring'; // RUM instrumentation for AppDynamics
+
 export default function Dashboard() {
   const [dashboardStats, setDashboardStats] = useState([]);
 
@@ -16,6 +18,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <AppDynamicsRealUserMonitoring />
       <div className="flex justify-center">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-6xl">
           {dashboardStats.map(({ title, value, change, route }, index) => {

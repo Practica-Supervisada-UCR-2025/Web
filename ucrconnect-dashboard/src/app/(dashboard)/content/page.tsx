@@ -3,6 +3,8 @@ import { useState, useEffect, JSX } from 'react';
 import { useRouter } from 'next/navigation';
 import { mockApiResponse } from '../../../../public/data/contentData';
 
+import AppDynamicsRealUserMonitoring from '../../components/app_dynamics_instrumentation/AppDynamicsRealUserMonitoring'; // RUM instrumentation for AppDynamics
+
 // Type definitions
 interface Post {
     id: string;
@@ -204,6 +206,7 @@ export default function Content(): JSX.Element {
 
     return (
         <div className="container mx-auto px-4 py-6 max-w-6xl">
+            <AppDynamicsRealUserMonitoring />
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-800">Panel de Moderaci&oacute;n</h1>
                 <div className="flex items-center space-x-4">
