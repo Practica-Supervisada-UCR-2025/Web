@@ -7,6 +7,8 @@ import { auth } from '@/lib/firebase';
 import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 
+import AppDynamicsRealUserMonitoring from '../../components/app_dynamics_instrumentation/AppDynamicsRealUserMonitoring'; // RUM instrumentation for AppDynamics
+
 function LoginContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -195,8 +197,11 @@ function LoginContent() {
 
 export default function Login() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginContent />
-    </Suspense>
+    <>
+      <AppDynamicsRealUserMonitoring />
+      <Suspense fallback={<div>Loading...</div>}>
+        <LoginContent />
+      </Suspense>
+    </>
   );
 }

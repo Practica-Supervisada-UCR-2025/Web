@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+import AppDynamicsRealUserMonitoring from '../../components/app_dynamics_instrumentation/AppDynamicsRealUserMonitoring'; // RUM instrumentation for AppDynamics
+
 export default function RecoverPassword() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -41,6 +43,7 @@ export default function RecoverPassword() {
 
   return (
     <div className="relative w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-md">
+       <AppDynamicsRealUserMonitoring />
       <div className="absolute -top-20 left-0 right-0 flex justify-center items-center h-32">
         <img src="/images/logos/login.svg" alt="UCRConnect" className="w-24 h-24 object-contain" />
       </div>
