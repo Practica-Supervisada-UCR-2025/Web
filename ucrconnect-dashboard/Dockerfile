@@ -1,5 +1,5 @@
 # Base build image
-FROM node:18-alpine AS builder
+FROM node:18-slim AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY . .
 RUN npm run build
 
 # Lightweight production image
-FROM node:18-alpine AS runner
+FROM node:18-slim AS runner
 
 # Set NODE_ENV to production to make next js run efficiently
 ENV NODE_ENV=production
@@ -26,7 +26,13 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
+# Appdynamics node js agent file
+COPY --from=builder /app/appdynamics-init.js ./appdynamics-init.js
+
 # Expose the port Next.js will run on
 EXPOSE 3001 
+
+# Adding the appdynamics node js agent to the frontend web app, so that it runs on the actual server hosted, and NOT the client browsers
+ENV NODE_OPTIONS="--require /app/appdynamics-init.js"
 
 CMD ["npm", "start"]
