@@ -66,10 +66,14 @@ describe('RootLayout Component', () => {
         // Verify the structure matches what we expect
         expect(result.type).toBe('html');
         expect(result.props.lang).toBe('en');
-        expect(result.props.children.type).toBe('body');
+        
+        const [head, body] = result.props.children;
+
+        expect(head.type).toBe('head');
+        expect(body.type).toBe('body');
 
         // Verify the className contains the expected font variables
-        const className = result.props.children.props.className;
+        const className = body.props.className;
         expect(className).toContain('mock-geist-sans-variable');
         expect(className).toContain('mock-geist-mono-variable');
         expect(className).toContain('antialiased');
