@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const [successPasswordMsg, setSuccessPasswordMsg] = useState('')
   const [errorProfileMsg, setErrorProfileMsg] = useState('')
   const [errorPasswordMsg, setErrorPasswordMsg] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     fetchProfileFromApiRoute()
@@ -66,19 +67,25 @@ export default function ProfilePage() {
       return
     }
 
+    setIsSubmitting(true)
     setSuccessProfileMsg('')
     setSuccessPasswordMsg('')
     setErrorProfileMsg('')
     setErrorPasswordMsg('')
 
+    let shouldReload = false
+
     try {
       const formDataToSend = new FormData()
       formDataToSend.append('full_name', formData.full_name)
+
       if (profileImageFile) {
         formDataToSend.append('profile_picture', profileImageFile)
+        shouldReload = true
       }
 
       await updateProfile(formDataToSend)
+
       setSuccessProfileMsg('Información del perfil actualizada correctamente.')
       setTimeout(() => setSuccessProfileMsg(''), 3000)
       setProfileImageFile(null)
@@ -114,7 +121,16 @@ export default function ProfilePage() {
         setTimeout(() => setErrorPasswordMsg(''), 3000)
       }
     }
+
+    setIsSubmitting(false)
+
+    if (shouldReload) {
+      setTimeout(() => {
+        location.reload()
+      }, 1000)
+    }
   }
+
 
   return (
     <div className="max-w-4xl mx-auto mt-10 bg-white shadow-xl rounded-2xl p-10">
@@ -128,16 +144,16 @@ export default function ProfilePage() {
       <div className="mt-6 flex flex-col items-center space-y-3">
         <button
           onClick={handleSubmit}
-          className="bg-[#249dd8] text-white px-10 py-3 rounded-full shadow hover:bg-[#1b87b9] transition"
+          disabled={isSubmitting}
+          className={`px-10 py-3 rounded-full shadow transition ${
+            isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#249dd8] hover:bg-[#1b87b9]'
+          } text-white`}
         >
-          Guardar cambios
+          {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
         </button>
 
-        {/* Mensajes de éxito */}
         {successProfileMsg && <p className="text-green-600 font-medium">{successProfileMsg}</p>}
         {successPasswordMsg && <p className="text-green-600 font-medium">{successPasswordMsg}</p>}
-
-        {/* Mensajes de error */}
         {errorProfileMsg && <p className="text-red-600 font-medium">{errorProfileMsg}</p>}
         {errorPasswordMsg && <p className="text-red-600 font-medium">{errorPasswordMsg}</p>}
       </div>
