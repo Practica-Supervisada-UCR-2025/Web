@@ -208,4 +208,74 @@ describe('ProfilePage', () => {
       expect(screen.getByTestId('profile-header')).toHaveTextContent('https://via.placeholder.com/120')
     })
   })
+
+  it('no cambia contraseña si no se rellenan los campos', async () => {
+    render(<ProfilePage />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('profile-form-fullname')).toHaveValue('Sebastián Rodríguez')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /guardar cambios/i }))
+
+    await waitFor(() => {
+      expect(reauthenticateWithCredential).not.toHaveBeenCalled()
+      expect(updatePassword).not.toHaveBeenCalled()
+    })
+  })
+
+  it('muestra error en consola si falla la carga del perfil', async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const mockedFetch = require('@/lib/profileApi').fetchProfileFromApiRoute
+    mockedFetch.mockRejectedValueOnce(new Error('Falló la carga'))
+
+    render(<ProfilePage />)
+
+    await waitFor(() => {
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading profile:', expect.any(Error))
+    })
+
+    consoleErrorSpy.mockRestore()
+  })
+
+  it('muestra error si falla al actualizar el perfil', async () => {
+    const mockedUpdate = require('@/lib/profileApi').updateProfile
+    mockedUpdate.mockRejectedValueOnce(new Error('Error de red'))
+
+    render(<ProfilePage />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('profile-form-fullname')).toHaveValue('Sebastián Rodríguez')
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /guardar cambios/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Error al actualizar la información del perfil.')).toBeInTheDocument()
+    })
+  })
+
+  it('muestra error genérico si falla al cambiar contraseña con otro código', async () => {
+    (reauthenticateWithCredential as jest.Mock).mockRejectedValueOnce({ code: 'auth/internal-error' })
+
+    render(<ProfilePage />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('profile-form-fullname')).toHaveValue('Sebastián Rodríguez')
+    })
+
+    fireEvent.change(screen.getByTestId('password-field-current'), {
+      target: { name: 'currentPassword', value: 'pass1234' },
+    })
+    fireEvent.change(screen.getByTestId('password-field-new'), {
+      target: { name: 'newPassword', value: 'pass4567' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /guardar cambios/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Error al cambiar la contraseña.')).toBeInTheDocument()
+    })
+  })
+  
 })
