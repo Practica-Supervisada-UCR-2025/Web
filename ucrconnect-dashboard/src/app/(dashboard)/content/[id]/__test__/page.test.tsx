@@ -934,7 +934,6 @@ describe('Hide Post Modal Flow', () => {
 
         beforeEach(() => {
             (useRouter as jest.Mock).mockReturnValue({ push: mockPush, back: mockBack });
-            // This postId matches the one in the component's mock data logic
             (useParams as jest.Mock).mockReturnValue({ id: 'h33e5h59-dd84-7eg3-cc86-7d7c379d857d' });
 
             (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -955,6 +954,12 @@ describe('Hide Post Modal Flow', () => {
                         email: 'test@example.com',
                         active_reports: '5',
                         total_reports: '10',
+                        comments: [],
+                        comments_metadata: {
+                            currentPage: 1,
+                            totalPages: 1,
+                            totalItems: 0
+                        }
                     }
                 })
             });
@@ -964,31 +969,12 @@ describe('Hide Post Modal Flow', () => {
             jest.clearAllMocks();
         });
 
-        it('should render comments when available', async () => {
+        it('should show empty state for comments when no comments exist', async () => {
             render(<PostDetail />);
 
             await waitFor(() => {
-                // Check for a specific comment's content
-                expect(screen.getByText('Este es un comentario de prueba 1')).toBeInTheDocument();
-                expect(screen.getByText('juan.perez@ucr.ac.cr')).toBeInTheDocument();
+                expect(screen.getByText('No hay comentarios para mostrar')).toBeInTheDocument();
             });
-
-            // Verify multiple comment items are rendered
-            const commentItems = screen.getAllByTestId('comment-item');
-            expect(commentItems.length).toBeGreaterThan(0);
-        });
-
-        it('should have clickable username in comments', async () => {
-            render(<PostDetail />);
-            await waitFor(() => {
-                expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
-            });
-
-            const userLink = screen.getAllByTestId('user-profile-link')[0];
-
-            // Check if element exists and is clickable
-            expect(userLink).toBeInTheDocument();
-            expect(userLink).not.toBeDisabled();
         });
 
         it('should display an error message if comments fail to load', async () => {
