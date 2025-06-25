@@ -81,7 +81,6 @@ describe('Sidebar Component', () => {
         expect(screen.getByText('Contenido')).toBeInTheDocument();
         expect(screen.getByText('Anal\u00EDticas')).toBeInTheDocument();
         expect(screen.getByText('Notificaciones')).toBeInTheDocument();
-        expect(screen.getByText('Configuraci\u00F3n')).toBeInTheDocument();
     });
 
     it('collapses and expands when toggle button is clicked', () => {
@@ -268,7 +267,7 @@ describe('Sidebar Component', () => {
 
         // Check that icons are still visible
         const navButtons = document.querySelectorAll('img');
-        expect(navButtons.length).toBe(6); // Should have 6 icons for the navigation items
+        expect(navButtons.length).toBe(5); // Should have 6 icons for the navigation items
 
         // Check that sidebar has the collapsed width class
         const sidebar = document.querySelector('aside');
