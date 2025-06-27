@@ -165,30 +165,46 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
 // Pagination component
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
     return (
-        <div className="flex justify-center items-center mt-6 mb-8">
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
             <button
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-l-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
+                className={`p-2 rounded-lg ${currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-[#204C6F] text-white hover:bg-[#2980B9]'
+                    }`}
             >
-                Anterior
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                </svg>
             </button>
-
-            <div className="px-4 py-2 bg-gray-100 text-gray-800">
-                P&aacute;gina {currentPage} de {totalPages}
-            </div>
-
+            {[...Array(totalPages)].map((_, index) => (
+                <button
+                    key={index}
+                    onClick={() => onPageChange(index + 1)}
+                    className={`px-3 py-1 rounded-lg ${currentPage === index + 1
+                            ? 'bg-[#204C6F] text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                >
+                    {index + 1}
+                </button>
+            ))}
             <button
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-r-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg ${currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-[#204C6F] text-white hover:bg-[#2980B9]'
+                    }`}
             >
-                Siguiente
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                </svg>
             </button>
         </div>
     );
 };
-
 export default function Content(): JSX.Element {
     const [apiData, setApiData] = useState<ApiResponse | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
