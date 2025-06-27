@@ -4,7 +4,6 @@ import { ArrowUp, ArrowDown } from 'lucide-react';
 export interface StatCardProps {
   title: string;
   value: string | number;
-  change: number;
   route?: string;
   bgStyle?: string;
   iconSize?: string;
@@ -23,13 +22,9 @@ export const getArrowIcon = (change: number) => {
 const StatCard: FC<StatCardProps> = ({
   title,
   value,
-  change,
   route,
   bgStyle,
-  iconSize = 'w-3 h-3',
 }) => {
-  const ArrowIcon = getArrowIcon(change);
-  const changeBg = getChangeBgClass(change);
   const defaultBgStyle = 'bg-white border border-gray-300 text-gray-900';
 
   const content = (
@@ -41,12 +36,6 @@ const StatCard: FC<StatCardProps> = ({
       <h3 id={`${title}-stat`} className="text-lg font-medium">{title}</h3>
       <div className="flex items-start">
         <p className="text-5xl font-bold">{value}</p>
-        {change !== 0 && (
-          <div className={`flex items-center px-2 py-0.5 rounded-md ml-2 text-sm font-medium ${changeBg}`}>
-            <ArrowIcon className={iconSize} />
-            <span className="ml-1">{change > 0 ? '+' : ''}{change}%</span>
-          </div>
-        )}
       </div>
     </div>
   );
