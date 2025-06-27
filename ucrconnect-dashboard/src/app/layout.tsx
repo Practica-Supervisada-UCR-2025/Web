@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "UCRConnect",
-    description: "UCRConnect",
+    title: "UCR Connect",
+    description: "UCR Connect",
 };
 
 export default function RootLayout({
