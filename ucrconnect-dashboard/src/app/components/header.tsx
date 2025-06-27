@@ -26,7 +26,9 @@ export default function Header() {
           setProfileImage(imageUrl);
         }
       } catch (error) {
-        console.error('Error al cargar imagen de perfil:', error);
+          if (process.env.NODE_ENV !== 'test') {
+              console.error('Error al cargar imagen de perfil:', error);
+          }
       }
     };
 
