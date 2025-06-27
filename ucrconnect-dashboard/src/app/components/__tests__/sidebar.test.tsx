@@ -78,7 +78,7 @@ describe('Sidebar Component', () => {
         // Check for main navigation items
         expect(screen.getByText('General')).toBeInTheDocument();
         expect(screen.getByText('Usuarios')).toBeInTheDocument();
-        expect(screen.getByText('Contenido')).toBeInTheDocument();
+        expect(screen.getByText('Moderaci\u00F3n')).toBeInTheDocument();
         expect(screen.getByText('Anal\u00EDticas')).toBeInTheDocument();
         expect(screen.getByText('Notificaciones')).toBeInTheDocument();
     });
@@ -166,7 +166,7 @@ describe('Sidebar Component', () => {
         const usersLink = screen.getByText('Usuarios').closest('a');
         expect(usersLink).toHaveAttribute('href', '/users');
 
-        const contentLink = screen.getByText('Contenido').closest('a');
+        const contentLink = screen.getByText('Moderaci\u00F3n').closest('a');
         expect(contentLink).toHaveAttribute('href', '/content');
 
         const analyticsLink = screen.getByText('Anal\u00EDticas').closest('a');
