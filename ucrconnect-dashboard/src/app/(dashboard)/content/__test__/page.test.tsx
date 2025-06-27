@@ -166,7 +166,7 @@ describe('Content Component', () => {
 
             await waitFor(() => {
                 expect(mockFetch).toHaveBeenCalledWith(
-                    '/api/posts/reported?page=1&limit=8&sortBy=reports',
+                    '/api/posts/reported?page=1&limit=8&orderBy=report_count&orderDirection=DESC',
                     {
                         method: 'GET',
                         headers: {
@@ -280,7 +280,7 @@ describe('Content Component', () => {
 
             await waitFor(() => {
                 expect(mockFetch).toHaveBeenCalledWith(
-                    '/api/posts/reported?page=1&limit=8&sortBy=date',
+                    '/api/posts/reported?page=1&limit=8&orderBy=date&orderDirection=DESC',
                     expect.any(Object)
                 );
             });
@@ -314,7 +314,7 @@ describe('Content Component', () => {
 
             await waitFor(() => {
                 expect(mockFetch).toHaveBeenLastCalledWith(
-                    '/api/posts/reported?page=1&limit=8&sortBy=date',
+                    '/api/posts/reported?page=1&limit=8&orderBy=date&orderDirection=DESC',
                     expect.any(Object)
                 );
             });
@@ -354,7 +354,7 @@ describe('Content Component', () => {
 
             await waitFor(() => {
                 expect(mockFetch).toHaveBeenCalledWith(
-                    '/api/posts/reported?page=2&limit=8&sortBy=reports',
+                    '/api/posts/reported?page=2&limit=8&orderBy=report_count&orderDirection=DESC',
                     expect.any(Object)
                 );
             });
@@ -478,7 +478,7 @@ describe('Content Component', () => {
 
             await waitFor(() => {
                 expect(mockFetch).toHaveBeenCalledWith(
-                    '/api/posts/reported?page=1&limit=8&sortBy=reports',
+                    '/api/posts/reported?page=1&limit=8&orderBy=report_count&orderDirection=DESC',
                     expect.any(Object)
                 );
             });
@@ -512,7 +512,7 @@ describe('Content Component', () => {
 
             await waitFor(() => {
                 expect(mockFetch).toHaveBeenLastCalledWith(
-                    '/api/posts/reported?page=1&limit=8&sortBy=reports',
+                    '/api/posts/reported?page=1&limit=8&orderBy=report_count&orderDirection=DESC',
                     expect.any(Object)
                 );
             });

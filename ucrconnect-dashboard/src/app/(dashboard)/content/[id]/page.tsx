@@ -112,7 +112,7 @@ export default function PostDetail(): JSX.Element {
                         setError('No autorizado para ver esta publicaci\u00f3n');
                         return;
                     }
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    throw new Error(`Código de error: ${response.status}. Reintentar posteriormente.`);
                 }
 
                 const data: ApiResponse = await response.json();
@@ -390,14 +390,84 @@ export default function PostDetail(): JSX.Element {
     if (!post) {
         return (
             <div className="container mx-auto px-4 py-6 max-w-4xl">
-                <div className="text-center py-20">
-                    <div className="text-red-500 mb-4">Publicaci&oacute;n no encontrada</div>
-                    <button
-                        onClick={() => router.push('/content')}
-                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md"
-                    >
-                        Volver al panel
-                    </button>
+                {/* Header Skeleton */}
+                <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center">
+                        <div className="h-5 w-5 bg-gray-300 rounded mr-2 animate-pulse"></div>
+                        <div className="h-4 w-16 bg-gray-300 rounded animate-pulse"></div>
+                    </div>
+                    <div className="h-8 w-48 bg-gray-300 rounded animate-pulse"></div>
+                    <div></div>
+                </div>
+
+                {/* Main Content Skeleton */}
+                <div className="bg-gray-20 rounded-lg shadow-lg p-6">
+                    {/* User Info and Reports Skeleton */}
+                    <div className="flex justify-between items-start mb-6">
+                        <div>
+                            <div className="h-6 w-32 bg-gray-300 rounded animate-pulse mb-2"></div>
+                            <div className="h-4 w-48 bg-gray-300 rounded animate-pulse"></div>
+                        </div>
+                        <div className="text-right">
+                            <div className="h-8 w-32 bg-gray-300 rounded-lg animate-pulse mb-2"></div>
+                            <div className="h-4 w-24 bg-gray-300 rounded animate-pulse"></div>
+                        </div>
+                    </div>
+
+                    {/* Content Skeleton */}
+                    <div className="mb-6">
+                        <div className="h-6 w-20 bg-gray-300 rounded animate-pulse mb-3"></div>
+                        <div className="bg-gray-100 rounded-lg p-4">
+                            <div className="space-y-2 mb-4">
+                                <div className="h-4 w-full bg-gray-300 rounded animate-pulse"></div>
+                                <div className="h-4 w-4/5 bg-gray-300 rounded animate-pulse"></div>
+                                <div className="h-4 w-3/4 bg-gray-300 rounded animate-pulse"></div>
+                            </div>
+                            {/* Image placeholder */}
+                            <div className="h-48 w-full bg-gray-300 rounded-lg animate-pulse"></div>
+                        </div>
+                    </div>
+
+                    {/* Metadata Skeleton */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <div className="h-6 w-24 bg-gray-300 rounded animate-pulse mb-3"></div>
+                            <div className="space-y-2">
+                                <div className="h-4 w-40 bg-gray-300 rounded animate-pulse"></div>
+                                <div className="h-4 w-36 bg-gray-300 rounded animate-pulse"></div>
+                                <div className="flex items-center">
+                                    <div className="h-4 w-16 bg-gray-300 rounded animate-pulse"></div>
+                                    <div className="h-6 w-16 bg-gray-300 rounded-full ml-2 animate-pulse"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Comments Section Skeleton */}
+                    <div className="mt-8 border-t pt-6">
+                        <div className="h-6 w-24 bg-gray-300 rounded animate-pulse mb-4"></div>
+                        <div className="space-y-4">
+                            {[...Array(3)].map((_, index) => (
+                                <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="h-4 w-24 bg-gray-300 rounded animate-pulse"></div>
+                                        <div className="h-4 w-32 bg-gray-300 rounded animate-pulse"></div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="h-4 w-full bg-gray-300 rounded animate-pulse"></div>
+                                        <div className="h-4 w-3/4 bg-gray-300 rounded animate-pulse"></div>
+                                    </div>
+                                    <div className="h-3 w-32 bg-gray-300 rounded animate-pulse mt-2"></div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Action Buttons Skeleton */}
+                    <div className="flex flex-wrap gap-4 pt-6 border-t">
+                        <div className="h-12 w-40 bg-gray-300 rounded-md animate-pulse"></div>
+                        <div className="h-12 w-36 bg-gray-300 rounded-md animate-pulse"></div>
+                    </div>
                 </div>
             </div>
         );
@@ -580,23 +650,38 @@ export default function PostDetail(): JSX.Element {
                 </div>
 
                 {/* Action Buttons*/}
-                {!hideButtons && post.is_active && (
+                {!hideButtons && (
                     <div className="flex flex-wrap gap-4 pt-6 border-t">
-                        <button
-                            onClick={() => setShowHideConfirmModal(true)}
-                            disabled={actionLoading}
-                            className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
-                        >
-                            {actionLoading ? 'Procesando...' : 'Ocultar publicaci\u00f3n'}
-                        </button>
-
-                        <button
-                            onClick={() => setShowConfirmClearReports(true)}
-                            disabled={actionLoading || parseInt(post.active_reports) === 0}
-                            className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
-                        >
-                            {actionLoading ? 'Procesando...' : 'Eliminar reportes'}
-                        </button>
+                        {post.is_active ? (
+                            // Buttons for active posts
+                            <>
+                                <button
+                                    onClick={() => setShowHideConfirmModal(true)}
+                                    disabled={actionLoading}
+                                    className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
+                                >
+                                    {actionLoading ? 'Procesando...' : 'Ocultar publicación'}
+                                </button>
+                                <button
+                                    onClick={() => setShowConfirmClearReports(true)}
+                                    disabled={actionLoading || parseInt(post.active_reports) === 0}
+                                    className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
+                                >
+                                    {actionLoading ? 'Procesando...' : 'Eliminar reportes'}
+                                </button>
+                            </>
+                        ) : (
+                            // Buttons for inactive posts
+                                <>
+                                    <button
+                                        onClick={() => setShowConfirmClearReports(true)}
+                                        disabled={actionLoading}
+                                        className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
+                                    >
+                                        {actionLoading ? 'Procesando...' : 'Restaurar publicación'}
+                                    </button>
+                                </>
+                        )}
                     </div>
                 )}
             </div>
@@ -719,9 +804,16 @@ export default function PostDetail(): JSX.Element {
             {showConfirmClearReports && (
                 <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4 text-gray-800">Confirmar eliminaci&oacute;n de reportes</h3>
-                        <p className="text-gray-600 mb-4">&iquest;Est&aacute;s seguro de que deseas eliminar todos los reportes activos de esta publicaci&oacute;n?</p>
-                        <div className="flex justify-end space-x-4 mt-6">
+                        <h3 className="text-lg font-bold mb-4 text-gray-800">
+                            {post.is_active ? 'Confirmar eliminaci\u00f3n de reportes' : 'Confirmar restauraci\u00f3n de publicaci\u00f3n'}
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                            {post.is_active
+                                ? '\u00bfEst\u00e1s seguro de que deseas eliminar todos los reportes activos de esta publicaci\u00f3n?'
+                                : '\u00bfEst\u00e1s seguro de que deseas restaurar esta publicaci\u00f3n?'
+                            }
+                        </p>
+                            <div className="flex justify-end space-x-4 mt-6">
                             <button
                                 onClick={() => setShowConfirmClearReports(false)}
                                 className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
