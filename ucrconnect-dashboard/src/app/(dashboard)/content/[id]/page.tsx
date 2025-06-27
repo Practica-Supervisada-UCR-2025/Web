@@ -74,6 +74,8 @@ export default function PostDetail(): JSX.Element {
     const [showHideConfirmModal, setShowHideConfirmModal] = useState(false);
     const [showSuspendModal, setShowSuspendModal] = useState(false);
     const [showSuspensionDuration, setShowSuspensionDuration] = useState(false);
+    const [suspensionReason, setSuspensionReason] = useState('');
+    const [suspensionTime, setSuspensionTime] = useState('1');
     const [showConfirmClearReports, setShowConfirmClearReports] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const [comments, setComments] = useState<Comment[]>([]);
@@ -356,7 +358,7 @@ export default function PostDetail(): JSX.Element {
             <div className="container mx-auto px-4 py-6 max-w-4xl">
                 <div className="flex justify-center items-center py-20">
                     <div className="flex items-center space-x-2">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#249dd8]"></div>
+                        <div className="animate-spin rounded-xl h-6 w-6 border-b-2 border-[#249dd8]"></div>
                         <span className="text-gray-500">Cargando publicaci&oacute;n...</span>
                     </div>
                 </div>
@@ -372,13 +374,13 @@ export default function PostDetail(): JSX.Element {
                     <div className="flex justify-center space-x-4">
                         <button
                             onClick={() => window.location.reload()}
-                            className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                            className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-xl"
                         >
                             Reintentar
                         </button>
                         <button
                             onClick={() => router.push('/content')}
-                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md"
+                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-xl"
                         >
                             Volver al panel
                         </button>
@@ -394,7 +396,7 @@ export default function PostDetail(): JSX.Element {
                     <div className="text-red-500 mb-4">Publicaci&oacute;n no encontrada</div>
                     <button
                         onClick={() => router.push('/content')}
-                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md"
+                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-xl"
                     >
                         Volver al panel
                     </button>
@@ -422,7 +424,7 @@ export default function PostDetail(): JSX.Element {
 
             {/* Success message */}
             {successMessage && (
-                <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-md">
+                <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-xl">
                     <div className="flex items-center">
                         <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -433,9 +435,9 @@ export default function PostDetail(): JSX.Element {
             )}
             {/* Loading message */}
             {actionLoading && (
-                <div className="mb-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-md">
+                <div className="mb-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-xl">
                     <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2"></div>
+                        <div className="animate-spin rounded-xl h-4 w-4 border-b-2 border-blue-700 mr-2"></div>
                         Procesando acci&oacute;n...
                     </div>
                 </div>
@@ -443,7 +445,7 @@ export default function PostDetail(): JSX.Element {
 
             {/* Error message */}
             {error && (
-                <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-xl">
                     {error}
                 </div>
             )}
@@ -498,7 +500,7 @@ export default function PostDetail(): JSX.Element {
                             <p><span className="font-medium">Actualizado:</span> {formatDate(post.updated_at)}</p>
                             <p>
                                 <span className="font-medium">Estado:</span>
-                                <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${post.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                <span className={`ml-2 px-2 py-1 rounded-xl text-xs font-medium ${post.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                                     {post.is_active ? 'Activo' : 'Inactivo'}
                                 </span>
                             </p>
@@ -558,11 +560,11 @@ export default function PostDetail(): JSX.Element {
                                     <button
                                         onClick={loadMoreComments}
                                         disabled={loadingMore}
-                                        className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md disabled:bg-gray-400"
+                                        className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-xl disabled:bg-gray-400"
                                     >
                                         {loadingMore ? (
                                             <span className="flex items-center justify-center">
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                                <div className="animate-spin rounded-xl h-4 w-4 border-b-2 border-white mr-2"></div>
                                                 Cargando...
                                             </span>
                                         ) : (
@@ -585,7 +587,7 @@ export default function PostDetail(): JSX.Element {
                         <button
                             onClick={() => setShowHideConfirmModal(true)}
                             disabled={actionLoading}
-                            className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
+                            className="px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl font-medium transition-colors"
                         >
                             {actionLoading ? 'Procesando...' : 'Ocultar publicaci\u00f3n'}
                         </button>
@@ -593,7 +595,7 @@ export default function PostDetail(): JSX.Element {
                         <button
                             onClick={() => setShowConfirmClearReports(true)}
                             disabled={actionLoading || parseInt(post.active_reports) === 0}
-                            className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-md font-medium transition-colors"
+                            className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-xl font-medium transition-colors"
                         >
                             {actionLoading ? 'Procesando...' : 'Eliminar reportes'}
                         </button>
@@ -603,14 +605,14 @@ export default function PostDetail(): JSX.Element {
 
             {/* Modals */}
             {showHideConfirmModal && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4 text-gray-800">&iquest;Deseas ocultar publicaci&oacute;n?</h3>
-                        <p className="text-gray-600 mb-4">Esta acci&oacute;n esconder&aacute; la publicaci&oacute;n de la vista p&uacute;blica.</p>
-                        <div className="flex justify-end space-x-4 mt-6">
+                        <h3 className="text-xl font-semibold mb-4 text-center mb-4 text-gray-800">&iquest;Deseas ocultar publicaci&oacute;n?</h3>
+                        <p className="text-gray-600 mb-4 text-center ">Esta acci&oacute;n esconder&aacute; la publicaci&oacute;n de la vista p&uacute;blica.</p>
+                        <div className="flex justify-center gap-4 mt-6">
                             <button
                                 onClick={() => setShowHideConfirmModal(false)}
-                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-xl"
                                 disabled={actionLoading}
                             >
                                 Cancelar
@@ -620,10 +622,10 @@ export default function PostDetail(): JSX.Element {
                                     setShowHideConfirmModal(false);
                                     setShowSuspendModal(true);
                                 }}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl"
                                 disabled={actionLoading}
                             >
-                                Continuar
+                                Ocultar
                             </button>
                         </div>
                     </div>
@@ -631,13 +633,13 @@ export default function PostDetail(): JSX.Element {
             )}
 
             {showSuspendModal && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4 text-gray-800">&iquest;Tambi&eacute;n deseas suspender al usuario?</h3>
-                        <div className="flex justify-end space-x-4 mt-6">
+                        <h3 className="text-xl font-semibold mb-4 text-center mb-4 text-gray-800">&iquest;Tambi&eacute;n deseas suspender al usuario?</h3>
+                        <div className="flex justify-center gap-4 mt-6">
                             <button
                                 onClick={() => setShowSuspendModal(false)}
-                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-xl"
                                 disabled={actionLoading}
                             >
                                 Cancelar
@@ -647,7 +649,7 @@ export default function PostDetail(): JSX.Element {
                                     setShowSuspendModal(false);
                                     handleHidePost();
                                 }}
-                                className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                                className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-xl"
                                 disabled={actionLoading}
                             >
                                 Solo ocultar
@@ -657,7 +659,7 @@ export default function PostDetail(): JSX.Element {
                                     setShowSuspendModal(false);
                                     setShowSuspensionDuration(true);
                                 }}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl"
                                 disabled={actionLoading}
                             >
                                 Suspender
@@ -667,64 +669,65 @@ export default function PostDetail(): JSX.Element {
                 </div>
             )}
             {showSuspensionDuration && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4 text-gray-800">Selecciona la duraci&oacute;n de la suspensi&oacute;n</h3>
-                        <div className="flex flex-col space-y-3 mt-6">
-                            <div className="flex justify-center space-x-4">
-                                <button
-                                    onClick={() => {
-                                        setShowSuspensionDuration(false);
-                                        handleHidePost(1);
-                                    }}
-                                    className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
-                                    disabled={actionLoading}
-                                >
-                                    1 d&iacute;a
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShowSuspensionDuration(false);
-                                        handleHidePost(3);
-                                    }}
-                                    className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
-                                    disabled={actionLoading}
-                                >
-                                    3 d&iacute;as
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShowSuspensionDuration(false);
-                                        handleHidePost(7);
-                                    }}
-                                    className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
-                                    disabled={actionLoading}
-                                >
-                                    7 d&iacute;as
-                                </button>
-                            </div>
-                            <div className="flex justify-center">
-                                <button
-                                    onClick={() => setShowSuspensionDuration(false)}
-                                    className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
-                                    disabled={actionLoading}
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-sm shadow-xl" role="dialog" aria-labelledby="suspend-modal-title">
+                        <h2 id="suspend-modal-title" className="text-xl font-semibold mb-4 text-center mb-4 text-gray-800">
+                            Está a punto de suspender al siguiente usuario: {post.username}
+                        </h2>
+                        <p className="text-gray-600 mb-4 text-center">Por favor, elija el tiempo de suspensión:</p>
+
+                        <select
+                            className="w-full p-2 border border-gray-300 rounded-xl mb-4 focus:outline-none focus:ring-1 focus:ring-[#1b87b9] focus:border-[#1b87b9] text-gray-900"
+                            value={suspensionTime}
+                            onChange={(e) => setSuspensionTime(e.target.value)}
+                        >
+                            <option value="1" className="text-gray-500">1 día</option>
+                            <option value="3" className="text-gray-500">3 días</option>
+                            <option value="7" className="text-gray-500">7 días</option>
+                        </select>
+
+                        <textarea
+                            className="w-full p-2 border border-gray-300 rounded-xl mb-6 focus:outline-none focus:ring-1 focus:ring-[#1b87b9] focus:border-[#1b87b9] text-gray-500 resize-none"
+                            placeholder="Motivo de la suspensión..."
+                            rows={3}
+                            value={suspensionReason}
+                            onChange={(e) => setSuspensionReason(e.target.value)}
+                        />
+
+                        <div className="flex justify-center gap-4">
+                            <button
+                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-xl"
+                                onClick={() => {
+                                    setShowSuspensionDuration(false);
+                                    setSuspensionReason('');
+                                }}
+                                disabled={actionLoading}
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                                onClick={() => {
+                                    setShowSuspensionDuration(false);
+                                    handleHidePost(parseInt(suspensionTime));
+                                }}
+                                disabled={actionLoading}
+                            >
+                                Suspender
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
             {showConfirmClearReports && (
-                <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg w-full max-w-md p-6">
-                        <h3 className="text-lg font-bold mb-4 text-gray-800">Confirmar eliminaci&oacute;n de reportes</h3>
-                        <p className="text-gray-600 mb-4">&iquest;Est&aacute;s seguro de que deseas eliminar todos los reportes activos de esta publicaci&oacute;n?</p>
-                        <div className="flex justify-end space-x-4 mt-6">
+                        <h3 className="text-xl font-semibold mb-4 text-center mb-4 text-gray-800">Confirmar eliminaci&oacute;n de reportes</h3>
+                        <p className="text-gray-600 mb-4 text-center">&iquest;Est&aacute;s seguro de que deseas eliminar todos los reportes activos de esta publicaci&oacute;n?</p>
+                        <div className="flex justify-center gap-4 mt-6">
                             <button
                                 onClick={() => setShowConfirmClearReports(false)}
-                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md"
+                                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-xl"
                                 disabled={actionLoading}
                             >
                                 Cancelar
@@ -734,10 +737,10 @@ export default function PostDetail(): JSX.Element {
                                     setShowConfirmClearReports(false);
                                     handleRestorePost();
                                 }}
-                                className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl"
                                 disabled={actionLoading}
                             >
-                                Confirmar
+                                Eliminar
                             </button>
                         </div>
                     </div>
