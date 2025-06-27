@@ -876,7 +876,7 @@ describe('Hide Post Modal Flow', () => {
             render(<PostDetail />);
 
             await waitFor(() => {
-                expect(screen.getByText(/HTTP error! status: 500/i)).toBeInTheDocument();
+                expect(screen.getByText(/C.digo de error: 500. Reintentar posteriormente./i)).toBeInTheDocument();
             });
         });
 
@@ -987,7 +987,7 @@ describe('Hide Post Modal Flow', () => {
             render(<PostDetail />);
 
             await waitFor(() => {
-                expect(screen.getByText(/HTTP error! status: 500/i)).toBeInTheDocument();
+                expect(screen.getByText(/C.digo de error: 500. Reintentar posteriormente./i)).toBeInTheDocument();
             });
         });
     });
