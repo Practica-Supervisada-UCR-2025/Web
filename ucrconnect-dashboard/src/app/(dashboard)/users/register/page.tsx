@@ -219,10 +219,13 @@ export default function RegisterUser() {
 
             const { auth: secondaryAuth, app: secondaryApp } = getSecondaryAuth();
 
+            // Parse email to lowercase
+            const parsedEmail = formData.email.toLowerCase().trim();
+
             // Create user in Firebase
             const userCredential = await createUserWithEmailAndPassword(
                 secondaryAuth,
-                formData.email,
+                parsedEmail,
                 formData.password
             );
 
@@ -237,7 +240,7 @@ export default function RegisterUser() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    email: formData.email,
+                    email: parsedEmail,
                     full_name: formData.name,
                     auth_id: authId,
                     auth_token: newUserToken,
