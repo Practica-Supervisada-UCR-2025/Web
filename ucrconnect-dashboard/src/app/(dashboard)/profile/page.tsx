@@ -8,6 +8,7 @@ import { getProfileValidationErrors } from '@/lib/validation/profile'
 import { ProfileHeader } from '@/components/profile/profileHeader'
 import { ProfileForm } from '@/components/profile/profileForm'
 import { PasswordFields } from '@/components/profile/passwordFields'
+import { Button } from '@/components/ui/button'
 
 export default function ProfilePage() {
   const [formData, setFormData] = useState({
@@ -142,15 +143,15 @@ export default function ProfilePage() {
       <h4 className="text-lg font-semibold text-gray-700 mb-4">Cambiar contraseña</h4>
       <PasswordFields formData={formData} errors={errors} onChange={handleChange} />
       <div className="mt-6 flex flex-col items-center space-y-3">
-        <button
+        <Button
           onClick={handleSubmit}
-          disabled={isSubmitting}
-          className={`px-10 py-3 rounded-full shadow transition ${
-            isSubmitting ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#249dd8] hover:bg-[#1b87b9]'
-          } text-white`}
+          type="button"
+          isLoading={isSubmitting}
+          disabled={false}
+          className=""
         >
-          {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
-        </button>
+          Guardar cambios
+        </Button>
 
         {successProfileMsg && <p className="text-green-600 font-medium">{successProfileMsg}</p>}
         {successPasswordMsg && <p className="text-green-600 font-medium">{successPasswordMsg}</p>}
