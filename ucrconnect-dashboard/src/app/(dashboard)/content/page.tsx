@@ -208,7 +208,7 @@ const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPage
 export default function Content(): JSX.Element {
     const [apiData, setApiData] = useState<ApiResponse | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
-    const [sortBy, setSortBy] = useState<'reports' | 'date'>('reports');
+    const [sortBy, setSortBy] = useState<'report_count' | 'date'>('report_count');
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -216,13 +216,13 @@ export default function Content(): JSX.Element {
     const postsPerPage = 8;
 
     // Fetch data function
-    const fetchData = async (page: number = currentPage, sort: 'reports' | 'date' = sortBy) => {
+    const fetchData = async (page: number = currentPage, sort: 'report_count' | 'date' = sortBy) => {
         try {
             setLoading(true);
             setError(null);
 
             const response = await fetch(
-                `/api/posts/reported?page=${page}&limit=${postsPerPage}&sortBy=${sort}`,
+                `/api/posts/reported?page=${page}&limit=${postsPerPage}&orderBy=${sort}&orderDirection=DESC`,
                 {
                     method: 'GET',
                     headers: {
@@ -263,7 +263,7 @@ export default function Content(): JSX.Element {
     };
 
     // Handle sort change
-    const handleSortChange = (newSort: 'reports' | 'date'): void => {
+    const handleSortChange = (newSort: 'report_count' | 'date'): void => {
         setSortBy(newSort);
         setCurrentPage(1); // Reset to first page when sorting changes
     };
@@ -341,11 +341,11 @@ export default function Content(): JSX.Element {
                         <select
                             id="sortBy"
                             value={sortBy}
-                            onChange={(e) => handleSortChange(e.target.value as 'reports' | 'date')}
+                            onChange={(e) => handleSortChange(e.target.value as 'report_count' | 'date')}
                             className="bg-white border border-gray-300 rounded-xl px-3 py-1 text-sm text-gray-800"
                             disabled={loading}
                         >
-                            <option value="reports">Reportes</option>
+                            <option value="report_count">Reportes</option>
                             <option value="date">Fecha</option>
                         </select>
                     </div>
