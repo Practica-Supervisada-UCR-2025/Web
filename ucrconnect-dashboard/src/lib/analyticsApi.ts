@@ -18,7 +18,7 @@ export async function fetchAnalytics({interval, startDate, endDate, graphType}: 
       res = await fetch(`/api/analytics/user-stats/${graphType}?${query}`);
       break;
     case "volume":
-      res = await fetch(`/api/analytics/posts-stats/${graphType}?${query}`);
+      res = await fetch(`/api/analytics/reports-stats/${graphType}?${query}`);
       break;
     case "total":
       res = await fetch(`/api/analytics/posts/stats/${graphType}?${query2}`);
