@@ -209,7 +209,7 @@ export default function Analytics() {
         <p className="text-center text-gray-600">No hay datos para mostrar.</p>
       )}
 
-      {data.length > 0 && (
+      {data.length > 0 && !loading && (
         <>
           <Chart data={data} type={chartType} xKey="date" yKey="count" />
           {interval === 'weekly' && (
