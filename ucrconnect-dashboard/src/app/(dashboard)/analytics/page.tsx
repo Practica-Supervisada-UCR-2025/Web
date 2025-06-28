@@ -110,33 +110,33 @@ export default function Analytics() {
           onChange={setInterval}
         />
 
-        {graphType === 'growth' ? (
-          <Dropdown
-            id="growthMode"
-            label="recimiento"
-            value={cumulative ? 'cumulative' : 'non-cumulative'}
-            options={[
-              { label: 'Acumulado', value: 'cumulative' },
-              { label: 'Por periodo', value: 'non-cumulative' },
-            ]}
-            onChange={(value) => setCumulative(value === 'cumulative')}
-          />
-        ) : (
-          <>
-            <div>
-              <label htmlFor="startDate" className="block text-sm font-semibold text-[#249dd8] mb-1">
-                Inicio
-              </label>
-              <input
-                id="startDate"
-                type="date"
-                value={startDate}
-                min={minDate}
-                max={endDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full rounded-xl px-4 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#249dd8] focus:border-[#249dd8] text-gray-800 shadow-sm [appearance:textfield]"
-              />
-            </div>
+          {graphType === 'growth' ? (
+            <Dropdown
+              id="growthMode"
+              label="Crecimiento"
+              value={cumulative ? 'cumulative' : 'non-cumulative'}
+              options={[
+                { label: 'Acumulado', value: 'cumulative' },
+                { label: 'Por periodo', value: 'non-cumulative' },
+              ]}
+              onChange={(value) => setCumulative(value === 'cumulative')}
+            />
+          ) : (
+            <>
+              <div>
+                <label htmlFor="startDate" className="block text-sm font-semibold text-[#249dd8] mb-1">
+                  Inicio
+                </label>
+                <input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  min={minDate}
+                  max={endDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full rounded-xl px-4 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#249dd8] focus:border-[#249dd8] text-gray-800 shadow-sm"
+                />
+              </div>
 
             <div>
               <label htmlFor="endDate" className="block text-sm font-semibold text-[#249dd8] mb-1">
@@ -205,14 +205,19 @@ export default function Analytics() {
       )}
 
       <div className="h-[450px] border rounded p-4">
-        {!loading && data.length === 0 && !error && (
-          <p className="text-center text-gray-600">No hay datos para mostrar.</p>
-        )}
+      {!loading && data.length === 0 && !error && (
+        <p className="text-center text-gray-600">No hay datos para mostrar.</p>
+      )}
 
-        {data.length > 0 && (
+      {data.length > 0 && (
+        <>
           <Chart data={data} type={chartType} xKey="date" yKey="count" />
-        )}
-      </div>
+          {interval === 'weekly' && (
+            <p className="mt-4 text-sm text-center text-gray-500 italic">W = Semana</p>
+          )}
+        </>
+      )}
+    </div>
     </div>
   );
 }
