@@ -55,9 +55,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Imprime el JWT en consola
-    console.log('Received JWT from backend:', backendData.access_token);
-
     // If backend response is successful, set the cookie and return success
     const successResponse = NextResponse.json({ message: 'Login successful', access_token: backendData.access_token }, { status: 200 });
     
