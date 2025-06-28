@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, JSX } from 'react';
 import { useRouter } from 'next/navigation';
+import { Dropdown } from '@/components/ui/dropdown';
 
 // Type definitions
 interface Post {
@@ -337,17 +338,18 @@ export default function Content(): JSX.Element {
                 <h1 className="text-2xl font-bold text-gray-800">Panel de Moderaci&oacute;n</h1>
                 <div className="flex items-center space-x-4">
                     <div className="flex items-center">
-                        <label htmlFor="sortBy" className="mr-2 text-sm text-gray-600">Ordenar por:</label>
-                        <select
+                        <label htmlFor="sortBy" className="mr-2 text-sm font-semibold text-[#249dd8]">Ordenar por:</label>
+                        <Dropdown
                             id="sortBy"
+                            label=""
                             value={sortBy}
-                            onChange={(e) => handleSortChange(e.target.value as 'report_count' | 'date')}
-                            className="bg-white border border-gray-300 rounded-xl px-3 py-1 text-sm text-gray-800"
+                            options={[
+                                { label: 'Reportes', value: 'report_count' },
+                                { label: 'Fecha', value: 'date' },
+                            ]}
+                            onChange={(value) => handleSortChange(value as 'report_count' | 'date')}
                             disabled={loading}
-                        >
-                            <option value="report_count">Reportes</option>
-                            <option value="date">Fecha</option>
-                        </select>
+                        />
                     </div>
 
                     <button
