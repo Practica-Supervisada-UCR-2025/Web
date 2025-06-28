@@ -46,7 +46,7 @@ export default function Header() {
     const pathTitles: Record<string, string> = {
       '/dashboard': 'Vista General',
       '/users': 'Usuarios',
-      '/content': 'Contenido',
+      '/content': 'Moderaci\u00F3n',
       '/analytics': 'Anal\u00EDticas',
       '/notifications': 'Notificaciones',
       '/settings': 'Configuraci\u00F3n',
