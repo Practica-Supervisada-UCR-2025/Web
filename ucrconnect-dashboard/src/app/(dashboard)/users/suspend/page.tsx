@@ -4,11 +4,12 @@ import { mockUsers } from '../mockUsers';
 import toast from 'react-hot-toast';
 
 interface User {
-  name: string;
-  email: string;
-  type: string;
-  status: string;
-  suspensionDays: number;
+    name: string;
+    email: string;
+    type: string;
+    status: string;
+    suspensionDays: number;
+    suspensionReason?: string;
 }
 
 export default function SuspendUser() {
@@ -17,6 +18,7 @@ export default function SuspendUser() {
   const [showActivateModal, setShowActivateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [suspensionTime, setSuspensionTime] = useState('1');
+  const [suspensionReason, setSuspensionReason] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [users, setUsers] = useState<User[]>(mockUsers);
   const usersPerPage = 6;
@@ -36,21 +38,22 @@ export default function SuspendUser() {
     setCurrentPage(pageNumber);
   };
 
-  const handleSuspendUser = () => {
-    if (selectedUser) {
-      try {
-        setUsers(users.map(user => 
-          user.email === selectedUser.email 
-            ? { ...user, status: 'Suspendido', suspensionDays: parseInt(suspensionTime) }
-            : user
-        ));
-        setShowModal(false);
-        toast.success(`Usuario ${selectedUser.name} suspendido por ${suspensionTime} ${parseInt(suspensionTime) === 1 ? 'día' : 'días'}`);
-      } catch (error) {
-        toast.error('Error al suspender usuario');
-      }
-    }
-  };
+    const handleSuspendUser = () => {
+        if (selectedUser) {
+            try {
+                setUsers(users.map(user =>
+                    user.email === selectedUser.email
+                        ? { ...user, status: 'Suspendido', suspensionDays: parseInt(suspensionTime), suspensionReason: suspensionReason }
+                        : user
+                ));
+                setShowModal(false);
+                setSuspensionReason('');
+                toast.success(`Usuario ${selectedUser.name} suspendido por ${suspensionTime} ${parseInt(suspensionTime) === 1 ? 'día' : 'días'}`);
+            } catch (error) {
+                toast.error('Error al suspender usuario');
+            }
+        }
+    };
 
   const handleActivateUser = () => {
     if (selectedUser) {
@@ -70,7 +73,7 @@ export default function SuspendUser() {
 
   return (
     <div className="w-full max-w-[95vw] mx-auto px-4">
-      <h1 className="text-2xl font-bold text-[#204C6F]">Suspender Usuarios</h1>
+      <h1 className="text-2xl font-bold text-[#249dd8]">Suspender Usuarios</h1>
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 relative mt-4">
         <div className="relative w-full sm:w-96">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -80,7 +83,7 @@ export default function SuspendUser() {
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
+            className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#1b87b9] focus:border-[#1b87b9] sm:text-sm shadow-md"
             placeholder="Buscar usuarios..."
             value={searchQuery}
             onChange={(e) => {
@@ -94,7 +97,7 @@ export default function SuspendUser() {
       <div className="mt-8">
         <div className="overflow-x-auto rounded-xl">
           <table className="min-w-full bg-white shadow-md">
-            <thead className="bg-[#204C6F]/10">
+            <thead className="bg-[#249dd8]/10">
               <tr>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correo</th>
@@ -107,11 +110,11 @@ export default function SuspendUser() {
             <tbody className="divide-y divide-gray-200">
               {currentUsers.map((user, index) => (
                 <tr key={index} className="hover:bg-gray-50">
-                  <td className="text-[#2980B9] px-4 sm:px-6 py-4 whitespace-nowrap">{user.name}</td>
+                  <td className="text-[#1b87b9] px-4 sm:px-6 py-4 whitespace-nowrap">{user.name}</td>
                   <td className="text-gray-900 px-4 sm:px-6 py-4 whitespace-nowrap">{user.email}</td>
                   <td className="text-gray-900 px-4 sm:px-6 py-4 whitespace-nowrap">{user.type}</td>
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 rounded-full ${
+                    <span className={`px-2 inline-flex text-xs leading-5 rounded-xl ${
                       user.status === 'Activo' 
                         ? 'bg-[#609000]/20 text-[#609000]'
                         : 'bg-red-100 text-red-700'
@@ -125,7 +128,7 @@ export default function SuspendUser() {
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                     {user.status === 'Activo' ? (
                       <span 
-                        className="px-2 inline-flex text-xs leading-5 rounded-full border border-red-700 text-red-700 hover:bg-red-700 hover:text-white transition-all duration-300 cursor-pointer"
+                        className="px-2 inline-flex text-xs leading-5 rounded-xl border border-red-700 text-red-700 hover:bg-red-700 hover:text-white transition-all duration-300 cursor-pointer"
                         onClick={() => {
                           setSelectedUser(user);
                           setShowModal(true);
@@ -135,7 +138,7 @@ export default function SuspendUser() {
                       </span>
                     ) : (
                       <span 
-                        className="px-2 inline-flex text-xs leading-5 rounded-full border border-[#609000] text-[#609000] hover:bg-[#609000] hover:text-white transition-all duration-300 cursor-pointer"
+                        className="px-2 inline-flex text-xs leading-5 rounded-xl border border-[#609000] text-[#609000] hover:bg-[#609000] hover:text-white transition-all duration-300 cursor-pointer"
                         onClick={() => {
                           setSelectedUser(user);
                           setShowActivateModal(true);
@@ -160,7 +163,7 @@ export default function SuspendUser() {
               className={`p-2 rounded-lg ${
                 currentPage === 1
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-[#204C6F] text-white hover:bg-[#2980B9]'
+                  : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
               }`}
             >
               <svg
@@ -184,7 +187,7 @@ export default function SuspendUser() {
                 onClick={() => handlePageChange(index + 1)}
                 className={`px-3 py-1 rounded-lg ${
                   currentPage === index + 1
-                    ? 'bg-[#204C6F] text-white'
+                    ? 'bg-[#249dd8] text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -197,7 +200,7 @@ export default function SuspendUser() {
               className={`p-2 rounded-lg ${
                 currentPage === totalPages
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-[#204C6F] text-white hover:bg-[#2980B9]'
+                  : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
               }`}
             >
               <svg
@@ -229,35 +232,43 @@ export default function SuspendUser() {
             data-testid="modal-overlay"
           >
             <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-sm shadow-xl" role="dialog" aria-labelledby="suspend-modal-title">
-              <h2 id="suspend-modal-title" className="text-xl font-semibold text-[#204C6F] mb-4 text-center">
-                Está apunto de suspender al siguiente usuario: {selectedUser?.name}
+              <h2 id="suspend-modal-title" className="text-xl font-semibold mb-4 text-center mb-4 text-gray-800">
+                Está a punto de suspender al siguiente usuario: {selectedUser?.name}
               </h2>
               <p className="text-gray-600 mb-4 text-center">Por favor, elija el tiempo de suspensión:</p>
               
-              <select 
-                className="w-full p-2 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] text-gray-500"
-                value={suspensionTime}
-                onChange={(e) => setSuspensionTime(e.target.value)}
-              >
-                <option value="1" className="text-gray-500">1 día</option>
-                <option value="3" className="text-gray-500">3 días</option>
-                <option value="7" className="text-gray-500">7 días</option>
-              </select>
+                <select 
+                              className="w-full p-2 border border-gray-300 rounded-xl mb-4 focus:outline-none focus:ring-1 focus:ring-[#1b87b9] focus:border-[#1b87b9] text-gray-900"
+                  value={suspensionTime}
+                  onChange={(e) => setSuspensionTime(e.target.value)}
+                >
+                  <option value="1" className="text-gray-500">1 día</option>
+                  <option value="3" className="text-gray-500">3 días</option>
+                  <option value="7" className="text-gray-500">7 días</option>
+                </select>
 
-              <div className="flex justify-center gap-4">
-                <button 
-                  className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancelar
-                </button>
-                <button 
-                  className="px-4 py-2 bg-[#204C6F] text-white rounded-lg hover:bg-[#2980B9] transition-colors"
-                  onClick={handleSuspendUser}
-                >
-                  Aceptar
-                </button>
-              </div>
+                <textarea
+                  className="w-full p-2 border border-gray-300 rounded-xl mb-6 focus:outline-none focus:ring-1 focus:ring-[#1b87b9] focus:border-[#1b87b9] text-gray-500 resize-none"
+                  placeholder="Motivo de la suspensión..."
+                  rows={3}
+                  value={suspensionReason}
+                  onChange={(e) => setSuspensionReason(e.target.value)}
+                />
+
+                <div className="flex justify-center gap-4">
+                  <button 
+                    className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-xl"
+                    onClick={() => setShowModal(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl"
+                    onClick={handleSuspendUser}
+                  >
+                    Suspender
+                  </button>
+                </div>
             </div>
           </div>
         )}
@@ -273,22 +284,22 @@ export default function SuspendUser() {
             data-testid="modal-overlay"
           >
             <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-sm shadow-xl" role="dialog" aria-labelledby="activate-modal-title">
-              <h2 id="activate-modal-title" className="text-xl font-semibold text-[#204C6F] mb-4 text-center">
+              <h2 id="activate-modal-title" className="text-xl font-semibold mb-4 text-center mb-4 text-gray-800">
                 ¿Está seguro que quiere activar al usuario {selectedUser?.name}?
               </h2>
 
               <div className="flex justify-center gap-4 mt-6">
                 <button 
-                  className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
+                  className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-xl"
                   onClick={() => setShowActivateModal(false)}
                 >
                   Cancelar
                 </button>
                 <button 
-                  className="px-4 py-2 bg-[#204C6F] text-white rounded-lg hover:bg-[#2980B9] transition-colors"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl"
                   onClick={handleActivateUser}
                 > 
-                  Aceptar
+                  Activar
                 </button>
               </div>
             </div>

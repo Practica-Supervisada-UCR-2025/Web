@@ -33,13 +33,13 @@ describe('SuspendUser Page', () => {
   it('renders the page title correctly', () => {
     const heading = screen.getByRole('heading', { name: 'Suspender Usuarios' });
     expect(heading).toBeInTheDocument();
-    expect(heading).toHaveClass('text-2xl', 'font-bold', 'text-[#204C6F]');
+    expect(heading).toHaveClass('text-2xl', 'font-bold', 'text-[#249dd8]');
   });
 
   it('renders the search input with correct placeholder and styling', () => {
     const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
     expect(searchInput).toBeInTheDocument();
-    expect(searchInput).toHaveClass('rounded-full', 'shadow-md');
+    expect(searchInput).toHaveClass('rounded-xl', 'shadow-md');
   });
 
   it('filters users when typing in search input', () => {
@@ -55,13 +55,13 @@ describe('SuspendUser Page', () => {
     const suspendButton = screen.getAllByText('Suspender')[0];
     fireEvent.click(suspendButton);
 
-    const modal = screen.getByRole('dialog', { name: /está apunto de suspender al siguiente usuario/i });
+    const modal = screen.getByRole('dialog', { name: /Está a punto de suspender al siguiente usuario/i });
     expect(modal).toBeInTheDocument();
     expect(screen.getByText('Por favor, elija el tiempo de suspensión:')).toBeInTheDocument();
     
     const timeSelect = screen.getByRole('combobox');
     expect(timeSelect).toBeInTheDocument();
-    expect(timeSelect).toHaveClass('text-gray-500');
+    expect(timeSelect).toHaveClass('text-gray-900');
   });
 
   it('shows activation modal with correct content and styling', () => {
@@ -153,7 +153,7 @@ describe('SuspendUser Page', () => {
     const suspendButton = screen.getAllByText('Suspender')[0];
     fireEvent.click(suspendButton);
 
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
 
     await waitFor(() => {
@@ -168,7 +168,7 @@ describe('SuspendUser Page', () => {
     const activateButton = screen.getByText('Activar');
     fireEvent.click(activateButton);
 
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Activar' });
     fireEvent.click(acceptButton);
 
     await waitFor(() => {
@@ -304,7 +304,7 @@ describe('SuspendUser Page', () => {
   it('verifies table cell text colors', () => {
     const nameCells = screen.getAllByText(/Juan Pérez|María Rodríguez|Carlos Méndez/);
     nameCells.forEach(cell => {
-      expect(cell).toHaveClass('text-[#2980B9]');
+      expect(cell).toHaveClass('text-[#1b87b9]');
     });
 
     const emailCells = screen.getAllByText(/@ucr.ac.cr/);
@@ -338,7 +338,7 @@ describe('SuspendUser Page', () => {
     const timeSelect = screen.getByRole('combobox');
     fireEvent.change(timeSelect, { target: { value: '1' } });
 
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
 
     await waitFor(() => {
@@ -353,7 +353,7 @@ describe('SuspendUser Page', () => {
     const activateButton = screen.getByText('Activar');
     fireEvent.click(activateButton);
 
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Activar' });
     fireEvent.click(acceptButton);
 
     await waitFor(() => {
@@ -368,7 +368,7 @@ describe('SuspendUser Page', () => {
     const timeSelect = screen.getByRole('combobox');
     fireEvent.change(timeSelect, { target: { value: '3' } });
 
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
 
     await waitFor(() => {
@@ -388,7 +388,7 @@ describe('SuspendUser Page', () => {
     const timeSelect = screen.getByRole('combobox');
     fireEvent.change(timeSelect, { target: { value: '1' } });
 
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
 
     // Simulate an error by directly calling the error toast
@@ -410,7 +410,7 @@ describe('SuspendUser Page', () => {
     const activateButton = screen.getByText('Activar');
     fireEvent.click(activateButton);
 
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Activar' });
     fireEvent.click(acceptButton);
 
     // Simulate an error by directly calling the error toast
@@ -423,18 +423,18 @@ describe('SuspendUser Page', () => {
 
   it('handles pagination correctly', () => {
     // Test initial page state
-    expect(screen.getByText('1')).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(screen.getByText('1')).toHaveClass('bg-[#249dd8]', 'text-white');
     
     // Test next page button
     const buttons = screen.getAllByRole('button');
     const nextButton = buttons[buttons.length - 1]; // Last button is the next button
     fireEvent.click(nextButton);
-    expect(screen.getByText('2')).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(screen.getByText('2')).toHaveClass('bg-[#249dd8]', 'text-white');
     
     // Test previous page button
     const prevButton = buttons[0]; // First button is the previous button
     fireEvent.click(prevButton);
-    expect(screen.getByText('1')).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(screen.getByText('1')).toHaveClass('bg-[#249dd8]', 'text-white');
   });
 
   it('handles search with special characters and spaces', () => {
@@ -491,7 +491,7 @@ describe('SuspendUser Page', () => {
     
     // Test focus state
     fireEvent.focus(searchInput);
-    expect(searchInput).toHaveClass('focus:ring-[#2980B9]', 'focus:border-[#2980B9]');
+    expect(searchInput).toHaveClass('focus:ring-[#1b87b9]', 'focus:border-[#1b87b9]');
     
     // Test blur state
     fireEvent.blur(searchInput);
@@ -521,7 +521,7 @@ describe('SuspendUser Page', () => {
     // Test suspension modal
     const suspendButton = screen.getAllByText('Suspender')[0];
     fireEvent.click(suspendButton);
-    expect(screen.getByRole('dialog', { name: /está apunto de suspender al siguiente usuario/i })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: /Está a punto de suspender al siguiente usuario/i })).toBeInTheDocument();
     
     // Close the suspension modal
     const cancelButton = screen.getByRole('button', { name: 'Cancelar' });
@@ -557,7 +557,7 @@ describe('SuspendUser Page', () => {
     const timeSelect = screen.getByRole('combobox');
     fireEvent.change(timeSelect, { target: { value: '3' } });
     
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+      const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
     
     // Verify user is suspended by checking the specific user's status
@@ -572,7 +572,7 @@ describe('SuspendUser Page', () => {
     const activateButton = screen.getByText('Activar');
     fireEvent.click(activateButton);
     
-    const activateAcceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const activateAcceptButton = screen.getByRole('button', { name: 'Activar' });
     fireEvent.click(activateAcceptButton);
     
     // Verify user is active by checking the specific user's status
@@ -593,7 +593,7 @@ describe('SuspendUser Page', () => {
     
     // Verify we're on page 2
     const page2Button = screen.getByRole('button', { name: '2' });
-    expect(page2Button).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(page2Button).toHaveClass('bg-[#249dd8]', 'text-white');
     
     // Change search query to show only one result
     fireEvent.change(searchInput, { target: { value: 'Juan' } });
@@ -608,7 +608,7 @@ describe('SuspendUser Page', () => {
     
     // Verify pagination is back and on first page
     const page1Button = screen.getByRole('button', { name: '1' });
-    expect(page1Button).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(page1Button).toHaveClass('bg-[#249dd8]', 'text-white');
   });
 
   it('handles table cell styling correctly', () => {
@@ -617,7 +617,7 @@ describe('SuspendUser Page', () => {
     rows.forEach(row => {
       // Check name cell styling
       const nameCell = row.querySelector('td:first-child');
-      expect(nameCell).toHaveClass('text-[#2980B9]');
+      expect(nameCell).toHaveClass('text-[#1b87b9]');
       
       // Check email cell styling
       const emailCell = row.querySelector('td:nth-child(2)');

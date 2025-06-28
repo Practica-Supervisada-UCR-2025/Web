@@ -26,12 +26,41 @@ export default function Sidebar() {
         return pathname === path;
     };
 
+    // SVG Icons as React components
+    const icons = {
+        house: (
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+            </svg>
+        ),
+        user: (
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+            </svg>
+        ),
+        grid: (
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z" />
+            </svg>
+        ),
+        graph: (
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z" />
+            </svg>
+        ),
+        bell: (
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+            </svg>
+        )
+    };
+
     const navItems = [
-        { name: 'General', path: '/dashboard', icon: 'https://www.svgrepo.com/show/371938/house.svg' },
-        { name: 'Usuarios', path: '/users', icon: 'https://www.svgrepo.com/show/535711/user.svg' },
-        { name: 'Moderaci\u00F3n', path: '/content', icon: 'https://www.svgrepo.com/show/522137/grid.svg' },
-        { name: 'Anal\u00EDticas', path: '/analytics', icon: 'https://www.svgrepo.com/show/491241/graph-asc.svg' },
-        { name: 'Notificaciones', path: '/notifications', icon: 'https://www.svgrepo.com/show/535206/bell.svg' },
+        { name: 'General', path: '/dashboard', icon: icons.house },
+        { name: 'Usuarios', path: '/users', icon: icons.user },
+        { name: 'Moderaci\u00F3n', path: '/content', icon: icons.grid },
+        { name: 'Anal\u00EDticas', path: '/analytics', icon: icons.graph },
+        { name: 'Notificaciones', path: '/notifications', icon: icons.bell },
     ];
 
     // Toggle sidebar function
@@ -100,11 +129,9 @@ export default function Sidebar() {
                                             ? 'text-blue-500'
                                             : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'}`}
                                 >
-                                    <img
-                                        src={item.icon}
-                                        className={`w-5 h-5 ${isOpen && !isAnimating ? 'mr-3' : ''} ${active ? '' : 'opacity-60'}`}
-                                        alt={item.name}
-                                    />
+                                    <div className={`${isOpen && !isAnimating ? 'mr-3' : ''}`}>
+                                        {item.icon}
+                                    </div>
                                     {isOpen && !isAnimating && <span className={active ? 'font-bold' : ''}>{item.name}</span>}
                                 </Link>
                             </li>
@@ -140,11 +167,9 @@ export default function Sidebar() {
                                             : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'}`}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                 >
-                                    <img
-                                        src={item.icon}
-                                        className={`w-5 h-5 mr-3 ${active ? '' : 'opacity-60'}`}
-                                        alt={item.name}
-                                    />
+                                    <div className="mr-3">
+                                        {item.icon}
+                                    </div>
                                     <span className={active ? 'font-bold' : ''}>{item.name}</span>
                                 </Link>
                             </li>

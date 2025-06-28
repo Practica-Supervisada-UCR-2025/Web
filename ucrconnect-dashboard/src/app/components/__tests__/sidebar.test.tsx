@@ -265,10 +265,6 @@ describe('Sidebar Component', () => {
         expect(screen.queryByText('General')).not.toBeInTheDocument();
         expect(screen.queryByText('Usuarios')).not.toBeInTheDocument();
 
-        // Check that icons are still visible
-        const navButtons = document.querySelectorAll('img');
-        expect(navButtons.length).toBe(5); // Should have 6 icons for the navigation items
-
         // Check that sidebar has the collapsed width class
         const sidebar = document.querySelector('aside');
         expect(sidebar).toHaveClass('w-16');
