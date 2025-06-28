@@ -8,7 +8,7 @@ type ButtonProps = {
   children: React.ReactNode;
   isLoading: boolean;
   disabled: boolean;
-  className: string;
+  className?: string;
 };
 
 export function Button({

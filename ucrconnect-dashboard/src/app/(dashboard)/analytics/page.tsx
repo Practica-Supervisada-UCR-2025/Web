@@ -21,6 +21,7 @@ export default function Analytics() {
   const [interval, setInterval] = useState('daily');
   const [startDate, setStartDate] = useState(formatDate(sixMonthsAgo));
   const [endDate, setEndDate] = useState(formatDate(today));
+  const [cumulative, setCumulative] = useState(true);
   const [data, setData] = useState([]);
   const [chartType, setChartType] = useState<'line' | 'bar'>('line');
   const [loading, setLoading] = useState(false);
@@ -36,7 +37,14 @@ export default function Analytics() {
     setError(null);
 
     try {
-      const response = await fetchAnalytics({ interval, startDate, endDate, graphType });
+      const response = await fetchAnalytics({
+        interval,
+        startDate,
+        endDate,
+        graphType,
+        cumulative
+      });
+
       let normalizedData = [];
 
       if (response.data?.series) {
@@ -55,16 +63,14 @@ export default function Analytics() {
 
       setData(normalizedData);
 
-      switch (graphType) {
-        case 'growth':
-        case 'total':
-          setChartType('line');
-          break;
-        case 'volume':
-          setChartType('bar');
-          break;
-        default:
-          setChartType('line');
+      if (graphType === 'growth') {
+        setChartType(cumulative ? 'line' : 'bar');
+      } else if (graphType === 'total') {
+        setChartType('line');
+      } else if (graphType === 'volume') {
+        setChartType('bar');
+      } else {
+        setChartType('line');
       }
     } catch (err: any) {
       setError(err.message || 'Error desconocido');
@@ -77,7 +83,9 @@ export default function Analytics() {
   return (
     <div className="max-w-5xl mx-auto mt-10 bg-white shadow-xl rounded-2xl p-10">
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-10">Panel de Métricas</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      
+      <div className="flex flex-col items-center gap-6 mb-8">
+      <div className={`grid gap-6 ${graphType === 'growth' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-4'}`}>
         <Dropdown
           id="graphType"
           label="Tipo de gráfico"
@@ -102,36 +110,84 @@ export default function Analytics() {
           onChange={setInterval}
         />
 
-        <div>
-          <label htmlFor="startDate" className="block text-sm font-semibold text-[#249dd8] mb-1">
-            Inicio
-          </label>
-          <input
-            id="startDate"
-            type="date"
-            value={startDate}
-            min={minDate}
-            max={endDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-full rounded-xl px-4 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#249dd8] focus:border-[#249dd8] text-gray-800 shadow-sm [appearance:textfield]"
+        {graphType === 'growth' ? (
+          <Dropdown
+            id="growthMode"
+            label="recimiento"
+            value={cumulative ? 'cumulative' : 'non-cumulative'}
+            options={[
+              { label: 'Acumulado', value: 'cumulative' },
+              { label: 'Por periodo', value: 'non-cumulative' },
+            ]}
+            onChange={(value) => setCumulative(value === 'cumulative')}
           />
-        </div>
+        ) : (
+          <>
+            <div>
+              <label htmlFor="startDate" className="block text-sm font-semibold text-[#249dd8] mb-1">
+                Inicio
+              </label>
+              <input
+                id="startDate"
+                type="date"
+                value={startDate}
+                min={minDate}
+                max={endDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full rounded-xl px-4 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#249dd8] focus:border-[#249dd8] text-gray-800 shadow-sm [appearance:textfield]"
+              />
+            </div>
 
-        <div>
-          <label htmlFor="endDate" className="block text-sm font-semibold text-[#249dd8] mb-1">
-            Fin
-          </label>
-          <input
-            id="endDate"
-            type="date"
-            value={endDate}
-            min={startDate < minDate ? minDate : startDate}
-            max={maxDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-full rounded-xl px-4 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#249dd8] focus:border-[#249dd8] text-gray-800 shadow-sm [appearance:textfield]"
-          />
-        </div>
+            <div>
+              <label htmlFor="endDate" className="block text-sm font-semibold text-[#249dd8] mb-1">
+                Fin
+              </label>
+              <input
+                id="endDate"
+                type="date"
+                value={endDate}
+                min={startDate < minDate ? minDate : startDate}
+                max={maxDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full rounded-xl px-4 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#249dd8] focus:border-[#249dd8] text-gray-800 shadow-sm [appearance:textfield]"
+              />
+            </div>
+          </>
+        )}
       </div>
+
+      {graphType === 'growth' && (
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+          <div>
+            <label htmlFor="startDate" className="block text-sm font-semibold text-[#249dd8] mb-1">Inicio</label>
+            <input
+              id="startDate"
+              type="date"
+              value={startDate}
+              min={minDate}
+              max={endDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full rounded-xl px-4 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#249dd8] focus:border-[#249dd8] text-gray-800 shadow-sm [appearance:textfield]"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="endDate" className="block text-sm font-semibold text-[#249dd8] mb-1">
+              Fin
+            </label>
+            <input
+              id="endDate"
+              type="date"
+              value={endDate}
+              min={startDate < minDate ? minDate : startDate}
+              max={maxDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-full rounded-xl px-4 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#249dd8] focus:border-[#249dd8] text-gray-800 shadow-sm [appearance:textfield]"
+            />
+          </div>
+        </div>
+      )}
+    </div>
 
       <div className="flex justify-center mb-10">
         <Button
@@ -139,7 +195,6 @@ export default function Analytics() {
           type="button"
           isLoading={loading}
           disabled={false}
-          className=""
         >
           Solicitar
         </Button>
