@@ -43,7 +43,6 @@ export async function fetchUserGrowthDashboardData() {
   return {
     chartData: data,
     totalUsers: response?.data?.totalUsers ?? 0,
-    totalActiveUsers: response?.data?.totalActiveUsers ?? 0,
   };
 }
 
@@ -89,6 +88,6 @@ export async function fetchReportsLast30Days() {
       date: item.date,
       count: item.count,
     })),
-    totalReports: raw.reduce((sum: number, item: any) => sum + item.count, 0),
+    totalReports: response?.data?.total ?? 0,
   };
 }
