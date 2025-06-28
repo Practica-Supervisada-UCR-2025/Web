@@ -9,6 +9,7 @@ interface TextAreaProps {
   required?: boolean;
   className?: string;
   rows?: number;
+  placeholder?: string;
 }
 
 export function TextArea({
@@ -22,6 +23,7 @@ export function TextArea({
   required = false,
   className = "",
   rows = 4,
+  placeholder = "",
 }: TextAreaProps) {
   return (
     <div>
@@ -36,7 +38,8 @@ export function TextArea({
         readOnly={readOnly}
         required={required}
         rows={rows}
-        className={`w-full border rounded-xl px-4 py-2 resize-y focus:outline-none
+        placeholder={placeholder}
+        className={`w-full border rounded-xl px-4 py-2 resize-y focus:outline-none focus:ring-2
           ${
             error
               ? "border-red-500 ring-red-300"
