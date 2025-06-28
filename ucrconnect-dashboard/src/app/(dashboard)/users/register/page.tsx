@@ -339,7 +339,11 @@ export default function RegisterUser() {
                             value={formData.name}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            className={`mt-1 w-full block px-3 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                            className={`w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
+                                errors.name
+                                ? 'border-red-500 ring-red-300'
+                                : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'
+                            } text-gray-800`}
                         />
                         {errors.name && touched.name && (
                             <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -358,7 +362,11 @@ export default function RegisterUser() {
                             value={formData.email}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            className={`mt-1 w-full block px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                            className={`w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
+                                errors.email
+                                ? 'border-red-500 ring-red-300'
+                                : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'
+                            } text-gray-800`}
                         />
                         {errors.email && touched.email && (
                             <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -378,7 +386,11 @@ export default function RegisterUser() {
                                 value={formData.password}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`mt-1 w-full block pr-10 px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                                className={`w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
+                                errors.password
+                                ? 'border-red-500 ring-red-300'
+                                : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'
+                            } text-gray-800`}
                             />
                             <button
                                 type="button"
@@ -417,7 +429,11 @@ export default function RegisterUser() {
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`mt-1 w-full block px-3 py-2 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                                className={`w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
+                                errors.confirmPassword
+                                ? 'border-red-500 ring-red-300'
+                                : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'
+                            } text-gray-800`}
                             />
                             <button
                                 type="button"
