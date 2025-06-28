@@ -36,7 +36,7 @@ describe('fetchAnalytics', () => {
     const data = await fetchAnalytics({ ...params, graphType: 'volume' });
 
     expect(fetch).toHaveBeenCalledWith(
-      '/api/analytics/posts-stats/volume?interval=daily&startDate=2024-01-01&endDate=2024-01-10'
+      '/api/analytics/reports-stats/volume?interval=daily&startDate=2024-01-01&endDate=2024-01-10'
     );
     expect(data).toEqual([{ date: '2024-01-01', count: 12 }]);
   });
