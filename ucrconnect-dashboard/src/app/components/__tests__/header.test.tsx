@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import Header from '../header';
 import '@testing-library/jest-dom';
 
@@ -39,6 +39,16 @@ describe('Header Component', () => {
         // Default mock for usePathname
         const { usePathname } = require('next/navigation');
         usePathname.mockReturnValue('/');
+
+        // Default mock for fetch (success case)
+        global.fetch = jest.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                data: {
+                    profile_picture: null
+                }
+            })
+        });
     });
 
     afterEach(() => {
@@ -59,25 +69,32 @@ describe('Header Component', () => {
 
         for (const { path, title } of pathsToTest) {
             usePathname.mockReturnValue(path);
-            const { unmount } = render(<Header />);
-            expect(screen.getByText(title)).toBeInTheDocument();
-            unmount();
+                const { unmount } = render(<Header />);
+                    expect(screen.getByText(title)).toBeInTheDocument();
+                unmount();
         }
     });
 
-    it('has functioning link to profile page', () => {
-        render(<Header />);
+    it('has functioning link to profile page', async () => {
+        await act(async () => {
+            render(<Header />);
+        });
+
+        // Wait for component to fully load
+        await waitFor(() => {
+            expect(screen.getByAltText('profile')).toBeInTheDocument();
+        });
+
         const profileImage = screen.getByAltText('profile');
-        expect(profileImage).toBeInTheDocument();
-        
+
         // Click the profile button to open the dropdown
         fireEvent.click(profileImage);
-        
+
         // Fast-forward timers to trigger visibility
         act(() => {
             jest.advanceTimersByTime(50);
         });
-        
+
         // Find the profile link in the dropdown
         const profileLink = screen.getByText('Ver perfil');
         expect(profileLink).toBeInTheDocument();
@@ -102,11 +119,18 @@ describe('Header Component', () => {
             writable: true
         });
 
-        render(<Header />);
-        
+        await act(async () => {
+            render(<Header />);
+        });
+
+        // Wait for component to load
+        await waitFor(() => {
+            expect(screen.getByAltText('profile')).toBeInTheDocument();
+        });
+
         // Click profile button to open dropdown
         fireEvent.click(screen.getByAltText('profile'));
-        
+
         // Fast-forward timers
         act(() => {
             jest.advanceTimersByTime(50);
@@ -156,11 +180,18 @@ describe('Header Component', () => {
         // Mock console.error
         const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-        render(<Header />);
-        
+        await act(async () => {
+            render(<Header />);
+        });
+
+        // Wait for component to load
+        await waitFor(() => {
+            expect(screen.getByAltText('profile')).toBeInTheDocument();
+        });
+
         // Click profile button to open dropdown
         fireEvent.click(screen.getByAltText('profile'));
-        
+
         // Fast-forward timers
         act(() => {
             jest.advanceTimersByTime(50);
@@ -199,11 +230,15 @@ describe('Header Component', () => {
         // Mock fetch to fail
         global.fetch = jest.fn().mockRejectedValue(new Error('Failed to fetch'));
 
-        render(<Header />);
+        await act(async () => {
+            render(<Header />);
+        });
 
-        const fallbackImg = await screen.findByAltText('profile');
-        expect(fallbackImg).toBeInTheDocument();
-        expect(fallbackImg).toHaveAttribute('src', expect.stringContaining('user-alt-1.svg'));
+        await waitFor(() => {
+            const fallbackImg = screen.getByAltText('profile');
+            expect(fallbackImg).toBeInTheDocument();
+            expect(fallbackImg).toHaveAttribute('src', expect.stringContaining('user-alt-1.svg'));
+        });
     });
 
     it('displays profile image when fetch succeeds', async () => {
@@ -220,22 +255,35 @@ describe('Header Component', () => {
             render(<Header />);
         });
 
-        const image = await screen.findByAltText('Foto de perfil');
-        expect(image).toBeInTheDocument();
+        await waitFor(() => {
+            const image = screen.getByAltText('Foto de perfil');
+            expect(image).toBeInTheDocument();
+        });
     });
 
-
-    it('renders blank section title for unknown routes', () => {
+    it('renders blank section title for unknown routes', async () => {
         const { usePathname } = require('next/navigation');
         usePathname.mockReturnValue('/unknown-route');
 
-        render(<Header />);
+        await act(async () => {
+            render(<Header />);
+        });
 
-        expect(screen.queryByText(/Vista General/i)).not.toBeInTheDocument();
+        // Wait for component to load
+        await waitFor(() => {
+            expect(screen.queryByText(/Vista General/i)).not.toBeInTheDocument();
+        });
     });
 
-    it('toggles profile dropdown open and closed on repeated clicks', () => {
-        render(<Header />);
+    it('toggles profile dropdown open and closed on repeated clicks', async () => {
+        await act(async () => {
+            render(<Header />);
+        });
+
+        // Wait for component to load
+        await waitFor(() => {
+            expect(screen.getByRole('button')).toBeInTheDocument();
+        });
 
         const button = screen.getByRole('button');
         fireEvent.click(button);
@@ -254,8 +302,16 @@ describe('Header Component', () => {
         expect(screen.queryByText('Ver⠀perfil')).not.toBeInTheDocument();
     });
 
-    it('closes profile dropdown after clicking "Ver perfil"', () => {
-        render(<Header />);
+    it('closes profile dropdown after clicking "Ver perfil"', async () => {
+        await act(async () => {
+            render(<Header />);
+        });
+
+        // Wait for component to load
+        await waitFor(() => {
+            expect(screen.getByRole('button')).toBeInTheDocument();
+        });
+
         const button = screen.getByRole('button');
         fireEvent.click(button);
 
@@ -272,5 +328,4 @@ describe('Header Component', () => {
 
         expect(screen.queryByText('Ver⠀perfil')).not.toBeInTheDocument();
     });
-
 });
