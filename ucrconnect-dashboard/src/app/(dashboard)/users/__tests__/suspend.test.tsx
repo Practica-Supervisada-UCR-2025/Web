@@ -605,8 +605,4 @@ describe('SuspendUser Page', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
   });
-
-  it.skip('handleActivateUser updates user state and shows toast', async () => {
-    // This test is skipped because it uses React internals and is not reliable in React 18+.
-  });
 }); 
