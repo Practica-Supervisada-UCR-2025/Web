@@ -580,11 +580,11 @@ export default function PostDetail(): JSX.Element {
                     <h3 className="text-lg font-bold text-[#249dd8] mb-4">Comentarios ({totalComments})</h3>
                     
                     {loading ? (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <div className="text-center py-8 bg-gray-50 rounded-xl">
                             <p className="text-gray-500">Cargando comentarios...</p>
                         </div>
                     ) : error ? (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <div className="text-center py-8 bg-gray-50 rounded-x;">
                             <p className="text-red-500">{error}</p>
                         </div>
                     ) : comments.length > 0 ? (
@@ -593,7 +593,7 @@ export default function PostDetail(): JSX.Element {
                             {comments.map((comment) => (
                                 <div 
                                     key={comment.id} 
-                                    className="bg-gray-50 p-4 rounded-lg"
+                                    className="bg-gray-50 p-4 rounded-xl"
                                     data-testid="comment-item"
                                     data-created-at={comment.created_at}
                                 >
@@ -642,7 +642,7 @@ export default function PostDetail(): JSX.Element {
                             )}
                         </>
                     ) : (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <div className="text-center py-8 bg-gray-50 rounded-xl">
                             <p className="text-gray-500">No hay comentarios para mostrar</p>
                         </div>
                     )}
@@ -716,7 +716,7 @@ export default function PostDetail(): JSX.Element {
 
             {showSuspendModal && (
                 <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-6">
+                    <div className="bg-white rounded-xl w-full max-w-md p-6">
                         <h3 className="text-xl font-semibold mb-4 text-center mb-4 text-gray-800">&iquest;Tambi&eacute;n deseas suspender al usuario?</h3>
                         <div className="flex justify-center gap-4 mt-6">
                             <button
@@ -803,7 +803,7 @@ export default function PostDetail(): JSX.Element {
             )}
             {showConfirmClearReports && (
                 <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-6">
+                    <div className="bg-white rounded-xl w-full max-w-md p-6">
                         <h3 className="text-xl font-semibold mb-4 text-center mb-4 text-gray-800">
                             {post.is_active ? 'Confirmar eliminaci\u00f3n de reportes' : 'Confirmar restauraci\u00f3n de publicaci\u00f3n'}
                         </h3>

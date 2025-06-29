@@ -146,6 +146,46 @@ function SuspendUserContent() {
     setCurrentPage(pageNumber);
   };
 
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 7; // Show max 7 page numbers
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show pages with ellipsis
+      if (currentPage <= 4) {
+        // Show first 5 pages + ellipsis + last page
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        // Show first page + ellipsis + last 5 pages
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Show first page + ellipsis + current-1, current, current+1 + ellipsis + last page
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   const handleSuspendUser = async () => {
     if (selectedUser) {
       try {
@@ -362,9 +402,10 @@ function SuspendUserContent() {
         {totalPages > 1 && (
           <div className="flex justify-center gap-2 mt-4 flex-wrap">
             <button
+              aria-label="previous"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`p-2 rounded-lg ${
+              className={`p-2 rounded-xl ${
                 currentPage === 1
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
@@ -385,23 +426,27 @@ function SuspendUserContent() {
                 />
               </svg>
             </button>
-            {[...Array(totalPages)].map((_, index) => (
+            {getPageNumbers().map((page, index) => (
               <button
                 key={index}
-                onClick={() => handlePageChange(index + 1)}
-                className={`px-3 py-1 rounded-lg ${
-                  currentPage === index + 1
+                onClick={() => typeof page === 'number' ? handlePageChange(page) : undefined}
+                disabled={page === '...'}
+                className={`px-3 py-1 rounded-xl ${
+                  page === '...'
+                    ? 'bg-transparent text-gray-400 cursor-default'
+                    : currentPage === page
                     ? 'bg-[#249dd8] text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {index + 1}
+                {page}
               </button>
             ))}
             <button
+              aria-label="next"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className={`p-2 rounded-lg ${
+              className={`p-2 rounded-xl ${
                 currentPage === totalPages
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
@@ -442,7 +487,7 @@ function SuspendUserContent() {
               <p className="text-gray-600 mb-4 text-center">Por favor, elija el tiempo de suspensión:</p>
               
               <select 
-                className="w-full p-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] text-gray-500"
+                className="w-full p-2 border border-gray-300 rounded-xl mb-4 focus:outline-none focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] text-gray-500"
                 value={suspensionTime}
                 onChange={(e) => setSuspensionTime(e.target.value)}
               >
@@ -457,7 +502,7 @@ function SuspendUserContent() {
                 </label>
                 <textarea
                   id="suspension-description"
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] text-gray-500 resize-none"
+                  className="w-full p-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] text-gray-500 resize-none"
                   rows={3}
                   placeholder="Describa la razón de la suspensión..."
                   value={suspensionDescription}
@@ -471,14 +516,14 @@ function SuspendUserContent() {
 
               <div className="flex justify-center gap-4">
                 <button 
-                  className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-red-600 border border-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => setShowModal(false)}
                   disabled={suspending}
                 >
                   Cancelar
                 </button>
                 <button 
-                  className="px-4 py-2 bg-[#204C6F] text-white rounded-lg hover:bg-[#2980B9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-2 bg-[#204C6F] text-white rounded-xl hover:bg-[#2980B9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   onClick={handleSuspendUser}
                   disabled={suspending}
                 >

@@ -485,6 +485,7 @@ function UsersContent() {
           <>
         <div className="flex justify-center gap-2 mt-4 flex-wrap">
           <button
+            aria-label="previous"
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             className={`p-2 rounded-lg ${
@@ -516,6 +517,7 @@ function UsersContent() {
           ))}
 
           <button
+            aria-label="next"
             onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalAvailablePages}
             className={`p-2 rounded-lg ${
