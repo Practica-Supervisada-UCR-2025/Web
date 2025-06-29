@@ -120,14 +120,14 @@ describe('SuspendUser Page', () => {
   it('renders the search input with correct placeholder', async () => {
     render(<SuspendUser />);
     await waitFor(() => {
-      expect(screen.getByPlaceholderText('Buscar usuarios por email, nombre o username...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Buscar usuarios...')).toBeInTheDocument();
     });
   });
 
   it('filters users when typing in search input', async () => {
     render(<SuspendUser />);
     await waitFor(() => {
-      const searchInput = screen.getByPlaceholderText('Buscar usuarios por email, nombre o username...');
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
     fireEvent.change(searchInput, { target: { value: 'Juan' } });
     expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
     expect(screen.queryByText('Carlos Méndez')).not.toBeInTheDocument();
@@ -502,28 +502,65 @@ describe('SuspendUser Page', () => {
   });
 
   it('calls setCurrentPage on pagination button click', async () => {
+    // Add more users to trigger pagination
+    const moreUsers = [
+      ...mockUsersData,
+      ...Array.from({ length: 10 }, (_, i) => ({
+        id: `${i + 4}`,
+        email: `user${i + 4}@ucr.ac.cr`,
+        full_name: `User ${i + 4}`,
+        username: `user${i + 4}`,
+        profile_picture: null,
+        is_active: true,
+        created_at: '2024-01-05T00:00:00Z'
+      }))
+    ];
+
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: moreUsers,
+            metadata: { last_time: '', remainingItems: 0, remainingPages: 0 }
+          })
+        });
+      }
+      if (url.includes('/api/users/suspend')) {
+        return Promise.resolve({
+          ok: true,
+          status: 201,
+          json: () => Promise.resolve({ message: 'User suspended successfully' })
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ message: 'Not found' }) });
+    });
+
     render(<SuspendUser />);
     await waitFor(() => {
-      expect(screen.getByText('Suspender Usuarios')).toBeInTheDocument();
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
     });
-    // Only one page in mock, so add more users to test pagination
-    mockUsersData.push(...Array.from({ length: 10 }, (_, i) => ({
-      id: `${i + 4}`,
-      email: `user${i + 4}@ucr.ac.cr`,
-      full_name: `User ${i + 4}`,
-      username: `user${i + 4}`,
-      profile_picture: null,
-      is_active: true,
-      created_at: '2024-01-05T00:00:00Z'
-    })));
-    cleanup();
-    render(<SuspendUser />);
+    
+    // Wait for pagination to appear
     await waitFor(() => {
       expect(screen.getByText('2')).toBeInTheDocument();
     });
+    
     const page2Button = screen.getByRole('button', { name: '2' });
     fireEvent.click(page2Button);
-    expect(page2Button).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(page2Button).toHaveClass('bg-[#249dd8]', 'text-white');
   });
 
   it('shows fallback image if profile_picture is null and triggers onError', async () => {

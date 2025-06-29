@@ -525,7 +525,7 @@ export default function PostDetail(): JSX.Element {
                 {/* User Info and Reports */}
                 <div className="flex justify-between items-start mb-6">
                     <div>
-                        <Link href={`/users?search=${encodeURIComponent(post.user_id)}&email=${encodeURIComponent(post.email)}`}>
+                        <Link href={`/users?search=${encodeURIComponent(post.username)}&email=${encodeURIComponent(post.email)}`}>
                             <h2 className="text-xl font-semibold text-[#249dd8] hover:text-[#1b87b9] cursor-pointer">{post.username}</h2>
                         </Link>
                         <p className="text-gray-600">{post.email}</p>
@@ -602,7 +602,7 @@ export default function PostDetail(): JSX.Element {
                                 >
                                     <div className="flex items-center gap-2 mb-2">
                                         <Link 
-                                            href={`/users?search=${encodeURIComponent(comment.user_id)}&email=${encodeURIComponent(comment.email)}`}
+                                            href={`/users?search=${encodeURIComponent(comment.username)}${comment.email ? `&email=${encodeURIComponent(comment.email)}` : ''}`}
                                             className="font-semibold text-[#249dd8] hover:underline"
                                             data-testid="user-profile-link"
                                         >
