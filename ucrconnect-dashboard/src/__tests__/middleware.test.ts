@@ -18,8 +18,16 @@ jest.mock('next/server', () => ({
 global.fetch = jest.fn();
 
 describe('Middleware', () => {
+  const originalConsoleError = console.error
+
   beforeEach(() => {
     jest.clearAllMocks();
+    // Suppress console.error for middleware errors in tests
+    console.error = jest.fn();
+  });
+
+  afterEach(() => {
+    console.error = originalConsoleError;
   });
 
   it('should redirect to login when accessing protected route without token', async () => {

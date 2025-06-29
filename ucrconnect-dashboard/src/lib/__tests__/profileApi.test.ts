@@ -9,13 +9,17 @@ jest.mock('@/lib/apiUtils', () => ({
 
 describe('profileApi utilities', () => {
   const originalFetch = global.fetch
+  const originalConsoleError = console.error
 
   beforeEach(() => {
     jest.clearAllMocks()
+    // Suppress console.error for navigation errors in tests
+    console.error = jest.fn()
   })
 
   afterEach(() => {
     global.fetch = originalFetch
+    console.error = originalConsoleError
   })
 
   describe('fetchProfileFromApiRoute', () => {
