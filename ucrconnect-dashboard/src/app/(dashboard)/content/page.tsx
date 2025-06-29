@@ -104,7 +104,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
                     </p>
                     <button
                         onClick={onClose}
-                        className="w-full px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md transition-colors"
+                        className="w-full px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-xl transition-colors"
                     >
                         Entendido
                     </button>
@@ -127,7 +127,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
                     <p className="text-sm text-gray-500">{post.email}</p>
                 </div>
                 <div className="text-right">
-                    <span className="inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-full">
+                    <span className="inline-block bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded-xl">
                         {post.active_reports} reportes activos
                     </span>
                     <p className="text-xs text-gray-400 mt-1">
@@ -139,7 +139,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
             <div className="my-3 flex-grow">
                 <p className="text-gray-700 mb-2">{post.content}</p>
                 {post.media_type !== 0 && post.file_url && (
-                    <div className="mt-2 rounded-md overflow-hidden">
+                    <div className="mt-2 rounded-xl overflow-hidden">
                         <img
                             src={post.file_url}
                             alt={`Contenido de ${post.username}`}
@@ -154,7 +154,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
 
             <div className="flex justify-between items-center text-sm text-gray-500 mt-auto">
                 <span>Creado: {formatDate(post.created_at)}</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${post.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                <span className={`px-2 py-1 rounded-xl text-xs font-medium ${post.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                     {post.is_active ? 'Activo' : 'Inactivo'}
                 </span>
             </div>
@@ -165,30 +165,46 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick }) => {
 // Pagination component
 const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
     return (
-        <div className="flex justify-center items-center mt-6 mb-8">
+        <div className="flex justify-center gap-2 mt-4 flex-wrap">
             <button
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-l-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
+                className={`p-2 rounded-lg ${currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
+                    }`}
             >
-                Anterior
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                </svg>
             </button>
-
-            <div className="px-4 py-2 bg-gray-100 text-gray-800">
-                P&aacute;gina {currentPage} de {totalPages}
-            </div>
-
+            {[...Array(totalPages)].map((_, index) => (
+                <button
+                    key={index}
+                    onClick={() => onPageChange(index + 1)}
+                    className={`px-3 py-1 rounded-lg ${currentPage === index + 1
+                            ? 'bg-[#249dd8] text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                >
+                    {index + 1}
+                </button>
+            ))}
             <button
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-r-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg ${currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
+                    }`}
             >
-                Siguiente
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+                </svg>
             </button>
         </div>
     );
 };
-
 export default function Content(): JSX.Element {
     const [apiData, setApiData] = useState<ApiResponse | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -278,7 +294,7 @@ export default function Content(): JSX.Element {
             <div className="container mx-auto px-4 py-6 max-w-6xl">
                 <div className="flex justify-center items-center py-20">
                     <div className="flex items-center space-x-2">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#249dd8]"></div>
+                        <div className="animate-spin rounded-xl h-6 w-6 border-b-2 border-[#249dd8]"></div>
                         <span className="text-gray-500">Cargando publicaciones...</span>
                     </div>
                 </div>
@@ -294,7 +310,7 @@ export default function Content(): JSX.Element {
                     <div className="text-red-500 mb-4">Error al cargar las publicaciones: {error}</div>
                     <button
                         onClick={handleReload}
-                        className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md"
+                        className="px-4 py-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-xl"
                     >
                         Reintentar
                     </button>
@@ -326,7 +342,7 @@ export default function Content(): JSX.Element {
                             id="sortBy"
                             value={sortBy}
                             onChange={(e) => handleSortChange(e.target.value as 'report_count' | 'date')}
-                            className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm text-gray-800"
+                            className="bg-white border border-gray-300 rounded-xl px-3 py-1 text-sm text-gray-800"
                             disabled={loading}
                         >
                             <option value="report_count">Reportes</option>
@@ -337,7 +353,7 @@ export default function Content(): JSX.Element {
                     <button
                         onClick={handleReload}
                         disabled={loading}
-                        className="ml-2 p-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-md flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="ml-2 p-2 bg-[#249dd8] hover:bg-[#1b87b9] text-white rounded-xl flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Recargar"
                     >
                         <svg

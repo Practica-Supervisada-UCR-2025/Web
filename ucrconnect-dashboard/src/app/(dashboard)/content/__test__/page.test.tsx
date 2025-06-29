@@ -305,7 +305,7 @@ describe('Content Component', () => {
             });
 
             // Go to page 2 first
-            const nextButton = screen.getByText('Siguiente');
+            const nextButton = screen.getByText('2');
             await user.click(nextButton);
 
             // Change sort order
@@ -326,9 +326,8 @@ describe('Content Component', () => {
             render(<Content />);
 
             await waitFor(() => {
-                expect(screen.getByText(/P.gina 1 de 2/i)).toBeInTheDocument();
-                expect(screen.getByText('Anterior')).toBeInTheDocument();
-                expect(screen.getByText('Siguiente')).toBeInTheDocument();
+                expect(screen.getByText('1')).toBeInTheDocument();
+                expect(screen.getByText('2')).toBeInTheDocument();
             });
         });
 
@@ -336,8 +335,8 @@ describe('Content Component', () => {
             render(<Content />);
 
             await waitFor(() => {
-                const prevButton = screen.getByText('Anterior');
-                expect(prevButton).toBeDisabled();
+                const prevButton = screen.getByText('1');
+                expect(prevButton).toHaveClass('bg-[#249dd8]', 'text-white');
             });
         });
 
@@ -346,10 +345,10 @@ describe('Content Component', () => {
             render(<Content />);
 
             await waitFor(() => {
-                expect(screen.getByText('Siguiente')).toBeInTheDocument();
+                expect(screen.getByText('2')).toBeInTheDocument();
             });
 
-            const nextButton = screen.getByText('Siguiente');
+            const nextButton = screen.getByText('2');
             await user.click(nextButton);
 
             await waitFor(() => {
@@ -375,8 +374,7 @@ describe('Content Component', () => {
                 expect(screen.getByText('user1')).toBeInTheDocument();
             });
 
-            expect(screen.queryByText('Anterior')).not.toBeInTheDocument();
-            expect(screen.queryByText('Siguiente')).not.toBeInTheDocument();
+            expect(screen.queryByText('2')).not.toBeInTheDocument();
         });
     });
 
@@ -499,11 +497,11 @@ describe('Content Component', () => {
             render(<Content />);
 
             await waitFor(() => {
-                expect(screen.getByText('Siguiente')).toBeInTheDocument();
+                expect(screen.getByText('2')).toBeInTheDocument();
             });
 
             // Go to page 2
-            const nextButton = screen.getByText('Siguiente');
+            const nextButton = screen.getByText('2');
             await user.click(nextButton);
 
             // Reload

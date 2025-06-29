@@ -406,14 +406,14 @@ describe('Users Page', () => {
     fireEvent.click(nextButton);
 
     // Verify page 2 is active
-    expect(screen.getByText('2')).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(screen.getByText('2')).toHaveClass('bg-[#249dd8]', 'text-white');
     expect(screen.getByText('1')).toHaveClass('bg-gray-100', 'text-gray-600');
 
     // Click page 3 button
     fireEvent.click(screen.getByText('3'));
 
     // Verify page 3 is active
-    expect(screen.getByText('3')).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(screen.getByText('3')).toHaveClass('bg-[#249dd8]', 'text-white');
     expect(screen.getByText('2')).toHaveClass('bg-gray-100', 'text-gray-600');
   });
 
@@ -565,7 +565,7 @@ describe('Users Page', () => {
 
     // Verify we're on page 2
     const page2Button = screen.getByRole('button', { name: '2' });
-    expect(page2Button).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(page2Button).toHaveClass('bg-[#249dd8]', 'text-white');
 
     // Click previous button
     fireEvent.click(prevButton);

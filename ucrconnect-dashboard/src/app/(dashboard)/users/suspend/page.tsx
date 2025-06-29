@@ -248,7 +248,7 @@ function SuspendUserContent() {
 
   return (
     <div className="w-full max-w-[95vw] mx-auto px-4">
-      <h1 className="text-2xl font-bold text-[#204C6F]">Suspender Usuarios</h1>
+      <h1 className="text-2xl font-bold text-[#249dd8]">Suspender Usuarios</h1>
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 relative mt-4">
         <div className="relative w-full sm:w-96">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -259,7 +259,7 @@ function SuspendUserContent() {
           <input
             type="text"
             className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
-            placeholder="Buscar usuarios por email, nombre o username..."
+            placeholder="Buscar usuarios..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -272,7 +272,7 @@ function SuspendUserContent() {
       <div className="mt-8">
         <div className="overflow-x-auto rounded-xl">
           <table className="min-w-full bg-white shadow-md">
-            <thead className="bg-[#204C6F]/10">
+            <thead className="bg-[#249dd8]/10">
               <tr>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correo</th>
@@ -367,7 +367,7 @@ function SuspendUserContent() {
               className={`p-2 rounded-lg ${
                 currentPage === 1
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-[#204C6F] text-white hover:bg-[#2980B9]'
+                  : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
               }`}
             >
               <svg
@@ -391,7 +391,7 @@ function SuspendUserContent() {
                 onClick={() => handlePageChange(index + 1)}
                 className={`px-3 py-1 rounded-lg ${
                   currentPage === index + 1
-                    ? 'bg-[#204C6F] text-white'
+                    ? 'bg-[#249dd8] text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -404,7 +404,7 @@ function SuspendUserContent() {
               className={`p-2 rounded-lg ${
                 currentPage === totalPages
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-[#204C6F] text-white hover:bg-[#2980B9]'
+                  : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
               }`}
             >
               <svg
@@ -513,16 +513,16 @@ function SuspendUserContent() {
 
               <div className="flex justify-center gap-4 mt-6">
                 <button 
-                  className="px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
+                  className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-xl"
                   onClick={() => setShowActivateModal(false)}
                 >
                   Cancelar
                 </button>
                 <button 
-                  className="px-4 py-2 bg-[#204C6F] text-white rounded-lg hover:bg-[#2980B9] transition-colors"
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl"
                   onClick={handleActivateUser}
                 > 
-                  Aceptar
+                  Activar
                 </button>
               </div>
             </div>

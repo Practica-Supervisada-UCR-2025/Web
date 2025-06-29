@@ -378,7 +378,7 @@ function UsersContent() {
           <input
             type="text"
             className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
-            placeholder="Buscar usuarios por email, nombre o username..."
+            placeholder="Buscar usuarios..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -388,16 +388,16 @@ function UsersContent() {
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Link href="/users/register" className="flex-1 sm:flex-none">
-            <button className="w-full sm:w-auto border border-[#204C6F]/10 text-[#204C6F] font-bold px-4 py-2 rounded-xl cursor-pointer hover:bg-[#204C6F]/20 transition shadow-lg flex items-center justify-center gap-2">
-              <div className="bg-[#2980B9] rounded-full p-1">
+            <button className="w-full sm:w-auto border border-[#249dd8]/10 text-[#249dd8] font-bold px-4 py-2 rounded-xl cursor-pointer hover:bg-[#249dd8]/20 transition shadow-lg flex items-center justify-center gap-2">
+              <div className="bg-[#1b87b9] rounded-xl p-1">
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/> </svg>
               </div>
               Registrar nuevo usuario
             </button>
           </Link>
           <Link href="/users/suspend" className="flex-1 sm:flex-none">
-            <button className="w-full sm:w-auto border border-[#204C6F]/10 text-[#204C6F] font-bold px-4 py-2 rounded-xl cursor-pointer hover:bg-[#204C6F]/20 transition shadow-lg flex items-center justify-center gap-2">
-              <div className="bg-[#2980B9] rounded-full p-1">
+            <button className="w-full sm:w-auto border border-[#249dd8]/10 text-[#249dd8] font-bold px-4 py-2 rounded-xl cursor-pointer hover:bg-[#249dd8]/20 transition shadow-lg flex items-center justify-center gap-2">
+              <div className="bg-[#1b87b9] rounded-xl p-1">
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/> </svg>
               </div>
               Suspender usuario
@@ -409,7 +409,7 @@ function UsersContent() {
       <div className="mt-8">
         <div className="overflow-x-auto rounded-xl">
           <table className="min-w-full bg-white shadow-md">
-            <thead className="bg-[#204C6F]/10">
+            <thead className="bg-[#249dd8]/10">
               <tr>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correo</th>
@@ -486,7 +486,7 @@ function UsersContent() {
             className={`p-2 rounded-lg ${
               currentPage === 1
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-[#204C6F] text-white hover:bg-[#2980B9]'
+                : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
             }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -503,7 +503,7 @@ function UsersContent() {
                     page === '...'
                       ? 'bg-transparent text-gray-400 cursor-default'
                       : currentPage === page
-                  ? 'bg-[#204C6F] text-white'
+                  ? 'bg-[#249dd8] text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -517,7 +517,7 @@ function UsersContent() {
             className={`p-2 rounded-lg ${
                   currentPage === totalAvailablePages
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-[#204C6F] text-white hover:bg-[#2980B9]'
+                : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
             }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

@@ -26,7 +26,9 @@ export default function Header() {
           setProfileImage(imageUrl);
         }
       } catch (error) {
-        console.error('Error al cargar imagen de perfil:', error);
+          if (process.env.NODE_ENV !== 'test') {
+              console.error('Error al cargar imagen de perfil:', error);
+          }
       }
     };
 
@@ -44,7 +46,7 @@ export default function Header() {
     const pathTitles: Record<string, string> = {
       '/dashboard': 'Vista General',
       '/users': 'Usuarios',
-      '/content': 'Contenido',
+      '/content': 'Moderaci\u00F3n',
       '/analytics': 'Anal\u00EDticas',
       '/notifications': 'Notificaciones',
       '/settings': 'Configuraci\u00F3n',
