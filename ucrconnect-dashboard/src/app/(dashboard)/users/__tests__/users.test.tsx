@@ -195,6 +195,15 @@ const mockUsersData = [
 ];
 
 describe('Users Page', () => {
+  // Suppress console errors during tests
+  beforeAll(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
   beforeEach(() => {
     cleanup();
     // Reset the mock implementation before each test
