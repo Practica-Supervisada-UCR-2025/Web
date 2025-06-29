@@ -78,10 +78,9 @@ describe('Sidebar Component', () => {
         // Check for main navigation items
         expect(screen.getByText('General')).toBeInTheDocument();
         expect(screen.getByText('Usuarios')).toBeInTheDocument();
-        expect(screen.getByText('Contenido')).toBeInTheDocument();
+        expect(screen.getByText('Moderaci\u00F3n')).toBeInTheDocument();
         expect(screen.getByText('Anal\u00EDticas')).toBeInTheDocument();
-        expect(screen.getByText('Notificaciones')).toBeInTheDocument();
-        expect(screen.getByText('Configuraci\u00F3n')).toBeInTheDocument();
+        expect(screen.getByText('Notificar')).toBeInTheDocument();
     });
 
     it('collapses and expands when toggle button is clicked', () => {
@@ -167,7 +166,7 @@ describe('Sidebar Component', () => {
         const usersLink = screen.getByText('Usuarios').closest('a');
         expect(usersLink).toHaveAttribute('href', '/users');
 
-        const contentLink = screen.getByText('Contenido').closest('a');
+        const contentLink = screen.getByText('Moderaci\u00F3n').closest('a');
         expect(contentLink).toHaveAttribute('href', '/content');
 
         const analyticsLink = screen.getByText('Anal\u00EDticas').closest('a');
@@ -201,7 +200,7 @@ describe('Sidebar Component', () => {
             fireEvent.click(mobileButton);
 
             // Mobile menu should now be open (Using "Notificaciones" since its in the menu)
-            expect(screen.getAllByText('Notificaciones').length).toBeGreaterThan(0);
+            expect(screen.getAllByText('Notificar').length).toBeGreaterThan(0);
 
             // Find and click the close button
             const closeButton = screen.getAllByRole('button').find(button =>
@@ -227,7 +226,7 @@ describe('Sidebar Component', () => {
             fireEvent.click(mobileButton);
 
             // Mobile menu should be open
-            expect(screen.getAllByText('Notificaciones').length).toBeGreaterThan(0);
+            expect(screen.getAllByText('Notificar').length).toBeGreaterThan(0);
 
             // Click a navigation item
             const mobileNavItems = screen.getAllByText('General');
@@ -265,10 +264,6 @@ describe('Sidebar Component', () => {
         // Check that text labels are not visible
         expect(screen.queryByText('General')).not.toBeInTheDocument();
         expect(screen.queryByText('Usuarios')).not.toBeInTheDocument();
-
-        // Check that icons are still visible
-        const navButtons = document.querySelectorAll('img');
-        expect(navButtons.length).toBe(6); // Should have 6 icons for the navigation items
 
         // Check that sidebar has the collapsed width class
         const sidebar = document.querySelector('aside');

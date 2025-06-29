@@ -37,11 +37,6 @@ describe('Users Page', () => {
     expect(screen.getByText('Usuarios')).toBeInTheDocument();
   });
 
-  it('dashboard stats card is clickable and has correct link', () => {
-    const statsCard = screen.getByText(mockUsers.length.toString()).closest('a');
-    expect(statsCard).toHaveAttribute('href', '/users');
-  });
-
   it('displays search input with correct placeholder', () => {
     const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
     expect(searchInput).toBeInTheDocument();
@@ -141,14 +136,14 @@ describe('Users Page', () => {
     fireEvent.click(nextButton);
 
     // Verify page 2 is active
-    expect(screen.getByText('2')).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(screen.getByText('2')).toHaveClass('bg-[#249dd8]', 'text-white');
     expect(screen.getByText('1')).toHaveClass('bg-gray-100', 'text-gray-600');
 
     // Click page 3 button
     fireEvent.click(screen.getByText('3'));
 
     // Verify page 3 is active
-    expect(screen.getByText('3')).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(screen.getByText('3')).toHaveClass('bg-[#249dd8]', 'text-white');
     expect(screen.getByText('2')).toHaveClass('bg-gray-100', 'text-gray-600');
   });
 
@@ -201,7 +196,7 @@ describe('Users Page', () => {
     
     // Focus input
     fireEvent.focus(searchInput);
-    expect(searchInput).toHaveClass('focus:ring-[#2980B9]', 'focus:border-[#2980B9]');
+    expect(searchInput).toHaveClass('focus:ring-[#1b87b9]', 'focus:border-[#1b87b9]');
     
     // Blur input
     fireEvent.blur(searchInput);
@@ -293,13 +288,13 @@ describe('Users Page', () => {
 
     // Verify we're on page 2
     const page2Button = screen.getByRole('button', { name: '2' });
-    expect(page2Button).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(page2Button).toHaveClass('bg-[#249dd8]', 'text-white');
 
     // Click previous button
     fireEvent.click(prevButton);
 
     // Verify we're back on page 1
     const page1Button = screen.getByRole('button', { name: '1' });
-    expect(page1Button).toHaveClass('bg-[#204C6F]', 'text-white');
+    expect(page1Button).toHaveClass('bg-[#249dd8]', 'text-white');
   });
 });

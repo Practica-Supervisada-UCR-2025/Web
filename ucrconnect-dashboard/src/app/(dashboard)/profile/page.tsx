@@ -8,6 +8,7 @@ import { getProfileValidationErrors } from '@/lib/validation/profile'
 import { ProfileHeader } from '@/components/profile/profileHeader'
 import { ProfileForm } from '@/components/profile/profileForm'
 import { PasswordFields } from '@/components/profile/passwordFields'
+import { Button } from '@/components/ui/button'
 
 export default function ProfilePage() {
   const [formData, setFormData] = useState({
@@ -25,6 +26,7 @@ export default function ProfilePage() {
   const [successPasswordMsg, setSuccessPasswordMsg] = useState('')
   const [errorProfileMsg, setErrorProfileMsg] = useState('')
   const [errorPasswordMsg, setErrorPasswordMsg] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     fetchProfileFromApiRoute()
@@ -66,19 +68,25 @@ export default function ProfilePage() {
       return
     }
 
+    setIsSubmitting(true)
     setSuccessProfileMsg('')
     setSuccessPasswordMsg('')
     setErrorProfileMsg('')
     setErrorPasswordMsg('')
 
+    let shouldReload = false
+
     try {
       const formDataToSend = new FormData()
       formDataToSend.append('full_name', formData.full_name)
+
       if (profileImageFile) {
         formDataToSend.append('profile_picture', profileImageFile)
+        shouldReload = true
       }
 
       await updateProfile(formDataToSend)
+
       setSuccessProfileMsg('Información del perfil actualizada correctamente.')
       setTimeout(() => setSuccessProfileMsg(''), 3000)
       setProfileImageFile(null)
@@ -114,7 +122,16 @@ export default function ProfilePage() {
         setTimeout(() => setErrorPasswordMsg(''), 3000)
       }
     }
+
+    setIsSubmitting(false)
+
+    if (shouldReload) {
+      setTimeout(() => {
+        location.reload()
+      }, 1000)
+    }
   }
+
 
   return (
     <div className="max-w-4xl mx-auto mt-10 bg-white shadow-xl rounded-2xl p-10">
@@ -126,18 +143,18 @@ export default function ProfilePage() {
       <h4 className="text-lg font-semibold text-gray-700 mb-4">Cambiar contraseña</h4>
       <PasswordFields formData={formData} errors={errors} onChange={handleChange} />
       <div className="mt-6 flex flex-col items-center space-y-3">
-        <button
+        <Button
           onClick={handleSubmit}
-          className="bg-[#249dd8] text-white px-10 py-3 rounded-full shadow hover:bg-[#1b87b9] transition"
+          type="button"
+          isLoading={isSubmitting}
+          disabled={false}
+          className=""
         >
           Guardar cambios
-        </button>
+        </Button>
 
-        {/* Mensajes de éxito */}
         {successProfileMsg && <p className="text-green-600 font-medium">{successProfileMsg}</p>}
         {successPasswordMsg && <p className="text-green-600 font-medium">{successPasswordMsg}</p>}
-
-        {/* Mensajes de error */}
         {errorProfileMsg && <p className="text-red-600 font-medium">{errorProfileMsg}</p>}
         {errorPasswordMsg && <p className="text-red-600 font-medium">{errorPasswordMsg}</p>}
       </div>

@@ -21,7 +21,7 @@ export default function RecoverPassword() {
     setError(''); 
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/recover-password`, {
+      const response = await fetch("/api/admin/auth/recoverpassword", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

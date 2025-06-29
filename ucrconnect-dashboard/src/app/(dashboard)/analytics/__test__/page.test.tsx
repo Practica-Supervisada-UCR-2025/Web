@@ -190,4 +190,67 @@ describe('Analytics Component', () => {
       expect(screen.getByText('Formato de datos no reconocido')).toBeInTheDocument();
     });
   });
+
+  test('shows error when startDate is after endDate', async () => {
+    render(<Analytics />);
+    const startInput = screen.getByLabelText('Inicio');
+    const endInput = screen.getByLabelText('Fin');
+
+    fireEvent.change(startInput, { target: { value: '2025-06-20' } });
+    fireEvent.change(endInput, { target: { value: '2025-06-10' } });
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByText('La fecha de inicio debe ser anterior o igual a la fecha de fin')).toBeInTheDocument();
+    });
+  });
+
+  test('does not show "no data" message while loading', async () => {
+    (fetchAnalytics as jest.Mock).mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ data: { series: [] } }), 100))
+    );
+
+    render(<Analytics />);
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    expect(screen.queryByText('No hay datos para mostrar.')).not.toBeInTheDocument();
+  });
+
+  test('does not show chart or "no data" message when there is an error', async () => {
+    (fetchAnalytics as jest.Mock).mockRejectedValue(new Error('Algo falló'));
+
+    render(<Analytics />);
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Algo falló')).toBeInTheDocument();
+      expect(screen.queryByTestId('chart-mock')).not.toBeInTheDocument();
+      expect(screen.queryByText('No hay datos para mostrar.')).not.toBeInTheDocument();
+    });
+  });
+
+  test('changes interval and sends it in fetchAnalytics call', async () => {
+    const mockFetch = fetchAnalytics as jest.Mock;
+    mockFetch.mockResolvedValue({
+      data: {
+        series: [{ date: '2024-01-01', count: 10 }],
+      },
+    });
+
+    render(<Analytics />);
+    
+    fireEvent.change(screen.getByLabelText('Intervalo'), {
+      target: { value: 'monthly' },
+    });
+
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          interval: 'monthly',
+        })
+      );
+    });
+  });
 });

@@ -4,11 +4,8 @@ import RootLayout from '../layout';
 
 // Mock the imported modules and components
 jest.mock("next/font/google", () => ({
-    Geist: jest.fn(() => ({
-        variable: "mock-geist-sans-variable"
-    })),
-    Geist_Mono: jest.fn(() => ({
-        variable: "mock-geist-mono-variable"
+    Poppins: jest.fn(() => ({
+        variable: "mock-poppins-variable"
     }))
 }));
 
@@ -68,10 +65,9 @@ describe('RootLayout Component', () => {
         expect(result.props.lang).toBe('en');
         expect(result.props.children.type).toBe('body');
 
-        // Verify the className contains the expected font variables
+        // Verify the className contains the expected font variable
         const className = result.props.children.props.className;
-        expect(className).toContain('mock-geist-sans-variable');
-        expect(className).toContain('mock-geist-mono-variable');
+        expect(className).toContain('mock-poppins-variable');
         expect(className).toContain('antialiased');
     });
 });

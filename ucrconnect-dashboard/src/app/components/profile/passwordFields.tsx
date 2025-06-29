@@ -57,7 +57,7 @@ export function PasswordFields({
                 name={field}
                 value={formData[field]}
                 onChange={onChange}
-                className={`w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
+                className={`w-full border rounded-xl px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
                   errors[field]
                     ? 'border-red-500 ring-red-300'
                     : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'

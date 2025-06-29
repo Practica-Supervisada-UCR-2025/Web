@@ -1,4 +1,5 @@
-import { Pencil } from 'lucide-react'
+import { TextField } from "@/components/ui/textFields";
+import { Pencil } from "lucide-react";
 
 export function ProfileForm({
   formData,
@@ -7,11 +8,11 @@ export function ProfileForm({
   onImageChange,
   profileImage,
 }: {
-  formData: any
-  errors: any
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  profileImage: string
+  formData: any;
+  errors: any;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  profileImage: string;
 }) {
   return (
     <div className="max-w-2xl mx-auto px-10 mb-10">
@@ -41,43 +42,27 @@ export function ProfileForm({
         </div>
 
         {/* Campos a la derecha */}
-        <div className="flex flex-col space-y-6">
-          {/* Nombre completo */}
-          <div>
-            <label htmlFor="full_name" className="block text-sm font-semibold text-[#249dd8] mb-1">
-              Nombre completo
-            </label>
-            <input
-              id="full_name"
-              type="text"
-              name="full_name"
-              value={formData.full_name}
-              onChange={onChange}
-              className={`w-full border rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 ${
-                errors.full_name
-                  ? 'border-red-500 ring-red-300'
-                  : 'border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]'
-              } text-gray-800`}
-            />
-            {errors.full_name && <p className="text-red-500 text-sm mt-1">{errors.full_name}</p>}
-          </div>
+        <div className="flex flex-col space-y-6 rounded-xl p-6 bg-white border">
+          <TextField
+            id="full_name"
+            label="Nombre completo"
+            name="full_name"
+            value={formData.full_name}
+            onChange={onChange}
+            error={errors.full_name}
+            required
+          />
 
-          {/* Correo electrónico */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-semibold text-[#249dd8] mb-1">
-              Correo electrónico
-            </label>
-            <input
-              id="email"
-              type="email"
-              name="email"
-              value={formData.email}
-              readOnly
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 text-gray-500 cursor-not-allowed"
-            />
-          </div>
+          <TextField
+            id="email"
+            label="Correo electrónico"
+            name="email"
+            type="email"
+            value={formData.email}
+            readOnly
+          />
         </div>
       </div>
     </div>
-  )
+  );
 }
