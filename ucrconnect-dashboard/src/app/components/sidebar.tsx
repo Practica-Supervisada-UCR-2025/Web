@@ -60,7 +60,7 @@ export default function Sidebar() {
         { name: 'Usuarios', path: '/users', icon: icons.user },
         { name: 'Moderaci\u00F3n', path: '/content', icon: icons.grid },
         { name: 'Anal\u00EDticas', path: '/analytics', icon: icons.graph },
-        { name: 'Notificaciones', path: '/notifications', icon: icons.bell },
+        { name: 'Notificar', path: '/notifications', icon: icons.bell },
     ];
 
     // Toggle sidebar function

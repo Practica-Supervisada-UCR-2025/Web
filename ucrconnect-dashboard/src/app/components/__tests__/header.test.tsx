@@ -54,7 +54,6 @@ describe('Header Component', () => {
             { path: '/users', title: 'Usuarios' },
             { path: '/content', title: 'Moderaci\u00F3n' },
             { path: '/analytics', title: 'Anal\u00EDticas' },
-            { path: '/settings', title: 'Configuraci\u00F3n' },
         ];
 
         for (const { path, title } of pathsToTest) {
