@@ -339,10 +339,7 @@ export default function PostDetail(): JSX.Element {
             await handleDeletePost();
         }
     };
-    // Handle clear reports
-    const handleClearReports = async (): Promise<void> => {
-        await handleModerationAction('clear_reports');
-    };
+
     // Clear messages after timeout
     useEffect(() => {
         if (successMessage) {

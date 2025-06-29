@@ -176,6 +176,7 @@ function UsersContent() {
       setRemainingItems(0);
 
       let allUsers: User[] = [];
+      let seenUserIds = new Set<string>(); // Track unique user IDs
       let hasMore = true;
       let lastTime = new Date(0).toISOString();
 
@@ -203,8 +204,12 @@ function UsersContent() {
 
         const data: UsersResponse = await response.json();
         
-        // Add new users to our collection
-        allUsers = [...allUsers, ...data.data];
+        // Filter out duplicates before adding to collection
+        const newUsers = data.data.filter(user => !seenUserIds.has(user.id));
+        newUsers.forEach(user => seenUserIds.add(user.id));
+        
+        // Add only new users to our collection
+        allUsers = [...allUsers, ...newUsers];
         
         // Update pagination state
         hasMore = data.metadata.remainingItems > 0;

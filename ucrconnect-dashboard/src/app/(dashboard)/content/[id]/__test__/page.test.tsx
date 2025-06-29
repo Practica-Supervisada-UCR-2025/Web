@@ -1035,7 +1035,6 @@ describe('Hide Post Modal Flow', () => {
         afterEach(() => {
             jest.clearAllMocks();
         });
-
         it('should handle successful post hiding', async () => {
             // Mock the fetch for the delete action
             (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -1070,3 +1069,4 @@ describe('Hide Post Modal Flow', () => {
 
 
 });
+
