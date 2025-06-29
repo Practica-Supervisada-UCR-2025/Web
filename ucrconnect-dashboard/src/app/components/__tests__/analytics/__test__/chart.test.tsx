@@ -6,8 +6,10 @@ jest.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: any) => <div data-testid="responsive">{children}</div>,
   LineChart: ({ children }: any) => <svg data-testid="line-chart">{children}</svg>,
   BarChart: ({ children }: any) => <svg data-testid="bar-chart">{children}</svg>,
+  PieChart: ({ children }: any) => <svg data-testid="pie-chart">{children}</svg>,
   Line: () => <path data-testid="line" />,
   Bar: ({ children }: any) => <g data-testid="bar">{children}</g>,
+  Pie: ({ children }: any) => <g data-testid="pie">{children}</g>,
   Cell: () => <rect data-testid="cell" />,
   XAxis: () => <g data-testid="x-axis" />,
   YAxis: () => <g data-testid="y-axis" />,
@@ -40,6 +42,13 @@ describe('Chart component', () => {
     expect(screen.getAllByTestId('cell').length).toBeGreaterThan(0);
   });
 
+  it('renderiza gráfico de pie cuando se especifica', () => {
+    render(<Chart data={mockData} xKey="date" yKey="value" type="pie" />);
+    expect(screen.getByTestId('pie-chart')).toBeInTheDocument();
+    expect(screen.getByTestId('pie')).toBeInTheDocument();
+    expect(screen.getAllByTestId('cell').length).toBe(mockData.length);
+  });
+
   it('usa el color especificado para el gráfico de línea (mock)', () => {
     render(<Chart data={mockData} xKey="date" yKey="value" type="line" color="#ff0000" />);
     expect(screen.getByTestId('line-chart')).toBeInTheDocument();
@@ -51,5 +60,25 @@ describe('Chart component', () => {
       <Chart data={mockData} xKey="date" yKey="value" type="bar" barColors={customColors} />
     );
     expect(screen.getAllByTestId('cell').length).toBe(mockData.length);
+  });
+
+  it('no renderiza nada para un tipo inválido', () => {
+    const { container } = render(
+      <Chart data={mockData} xKey="date" yKey="value" type="unknown" />
+    );
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('acepta margin personalizado', () => {
+    render(
+      <Chart
+        data={mockData}
+        xKey="date"
+        yKey="value"
+        type="line"
+        margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
+      />
+    );
+    expect(screen.getByTestId('line-chart')).toBeInTheDocument();
   });
 });

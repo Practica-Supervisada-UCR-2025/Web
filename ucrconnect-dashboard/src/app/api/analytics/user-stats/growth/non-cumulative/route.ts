@@ -1,4 +1,5 @@
-// app/api/analytics/posts-stats/volume/route.ts
+// api\analytics\user-stats\growth\non-cumulative
+
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(req: NextRequest) {
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const backendUrl = `${process.env.NEXT_PUBLIC_ANALYTICS_URL}/api/analytics/posts-stats/volume?interval=${interval}&startDate=${startDate}&endDate=${endDate}`;
+  const backendUrl = `${process.env.NEXT_PUBLIC_ANALYTICS_URL}/api/analytics/users-stats/growth/non-cumulative?interval=${interval}&startDate=${startDate}&endDate=${endDate}`;
 
   try {
     const backendRes = await fetch(backendUrl, {

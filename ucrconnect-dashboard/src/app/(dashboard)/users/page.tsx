@@ -349,7 +349,7 @@ function UsersContent() {
   return (
     <div className="w-full max-w-[95vw] mx-auto px-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-        {dashboardStats.map(({ title, value, change, route }, index) => {
+        {dashboardStats.map(({ title, value, route }, index) => {
           const isUsuarios = title === 'Usuarios';
           const customBgStyle = isUsuarios
             ? 'bg-gradient-to-tr from-[#249DD8] to-[#41ADE7BF] text-white'
@@ -361,7 +361,7 @@ function UsersContent() {
               className="transition-transform transform hover:scale-104 cursor-pointer"
             >
               <Link href={route || '#'} passHref>
-                <StatCard title={title} value={value} change={change} route={route} bgStyle={customBgStyle} />
+                <StatCard title={title} value={value} bgStyle={customBgStyle} />
               </Link>
             </div>
           );
