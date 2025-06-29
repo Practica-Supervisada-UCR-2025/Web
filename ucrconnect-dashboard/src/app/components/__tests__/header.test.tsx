@@ -194,4 +194,83 @@ describe('Header Component', () => {
         // Clean up
         consoleSpy.mockRestore();
     });
+
+    it('displays fallback profile image when fetch fails', async () => {
+        // Mock fetch to fail
+        global.fetch = jest.fn().mockRejectedValue(new Error('Failed to fetch'));
+
+        render(<Header />);
+
+        const fallbackImg = await screen.findByAltText('profile');
+        expect(fallbackImg).toBeInTheDocument();
+        expect(fallbackImg).toHaveAttribute('src', expect.stringContaining('user-alt-1.svg'));
+    });
+
+    it('displays profile image when fetch succeeds', async () => {
+        global.fetch = jest.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                data: {
+                    profile_picture: 'https://example.com/profile.jpg'
+                }
+            })
+        });
+
+        await act(async () => {
+            render(<Header />);
+        });
+
+        const image = await screen.findByAltText('Foto de perfil');
+        expect(image).toBeInTheDocument();
+    });
+
+
+    it('renders blank section title for unknown routes', () => {
+        const { usePathname } = require('next/navigation');
+        usePathname.mockReturnValue('/unknown-route');
+
+        render(<Header />);
+
+        expect(screen.queryByText(/Vista General/i)).not.toBeInTheDocument();
+    });
+
+    it('toggles profile dropdown open and closed on repeated clicks', () => {
+        render(<Header />);
+
+        const button = screen.getByRole('button');
+        fireEvent.click(button);
+
+        act(() => {
+            jest.advanceTimersByTime(50);
+        });
+
+        expect(screen.getByText('Ver perfil')).toBeInTheDocument();
+
+        fireEvent.click(button); // Second click to close
+        act(() => {
+            jest.advanceTimersByTime(150);
+        });
+
+        expect(screen.queryByText('Ver⠀perfil')).not.toBeInTheDocument();
+    });
+
+    it('closes profile dropdown after clicking "Ver perfil"', () => {
+        render(<Header />);
+        const button = screen.getByRole('button');
+        fireEvent.click(button);
+
+        act(() => {
+            jest.advanceTimersByTime(50);
+        });
+
+        const profileLink = screen.getByText('Ver perfil');
+        fireEvent.click(profileLink);
+
+        act(() => {
+            jest.advanceTimersByTime(150);
+        });
+
+        expect(screen.queryByText('Ver⠀perfil')).not.toBeInTheDocument();
+    });
+
 });
