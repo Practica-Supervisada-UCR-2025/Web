@@ -1,5 +1,8 @@
 'use client';
 
+import { TextField } from "@/components/ui/textFields";
+import { Button } from '@/components/ui/button';
+
 import { useState, useEffect } from 'react';
 import { createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
 import { getSecondaryAuth } from '@/lib/firebase';
@@ -326,43 +329,30 @@ export default function RegisterUser() {
             <h3 className="text-2xl font-bold text-center text-gray-800 mb-10">Registrar nuevo usuario administrador</h3>
             <div>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-gray-800">
-                    <div>
-                        <label htmlFor="name" className="block text-sm font-semibold text-[#249dd8] mb-1">
-                            Nombre <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            id="name"
-                            name="name"
-                            type="text"
-                            placeholder="Nombre completo"
-                            value={formData.name}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            className={`mt-1 w-full block px-3 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        />
-                        {errors.name && touched.name && (
-                            <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                        )}
-                    </div>
+                    <TextField
+                        id="name"
+                        label="Nombre"
+                        name="name"
+                        placeholder="Nombre completo"
+                        value={formData.name}
+                        onChange={handleChange}
+                        error={touched.name ? errors.name : undefined}
+                        required
+                        onBlur={handleBlur}
+                    />
 
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-semibold text-[#249dd8] mb-1">
-                            Correo electrónico <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="ejemplo@ucr.ac.cr"
-                            value={formData.email}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            className={`mt-1 w-full block px-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
-                        />
-                        {errors.email && touched.email && (
-                            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                        )}
-                    </div>
+                    <TextField
+                        label="Correo electrónico"
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="ejemplo@ucr.ac.cr"
+                        value={formData.email}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={touched.email ? errors.email : undefined}
+                        required
+                    />
 
                     <div>
                         <label htmlFor="password" className="block text-sm font-semibold text-[#249dd8] mb-1">
@@ -377,7 +367,13 @@ export default function RegisterUser() {
                                 value={formData.password}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`mt-1 w-full block pr-10 px-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                                className={`w-full border rounded-xl px-4 py-2 pr-10 focus:outline-none focus:ring-2
+                                    ${
+                                        errors.password
+                                        ? "border-red-500 ring-red-300"
+                                        : "border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]"
+                                    }`
+                                }
                             />
                             <button
                                 type="button"
@@ -416,7 +412,13 @@ export default function RegisterUser() {
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
-                                className={`mt-1 w-full block px-3 py-2 border ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                                className={`w-full border rounded-xl px-4 py-2 pr-10 focus:outline-none focus:ring-2
+                                    ${
+                                        errors.password
+                                        ? "border-red-500 ring-red-300"
+                                        : "border-gray-300 focus:ring-[#249dd8] focus:border-[#249dd8]"
+                                    }`
+                                }
                             />
                             <button
                                 type="button"
@@ -443,14 +445,13 @@ export default function RegisterUser() {
                     </div>
 
                     <div className="flex justify-center">
-                        <button
+                        <Button
                             type="submit"
-                            className="w-auto py-3 px-10 rounded-full shadow text-white bg-[#249dd8] cursor-pointer hover:bg-[#1b87b9] disabled:opacity-50 disabled:cursor-not-allowed transition"
-                            disabled={!isFormValid() || isSubmitting}
-                            title={!isFormValid() ? 'Complete todos los campos correctamente.' : ''}
+                            isLoading={isSubmitting}
+                            disabled={!isFormValid()}
                         >
-                            {isSubmitting ? 'Registrando...' : 'Registrar usuario'}
-                        </button>
+                            Registrar usuario
+                        </Button>
                     </div>
 
                     {errors.form && (
