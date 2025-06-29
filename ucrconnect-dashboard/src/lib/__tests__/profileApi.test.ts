@@ -1,33 +1,39 @@
 import { fetchProfileFromApiRoute, updateProfile } from '@/lib/profileApi'
+import { apiGet } from '@/lib/apiUtils'
+
+// Mock the apiUtils module
+jest.mock('@/lib/apiUtils', () => ({
+  apiGet: jest.fn(),
+  apiPatch: jest.fn(),
+}))
 
 describe('profileApi utilities', () => {
   const originalFetch = global.fetch
 
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   afterEach(() => {
     global.fetch = originalFetch
-    jest.resetAllMocks()
   })
 
   describe('fetchProfileFromApiRoute', () => {
     it('should return profile data when the request is successful', async () => {
       const mockProfile = { id: '123', name: 'Admin' }
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ data: mockProfile }),
-      }) as unknown as typeof fetch
+      ;(apiGet as jest.Mock).mockResolvedValue(mockProfile)
 
       const data = await fetchProfileFromApiRoute()
 
-      expect(global.fetch).toHaveBeenCalledWith('/api/admin/auth/profile')
+      expect(apiGet).toHaveBeenCalledWith('/api/admin/auth/profile')
       expect(data).toEqual(mockProfile)
     })
 
     it('should throw an error when the request is not ok', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-      }) as unknown as typeof fetch
+      const errorMessage = 'Error fetching profile'
+      ;(apiGet as jest.Mock).mockRejectedValue(new Error(errorMessage))
 
-      await expect(fetchProfileFromApiRoute()).rejects.toThrow('Error fetching profile')
+      await expect(fetchProfileFromApiRoute()).rejects.toThrow(errorMessage)
     })
   })
 
@@ -47,6 +53,7 @@ describe('profileApi utilities', () => {
       expect(global.fetch).toHaveBeenCalledWith('/api/admin/auth/profile', {
         method: 'PATCH',
         body: formData,
+        credentials: 'include',
       })
       expect(data).toEqual(mockUpdatedProfile)
     })
@@ -72,6 +79,18 @@ describe('profileApi utilities', () => {
       const formData = new FormData()
 
       await expect(updateProfile(formData)).rejects.toThrow('Error updating profile')
+    })
+
+    it('should handle session expiration and redirect to login', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: jest.fn().mockResolvedValue({ message: 'Unauthorized' }),
+      }) as unknown as typeof fetch
+
+      const formData = new FormData()
+
+      await expect(updateProfile(formData)).rejects.toThrow('Session expired')
     })
   })
 })

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -13,11 +13,14 @@ function LoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const sessionExpiredShownRef = useRef(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
     // Check for logout parameter
     const logoutStatus = searchParams.get('logout');
+    const sessionExpired = searchParams.get('session_expired');
+    
     if (logoutStatus === 'success') {
       toast.success('Sesión cerrada exitosamente', {
         duration: 2000,
@@ -33,6 +36,16 @@ function LoginContent() {
         position: 'top-center',
         style: {
           background: '#333',
+          color: '#fff',
+        },
+      });
+    } else if (sessionExpired === 'true' && !sessionExpiredShownRef.current) {
+      sessionExpiredShownRef.current = true;
+      toast.error('Sesión ha expirado. Inicie sesión nuevamente.', {
+        duration: 4000,
+        position: 'top-center',
+        style: {
+          background: '#dc2626',
           color: '#fff',
         },
       });
@@ -138,6 +151,7 @@ function LoginContent() {
             type="email"
             placeholder="Correo electrónico"
             required
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#2980B9] focus:border-[#2980B9] dark:text-[#0C344E]"
@@ -151,6 +165,7 @@ function LoginContent() {
             type={showPassword ? "text" : "password"}
             placeholder="Contraseña"
             required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-[#2980B9] focus:border-[#2980B9] dark:text-[#0C344E]"

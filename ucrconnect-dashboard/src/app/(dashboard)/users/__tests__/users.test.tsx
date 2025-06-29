@@ -942,7 +942,7 @@ describe('Users Page', () => {
     render(<Users />);
     
     await waitFor(() => {
-      expect(window.location.href).toBe('/login');
+      expect(window.location.href).toBe('http://localhost/login?session_expired=true');
     });
 
     // Restore original location

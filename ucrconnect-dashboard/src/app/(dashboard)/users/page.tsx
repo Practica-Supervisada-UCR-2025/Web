@@ -3,6 +3,7 @@ import { useEffect, useState, Suspense } from 'react';
 import StatCard from '../../components/statCard';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useApi } from '@/hooks/useApi';
 
 interface User {
   id: string;
@@ -26,6 +27,7 @@ interface UsersResponse {
 
 function UsersContent() {
   const searchParams = useSearchParams();
+  const { get } = useApi();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +93,7 @@ function UsersContent() {
     }
   }, [searchParams]);
 
-  // Fetch users from API
+  // Fetch users from API using new API utilities
   const fetchUsers = async (createdAfter?: string, limit: number = 50) => {
     try {
       setLoading(true);
@@ -115,19 +117,33 @@ function UsersContent() {
         url += `?${params.toString()}`;
       }
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies for authentication
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await get(url);
+      
+      // Handle different response structures - the API utilities might return data directly or wrapped
+      let data: UsersResponse;
+      if (response.data && Array.isArray(response.data)) {
+        // Response is wrapped in a data property
+        data = response as UsersResponse;
+      } else if (Array.isArray(response)) {
+        // Response is directly an array of users
+        data = {
+          message: 'Success',
+          data: response,
+          metadata: {
+            last_time: '',
+            remainingItems: 0,
+            remainingPages: 0
+          }
+        };
+      } else {
+        // Response is already in the expected format
+        data = response as UsersResponse;
       }
-
-      const data: UsersResponse = await response.json();
+      
+      // Ensure data.data is an array
+      if (!data.data || !Array.isArray(data.data)) {
+        throw new Error('Invalid response structure from API');
+      }
       
       // Always append users for pagination, search filtering happens client-side
       if (createdAfter) {
@@ -160,7 +176,7 @@ function UsersContent() {
     }
   };
 
-  // Load ALL users upfront
+  // Load ALL users upfront using new API utilities
   const loadAllUsers = async () => {
     // Don't load users if not authenticated
     if (!isAuthenticated) {
@@ -184,25 +200,33 @@ function UsersContent() {
       while (hasMore) {
         const url = `/api/users/get/all?created_after=${encodeURIComponent(lastTime)}&limit=50`;
         
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-        });
-
-        if (response.status === 401) {
-          // Redirect to login if unauthorized
-          window.location.href = '/login';
-          return;
+        const response = await get(url);
+        
+        // Handle different response structures
+        let data: UsersResponse;
+        if (response.data && Array.isArray(response.data)) {
+          // Response is wrapped in a data property
+          data = response as UsersResponse;
+        } else if (Array.isArray(response)) {
+          // Response is directly an array of users
+          data = {
+            message: 'Success',
+            data: response,
+            metadata: {
+              last_time: '',
+              remainingItems: 0,
+              remainingPages: 0
+            }
+          };
+        } else {
+          // Response is already in the expected format
+          data = response as UsersResponse;
         }
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        
+        // Ensure data.data is an array
+        if (!data.data || !Array.isArray(data.data)) {
+          throw new Error('Invalid response structure from API');
         }
-
-        const data: UsersResponse = await response.json();
         
         // Filter out duplicates before adding to collection
         const newUsers = data.data.filter(user => !seenUserIds.has(user.id));
