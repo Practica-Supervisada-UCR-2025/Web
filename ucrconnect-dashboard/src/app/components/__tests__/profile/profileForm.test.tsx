@@ -137,8 +137,6 @@ describe('ProfileHeader', () => {
 })
 
 /* components/__test__/profile/profileForm.test.tsx */
-import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
 import { ProfileForm } from '../../profile/profileForm'
 
 describe('ProfileForm', () => {
