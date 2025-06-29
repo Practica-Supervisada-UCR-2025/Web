@@ -268,7 +268,6 @@ describe('Users Page', () => {
     expect(screen.getByText('Usuarios')).toBeInTheDocument();
   });
 
-<<<<<<< HEAD
   it('dashboard stats card is clickable and has correct link', async () => {
     render(<Users />);
     
@@ -282,31 +281,6 @@ describe('Users Page', () => {
 
   it('displays search input with correct placeholder', async () => {
     render(<Users />);
-=======
-  it('displays search input with correct placeholder', () => {
-    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
-    expect(searchInput).toBeInTheDocument();
-  });
-
-  it('displays register and suspend user buttons', () => {
-    expect(screen.getByText('Registrar nuevo usuario')).toBeInTheDocument();
-    expect(screen.getByText('Suspender usuario')).toBeInTheDocument();
-  });
-
-  it('displays table headers correctly', () => {
-    const headers = screen.getAllByRole('columnheader');
-    expect(headers).toHaveLength(4);
-    expect(headers[0]).toHaveTextContent('Nombre');
-    expect(headers[1]).toHaveTextContent('Correo');
-    expect(headers[2]).toHaveTextContent('Tipo');
-    expect(headers[3]).toHaveTextContent('Estado');
-  });
-
-  it('displays user data correctly', () => {
-    // Check first page data (6 users)
-    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
-    expect(screen.getByText('juan.perez@ucr.ac.cr')).toBeInTheDocument();
->>>>>>> develop
     
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Buscar usuarios...')).toBeInTheDocument();

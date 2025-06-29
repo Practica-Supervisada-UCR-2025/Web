@@ -2,7 +2,6 @@
 import { useEffect, useState, Suspense } from 'react';
 import StatCard from '../../components/statCard';
 import Link from 'next/link';
-import { PostsChart, ReportsChart, UsersChart } from '../../components/charts';
 import { useSearchParams } from 'next/navigation';
 
 interface User {
