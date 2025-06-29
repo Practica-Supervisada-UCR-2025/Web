@@ -310,7 +310,7 @@ export default function PostDetail(): JSX.Element {
                     break;
                 case 'suspend_user':
                     setPost({ ...post, is_active: false, status: 0 });
-                    setSuccessMessage(`Usuario suspendido por ${suspensionDays} d\u00edas exitosamente`);
+                    setSuccessMessage(`Usuario suspendido por ${suspensionDays} ${suspensionDays === 1 ? 'día' : 'días'} exitosamente`);
                     setHideButtons(true);
                     break;
             }
@@ -329,12 +329,46 @@ export default function PostDetail(): JSX.Element {
     // Handle hide post
     const handleHidePost = async (suspensionDays?: number): Promise<void> => {
         if (suspensionDays) {
-            // Show "not implemented" message for user suspension
-            setSuccessMessage('Funcionalidad de suspensi\u00f3n de usuario no implementada a\u00fan');
-            setHideButtons(true);
-            setTimeout(() => {
-                router.push('/content');
-            }, 2000);
+            // Suspend user using the API
+            setActionLoading(true);
+            setError(null);
+            try {
+                const response = await fetch('/api/users/suspend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: post?.user_id,
+                        days: suspensionDays,
+                        description: suspensionReason || `Usuario suspendido por moderación - ${suspensionDays} ${suspensionDays === 1 ? 'día' : 'días'}`
+                    }),
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('No tienes permisos para suspender usuarios');
+                    } else if (response.status === 400) {
+                        throw new Error(result.details || 'Error de validación en la suspensión');
+                    } else {
+                        throw new Error(result.message || 'Error al suspender el usuario');
+                    }
+                }
+
+                // Hide the post after successful suspension
+                await handleDeletePost();
+                setSuccessMessage(`Usuario suspendido por ${suspensionDays} ${suspensionDays === 1 ? 'día' : 'días'} exitosamente`);
+                setHideButtons(true);
+                setTimeout(() => {
+                    router.push('/content');
+                }, 2000);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Error al suspender el usuario');
+            } finally {
+                setActionLoading(false);
+            }
         } else {
             await handleDeletePost();
         }
