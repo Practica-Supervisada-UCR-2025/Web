@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 export async function GET(request: NextRequest) {
-    try {
         // Get the access token from cookies
         const cookieStore = await cookies();
         const accessToken = request.cookies.get('access_token')?.value;
@@ -47,6 +46,7 @@ export async function GET(request: NextRequest) {
         // Make request to backend API
         const backendUrl = `${process.env.NEXT_PUBLIC_POST_URL}/api/posts/reported?${queryParams.toString()}`;
 
+    try {
         const backendResponse = await fetch(backendUrl, {
             method: 'GET',
             headers: {
@@ -54,10 +54,13 @@ export async function GET(request: NextRequest) {
                 'Authorization': `Bearer ${accessToken}`,
             },
         });
+        console.log(backendResponse);
 
         // Handle non-JSON responses
         const contentType = backendResponse.headers.get('content-type');
         let backendData;
+
+        console.log(contentType);
 
         if (contentType && contentType.includes('application/json')) {
             backendData = await backendResponse.json();
@@ -86,6 +89,8 @@ export async function GET(request: NextRequest) {
                 { status: backendResponse.status }
             );
         }
+
+        console.log(backendData);
 
         // Return successful response
         return NextResponse.json(backendData, { status: 200 });
