@@ -9,8 +9,14 @@ describe('fetchAnalytics', () => {
     endDate: '2024-01-10',
   };
 
+  const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   it('fetches growth data correctly', async () => {
@@ -36,7 +42,7 @@ describe('fetchAnalytics', () => {
     const data = await fetchAnalytics({ ...params, graphType: 'volume' });
 
     expect(fetch).toHaveBeenCalledWith(
-      '/api/analytics/posts-stats/volume?interval=daily&startDate=2024-01-01&endDate=2024-01-10'
+      '/api/analytics/reports-stats/volume?interval=daily&startDate=2024-01-01&endDate=2024-01-10'
     );
     expect(data).toEqual([{ date: '2024-01-01', count: 12 }]);
   });
@@ -50,6 +56,7 @@ describe('fetchAnalytics', () => {
   it('throws an error when backend returns an error with message', async () => {
     (fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
+      status: 400,
       json: () => Promise.resolve({ message: 'Datos inválidos' }),
     });
 
@@ -61,6 +68,7 @@ describe('fetchAnalytics', () => {
   it('throws a generic error when backend response is not JSON', async () => {
     (fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
+      status: 500,
       json: () => Promise.reject('not json'),
     });
 
@@ -81,5 +89,40 @@ describe('fetchAnalytics', () => {
       '/api/analytics/posts/stats/total?start_date=01-01-2024&end_date=10-01-2024&period=daily'
     );
     expect(data).toEqual([{ date: '01-01-2024', count: 3 }]);
+  });
+
+  it('fetches reported data correctly', async () => {
+    (fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: [{ date: '2024-01-01', count: 7 }] }),
+    });
+
+    const data = await fetchAnalytics({
+      ...params,
+      graphType: 'reported',
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/analytics/posts-stats/reported?interval=daily&startDate=2024-01-01&endDate=2024-01-10'
+    );
+    expect(data).toEqual([{ date: '2024-01-01', count: 7 }]);
+  });
+
+  it('fetches non-cumulative growth data correctly', async () => {
+    (fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: [{ date: '2024-01-01', count: 2 }] }),
+    });
+
+    const data = await fetchAnalytics({
+      ...params,
+      graphType: 'growth',
+      cumulative: false,
+    });
+
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/analytics/user-stats/growth/non-cumulative?interval=daily&startDate=2024-01-01&endDate=2024-01-10'
+    );
+    expect(data).toEqual([{ date: '2024-01-01', count: 2 }]);
   });
 });

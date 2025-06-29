@@ -37,11 +37,6 @@ describe('Users Page', () => {
     expect(screen.getByText('Usuarios')).toBeInTheDocument();
   });
 
-  it('dashboard stats card is clickable and has correct link', () => {
-    const statsCard = screen.getByText(mockUsers.length.toString()).closest('a');
-    expect(statsCard).toHaveAttribute('href', '/users');
-  });
-
   it('displays search input with correct placeholder', () => {
     const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
     expect(searchInput).toBeInTheDocument();

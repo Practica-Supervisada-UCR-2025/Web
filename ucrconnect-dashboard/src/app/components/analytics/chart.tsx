@@ -1,9 +1,10 @@
+'use client';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Cell, Legend,
+  BarChart, Bar, PieChart, Pie, Cell, Legend,
 } from "recharts";
 
-type ChartType = "line" | "bar";
+type ChartType = "line" | "bar" | "pie";
 
 type ChartProps = {
   data: any[];
@@ -13,11 +14,17 @@ type ChartProps = {
   color?: string;
   barColors?: string[];
   margin?: { top?: number; right?: number; left?: number; bottom?: number };
+  pieColors?: string[];
 };
 
 export default function Chart({
-  data, type = "line", xKey, yKey, color = "#249dd8",
+  data,
+  type = "line",
+  xKey,
+  yKey,
+  color = "#249dd8",
   barColors = ['#8884d8', '#82ca9d', '#ffc658', '#ff7f50', '#a0522d', '#00bcd4', '#ff69b4', '#7b68ee'],
+  pieColors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'],
   margin = { top: 20, right: 30, left: 20, bottom: 30 },
 }: ChartProps) {
   if (!data || data.length === 0) {
@@ -56,30 +63,54 @@ export default function Chart({
             dot={{ stroke: color, strokeWidth: 2, r: 4, fill: "white" }}
             activeDot={{ r: 6, strokeWidth: 3, stroke: color, fill: "white" }}
           />
-          <Legend
-            wrapperStyle={{ color: '#000' }}
-          />
+          <Legend wrapperStyle={{ color: '#000' }} />
         </LineChart>
       </ResponsiveContainer>
     );
   }
 
-  return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} margin={margin}>
-        <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
-        <XAxis dataKey={xKey} stroke="#8884d8" />
-        <YAxis stroke="#8884d8" />
-        <Tooltip wrapperStyle={tooltipStyle} />
-        <Bar dataKey={yKey} name="Cantidad">
-          {data.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} />
-          ))}
-        </Bar>
-        <Legend
-          wrapperStyle={{ color: '#000' }}
-        />
-      </BarChart>
-    </ResponsiveContainer>
-  );
+  if (type === "bar") {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={margin}>
+          <CartesianGrid stroke="#e0e0e0" strokeDasharray="3 3" />
+          <XAxis dataKey={xKey} stroke="#8884d8" />
+          <YAxis stroke="#8884d8" />
+          <Tooltip wrapperStyle={tooltipStyle} />
+          <Legend wrapperStyle={{ color: '#000', marginTop: 10 }} />
+          <Bar dataKey={yKey} name="Cantidad">
+            {data.map((_, index) => (
+              <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  if (type === "pie") {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart margin={margin}>
+          <Pie
+            data={data}
+            dataKey={yKey}
+            nameKey={xKey}
+            cx="50%"
+            cy="50%"
+            outerRadius={70}
+            label
+          >
+            {data.map((_, index) => (
+              <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+            ))}
+          </Pie>
+          <Tooltip wrapperStyle={tooltipStyle} />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  return null;
 }

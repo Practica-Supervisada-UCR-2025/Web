@@ -1,4 +1,4 @@
-import { GET } from '@/app/api/analytics/posts-stats/volume/route';
+import { GET } from '@/app/api/analytics/reports-stats/volume/route';
 import { NextResponse } from 'next/server';
 
 const originalConsole = { ...console };
@@ -29,11 +29,11 @@ const mockRequest = (cookieValue: string | null, url = ''): any => {
   };
 };
 
-describe('GET /api/analytics/posts-stats/volume', () => {
+describe('GET /api/analytics/reports-stats/volume', () => {
   beforeEach(() => jest.clearAllMocks());
 
   const validUrl =
-    'https://example.com/api/analytics/posts-stats/volume?interval=daily&startDate=2024-01-01&endDate=2024-06-01';
+    'https://example.com/api/analytics/reports-stats/volume?interval=daily&startDate=2024-01-01&endDate=2024-06-01';
 
   it('returns 401 if no token in cookies', async () => {
     const res: any = await GET(mockRequest(null, validUrl));
