@@ -4,6 +4,7 @@ import StatCard from '../../components/statCard';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useApi } from '@/hooks/useApi';
+import { fetchAnalytics } from '@/lib/analyticsApi';
 
 interface User {
   id: string;
@@ -161,12 +162,7 @@ function UsersContent() {
       setLastTime(data.metadata.last_time);
       setRemainingItems(data.metadata.remainingItems);
 
-      // Update total count for stats
-      const totalCount = data.data.length + data.metadata.remainingItems;
-      setTotalUsers(totalCount);
-      setDashboardStats(prev => prev.map(stat => 
-        stat.title === 'Usuarios' ? { ...stat, value: totalCount } : stat
-      ));
+      // Don't update total count here - it comes from analytics API
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch users');
@@ -247,11 +243,7 @@ function UsersContent() {
       setLastTime(null);
       setRemainingItems(0);
 
-      // Update total count for stats
-      setTotalUsers(allUsers.length);
-      setDashboardStats(prev => prev.map(stat => 
-        stat.title === 'Usuarios' ? { ...stat, value: allUsers.length } : stat
-      ));
+      // Don't update total count here - it comes from analytics API
 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch all users');
@@ -265,8 +257,35 @@ function UsersContent() {
   useEffect(() => {
     if (isAuthenticated) {
       loadAllUsers();
+      fetchTotalUserCount();
     }
   }, [isAuthenticated]);
+
+  // Fetch total user count from analytics API
+  const fetchTotalUserCount = async () => {
+    try {
+      const today = new Date();
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+      const response = await fetchAnalytics({
+        interval: 'monthly',
+        startDate: sixMonthsAgo.toISOString().split('T')[0],
+        endDate: today.toISOString().split('T')[0],
+        graphType: 'growth',
+        cumulative: true
+      });
+
+      const totalUsers = response?.data?.totalUsers ?? 0;
+      setTotalUsers(totalUsers);
+      setDashboardStats(prev => prev.map(stat => 
+        stat.title === 'Usuarios' ? { ...stat, value: totalUsers } : stat
+      ));
+    } catch (err) {
+      console.error('Error fetching total user count:', err);
+      // Fallback to counting loaded users if analytics fails
+    }
+  };
 
   useEffect(() => {
     if (searchQuery.trim()) {
