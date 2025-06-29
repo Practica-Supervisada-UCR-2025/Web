@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
 
     // Make request to backend API
     const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/get/all?${queryParams.toString()}`;
+    
+    console.log('Making request to backend:', backendUrl);
 
     const backendResponse = await fetch(backendUrl, {
       method: 'GET',
@@ -49,12 +51,20 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    console.log('Backend response status:', backendResponse.status);
+
     // Handle non-JSON responses
     const contentType = backendResponse.headers.get('content-type');
     let backendData;
 
     if (contentType && contentType.includes('application/json')) {
       backendData = await backendResponse.json();
+      
+      // Debug: Log sample user data to see structure
+      if (backendData.data && backendData.data.length > 0) {
+        console.log('Sample user from backend:', JSON.stringify(backendData.data[0], null, 2));
+        console.log('Users with suspension data:', backendData.data.filter((u: any) => u.suspension).length);
+      }
     } else {
       const textResponse = await backendResponse.text();
       console.error('Backend returned non-JSON response:', textResponse);
