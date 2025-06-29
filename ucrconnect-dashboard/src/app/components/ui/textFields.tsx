@@ -10,6 +10,7 @@ interface TextFieldProps {
   readOnly?: boolean;
   required?: boolean;
   className?: string;
+  placeholder?: string;
 }
 
 export function TextField({
@@ -23,6 +24,7 @@ export function TextField({
   error,
   readOnly = false,
   required = false,
+  placeholder = "",
   className = "",
 }: TextFieldProps) {
   return (
@@ -39,6 +41,7 @@ export function TextField({
         onBlur={onBlur}
         readOnly={readOnly}
         required={required}
+        placeholder={placeholder}
         className={`w-full border rounded-xl px-4 py-2 pr-10 focus:outline-none focus:ring-2
           ${
             error
