@@ -80,7 +80,7 @@ describe('Sidebar Component', () => {
         expect(screen.getByText('Usuarios')).toBeInTheDocument();
         expect(screen.getByText('Moderaci\u00F3n')).toBeInTheDocument();
         expect(screen.getByText('Anal\u00EDticas')).toBeInTheDocument();
-        expect(screen.getByText('Notificaciones')).toBeInTheDocument();
+        expect(screen.getByText('Notificar')).toBeInTheDocument();
     });
 
     it('collapses and expands when toggle button is clicked', () => {
@@ -200,7 +200,7 @@ describe('Sidebar Component', () => {
             fireEvent.click(mobileButton);
 
             // Mobile menu should now be open (Using "Notificaciones" since its in the menu)
-            expect(screen.getAllByText('Notificaciones').length).toBeGreaterThan(0);
+            expect(screen.getAllByText('Notificar').length).toBeGreaterThan(0);
 
             // Find and click the close button
             const closeButton = screen.getAllByRole('button').find(button =>
@@ -226,7 +226,7 @@ describe('Sidebar Component', () => {
             fireEvent.click(mobileButton);
 
             // Mobile menu should be open
-            expect(screen.getAllByText('Notificaciones').length).toBeGreaterThan(0);
+            expect(screen.getAllByText('Notificar').length).toBeGreaterThan(0);
 
             // Click a navigation item
             const mobileNavItems = screen.getAllByText('General');
