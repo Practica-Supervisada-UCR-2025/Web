@@ -67,7 +67,7 @@ export default function Analytics() {
         setChartType(cumulative ? 'line' : 'bar');
       } else if (graphType === 'total') {
         setChartType('line');
-      } else if (graphType === 'volume') {
+      } else if (graphType === 'volume' || graphType === 'reported') {
         setChartType('bar');
       } else {
         setChartType('line');
@@ -93,7 +93,8 @@ export default function Analytics() {
           options={[
             { label: 'Crecimiento de Usuarios', value: 'growth' },
             { label: 'Total de Publicaciones', value: 'total' },
-            { label: 'Volumen de reportes', value: 'volume' },
+            { label: 'Total de reportes', value: 'volume' },
+            { label: 'Publicaciones reportadas', value: 'reported' }, // ✅ nuevo
           ]}
           onChange={setGraphType}
         />

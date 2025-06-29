@@ -23,12 +23,17 @@ export async function fetchAnalytics({interval,startDate,endDate,graphType,cumul
       break;
     }
 
+    case "total":
+      res = await fetch(`/api/analytics/posts/stats/${graphType}?${query2}`);
+      break;
+
     case "volume":
       res = await fetch(`/api/analytics/reports-stats/${graphType}?${query}`);
       break;
 
-    case "total":
-      res = await fetch(`/api/analytics/posts/stats/${graphType}?${query2}`);
+    case "reported":
+      console.log("URL:", `/api/analytics/posts-stats/${graphType}?${query}`);
+      res = await fetch(`/api/analytics/posts-stats/${graphType}?${query}`);
       break;
 
     default:
@@ -37,6 +42,7 @@ export async function fetchAnalytics({interval,startDate,endDate,graphType,cumul
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);
+    console.error("API ERROR:", res.status, errorData);
     throw new Error(errorData?.message || "Error al obtener datos");
   }
 
