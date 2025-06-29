@@ -9,8 +9,14 @@ describe('fetchAnalytics', () => {
     endDate: '2024-01-10',
   };
 
+  const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   it('fetches growth data correctly', async () => {
@@ -50,6 +56,7 @@ describe('fetchAnalytics', () => {
   it('throws an error when backend returns an error with message', async () => {
     (fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
+      status: 400,
       json: () => Promise.resolve({ message: 'Datos inválidos' }),
     });
 
@@ -61,6 +68,7 @@ describe('fetchAnalytics', () => {
   it('throws a generic error when backend response is not JSON', async () => {
     (fetch as jest.Mock).mockResolvedValueOnce({
       ok: false,
+      status: 500,
       json: () => Promise.reject('not json'),
     });
 
@@ -83,7 +91,7 @@ describe('fetchAnalytics', () => {
     expect(data).toEqual([{ date: '01-01-2024', count: 3 }]);
   });
 
-   it('fetches reported data correctly', async () => {
+  it('fetches reported data correctly', async () => {
     (fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ data: [{ date: '2024-01-01', count: 7 }] }),

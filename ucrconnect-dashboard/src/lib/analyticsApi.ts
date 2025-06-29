@@ -32,7 +32,6 @@ export async function fetchAnalytics({interval,startDate,endDate,graphType,cumul
       break;
 
     case "reported":
-      console.log("URL:", `/api/analytics/posts-stats/${graphType}?${query}`);
       res = await fetch(`/api/analytics/posts-stats/${graphType}?${query}`);
       break;
 
@@ -42,7 +41,6 @@ export async function fetchAnalytics({interval,startDate,endDate,graphType,cumul
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);
-    console.error("API ERROR:", res.status, errorData);
     throw new Error(errorData?.message || "Error al obtener datos");
   }
 
