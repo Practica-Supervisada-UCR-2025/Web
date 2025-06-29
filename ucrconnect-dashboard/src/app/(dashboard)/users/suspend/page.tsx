@@ -481,7 +481,7 @@ function SuspendUserContent() {
             data-testid="modal-overlay"
           >
             <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-sm shadow-xl" role="dialog" aria-labelledby="suspend-modal-title">
-              <h2 id="suspend-modal-title" className="text-xl font-semibold text-[#204C6F] mb-4 text-center">
+              <h2 id="suspend-modal-title" className="text-xl font-semibold text-gray-800 mb-4 text-center">
                 Está apunto de suspender al siguiente usuario: {selectedUser?.full_name}
               </h2>
               <p className="text-gray-600 mb-4 text-center">Por favor, elija el tiempo de suspensión:</p>
@@ -516,14 +516,14 @@ function SuspendUserContent() {
 
               <div className="flex justify-center gap-4">
                 <button 
-                  className="px-4 py-2 text-red-600 border border-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => setShowModal(false)}
                   disabled={suspending}
                 >
                   Cancelar
                 </button>
                 <button 
-                  className="px-4 py-2 bg-[#204C6F] text-white rounded-xl hover:bg-[#2980B9] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   onClick={handleSuspendUser}
                   disabled={suspending}
                 >
@@ -533,7 +533,7 @@ function SuspendUserContent() {
                       Suspendiéndo...
                     </>
                   ) : (
-                    'Aceptar'
+                    'Suspender'
                   )}
                 </button>
               </div>
@@ -552,7 +552,7 @@ function SuspendUserContent() {
             data-testid="modal-overlay"
           >
             <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-sm shadow-xl" role="dialog" aria-labelledby="activate-modal-title">
-              <h2 id="activate-modal-title" className="text-xl font-semibold text-[#204C6F] mb-4 text-center">
+              <h2 id="activate-modal-title" className="text-xl font-semibold text-gray-800 mb-4 text-center">
                 ¿Está seguro que quiere activar al usuario {selectedUser?.full_name}?
               </h2>
 

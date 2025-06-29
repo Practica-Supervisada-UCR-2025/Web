@@ -217,7 +217,7 @@ describe('SuspendUser Page', () => {
     });
     const timeSelect = screen.getByRole('combobox');
     fireEvent.change(timeSelect, { target: { value: '1' } });
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/Usuario .* suspendido por 1 día/));
@@ -236,7 +236,7 @@ describe('SuspendUser Page', () => {
     });
     const timeSelect = screen.getByRole('combobox');
     fireEvent.change(timeSelect, { target: { value: '3' } });
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/Usuario .* suspendido por 3 días/));
@@ -257,7 +257,7 @@ describe('SuspendUser Page', () => {
     });
     const timeSelect = screen.getByRole('combobox');
     fireEvent.change(timeSelect, { target: { value: '1' } });
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
     mockToastError('Error al suspender usuario');
     await waitFor(() => {
@@ -350,7 +350,7 @@ describe('SuspendUser Page', () => {
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
     await waitFor(() => {
       expect(hrefValue).toBe('/login');
@@ -398,7 +398,7 @@ describe('SuspendUser Page', () => {
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Este usuario ya está suspendido');
@@ -446,7 +446,7 @@ describe('SuspendUser Page', () => {
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Usuario no encontrado');
@@ -494,7 +494,7 @@ describe('SuspendUser Page', () => {
     await waitFor(() => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
-    const acceptButton = screen.getByRole('button', { name: 'Aceptar' });
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
     fireEvent.click(acceptButton);
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('days must be 1, 3, or 7');
