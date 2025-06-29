@@ -48,8 +48,7 @@ export default function Header() {
       '/users': 'Usuarios',
       '/content': 'Moderaci\u00F3n',
       '/analytics': 'Anal\u00EDticas',
-      '/notifications': 'Notificaciones',
-      '/settings': 'Configuraci\u00F3n',
+      '/notifications': 'Notificar',
       '/profile': 'Perfil'
     };
 
