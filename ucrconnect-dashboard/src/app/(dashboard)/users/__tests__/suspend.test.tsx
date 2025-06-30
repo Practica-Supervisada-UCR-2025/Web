@@ -686,4 +686,478 @@ describe('SuspendUser Page', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
   });
+
+  it('shows empty state when no users are found', async () => {
+    // Mock empty users response
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: [],
+            metadata: { last_time: '', remainingItems: 0, remainingPages: 0 }
+          })
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ message: 'Not found' }) });
+    });
+
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getByText('No hay usuarios disponibles')).toBeInTheDocument();
+    });
+  });
+
+  it('shows search no results message when search yields no results', async () => {
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Suspender').length).toBeGreaterThan(0);
+    });
+    
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    fireEvent.change(searchInput, { target: { value: 'nonexistentuser' } });
+    
+    await waitFor(() => {
+      expect(screen.getByText('No se encontraron usuarios con "nonexistentuser" en email, nombre o username')).toBeInTheDocument();
+    });
+  });
+
+  it('handles suspension description textarea input', async () => {
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Suspender').length).toBeGreaterThan(0);
+    });
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+    
+    const descriptionTextarea = screen.getByPlaceholderText('Describa la razón de la suspensión...');
+    fireEvent.change(descriptionTextarea, { target: { value: 'Test suspension reason' } });
+    
+    expect(descriptionTextarea).toHaveValue('Test suspension reason');
+    expect(screen.getByTestId('suspension-description-count').textContent).toBe('22/500 caracteres');
+  });
+
+  it('handles suspension description character limit', async () => {
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Suspender').length).toBeGreaterThan(0);
+    });
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+    
+    const descriptionTextarea = screen.getByPlaceholderText('Describa la razón de la suspensión...');
+    const longDescription = 'a'.repeat(500);
+    fireEvent.change(descriptionTextarea, { target: { value: longDescription } });
+    
+    expect(descriptionTextarea).toHaveValue(longDescription);
+    expect(screen.getByTestId('suspension-description-count').textContent).toBe('500/500 caracteres');
+  });
+
+  it('shows suspending state with loading spinner', async () => {
+    // Mock a slow response to see the loading state
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: mockUsersData,
+            metadata: { last_time: '', remainingItems: 0, remainingPages: 0 }
+          })
+        });
+      }
+      if (url.includes('/api/users/suspend')) {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              ok: true,
+              status: 201,
+              json: () => Promise.resolve({ message: 'User suspended successfully' })
+            });
+          }, 100);
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ message: 'Not found' }) });
+    });
+
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Suspender').length).toBeGreaterThan(0);
+    });
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+    
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
+    fireEvent.click(acceptButton);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Suspendiéndo...')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Suspendiéndo...' })).toBeDisabled();
+    });
+  });
+
+  it('handles suspension time selection change', async () => {
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Suspender').length).toBeGreaterThan(0);
+    });
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+    
+    const timeSelect = screen.getByRole('combobox');
+    fireEvent.change(timeSelect, { target: { value: '7' } });
+    
+    expect(timeSelect).toHaveValue('7');
+  });
+
+  it('handles pagination navigation with previous/next buttons', async () => {
+    // Add more users to trigger pagination
+    const moreUsers = [
+      ...mockUsersData,
+      ...Array.from({ length: 10 }, (_, i) => ({
+        id: `${i + 4}`,
+        email: `user${i + 4}@ucr.ac.cr`,
+        full_name: `User ${i + 4}`,
+        username: `user${i + 4}`,
+        profile_picture: null,
+        is_active: true,
+        created_at: '2024-01-05T00:00:00Z'
+      }))
+    ];
+
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: moreUsers,
+            metadata: { last_time: '', remainingItems: 0, remainingPages: 0 }
+          })
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ message: 'Not found' }) });
+    });
+
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+    
+    // Test next button
+    const nextButton = screen.getByLabelText('next');
+    expect(nextButton).not.toBeDisabled();
+    fireEvent.click(nextButton);
+    
+    await waitFor(() => {
+      // Verify we're on page 2 by checking for different users
+      expect(screen.getByText('User 7')).toBeInTheDocument();
+    });
+    
+    // Test previous button
+    const prevButton = screen.getByLabelText('previous');
+    expect(prevButton).not.toBeDisabled();
+    fireEvent.click(prevButton);
+    
+    await waitFor(() => {
+      // Verify we're back on page 1
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+  });
+
+  it('handles pagination button disabled states', async () => {
+    // Add more users to trigger pagination
+    const moreUsers = [
+      ...mockUsersData,
+      ...Array.from({ length: 10 }, (_, i) => ({
+        id: `${i + 4}`,
+        email: `user${i + 4}@ucr.ac.cr`,
+        full_name: `User ${i + 4}`,
+        username: `user${i + 4}`,
+        profile_picture: null,
+        is_active: true,
+        created_at: '2024-01-05T00:00:00Z'
+      }))
+    ];
+
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: moreUsers,
+            metadata: { last_time: '', remainingItems: 0, remainingPages: 0 }
+          })
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ message: 'Not found' }) });
+    });
+
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+    
+    // On first page, previous button should be disabled
+    const prevButton = screen.getByLabelText('previous');
+    expect(prevButton).toBeDisabled();
+    expect(prevButton).toHaveClass('bg-gray-100', 'text-gray-400', 'cursor-not-allowed');
+    
+    // Navigate to last page by clicking next multiple times
+    const nextButton = screen.getByLabelText('next');
+    fireEvent.click(nextButton); // page 2
+    fireEvent.click(nextButton); // page 3 (last page)
+    
+    await waitFor(() => {
+      // Should be on last page, next button should be disabled
+      expect(nextButton).toBeDisabled();
+      expect(nextButton).toHaveClass('bg-gray-100', 'text-gray-400', 'cursor-not-allowed');
+    });
+  });
+
+  it('handles authentication failure during initial load', async () => {
+    // Mock authentication failure
+    mockFetch.mockImplementation(() => 
+      Promise.resolve({
+        ok: false,
+        status: 401,
+        json: () => Promise.resolve({ message: 'Unauthorized' })
+      })
+    );
+
+    // Mock window.location.href assignment
+    let hrefValue = '';
+    Object.defineProperty(window, 'location', {
+      value: {
+        get href() {
+          return hrefValue;
+        },
+        set href(value) {
+          hrefValue = value;
+        }
+      },
+      writable: true
+    });
+
+    render(<SuspendUser />);
+    
+    await waitFor(() => {
+      expect(hrefValue).toBe('/login');
+    });
+  });
+
+  it('handles network error during fetchUsers', async () => {
+    // Mock auth to succeed first
+    mockFetch.mockImplementationOnce(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({
+          message: 'Profile retrieved successfully',
+          data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+        })
+      })
+    );
+    // Then mock network error
+    mockFetch.mockImplementationOnce(() =>
+      Promise.reject(new Error('Network error'))
+    );
+
+    render(<SuspendUser />);
+    
+    await waitFor(() => {
+      expect(screen.getByText(/Error:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Network error/)).toBeInTheDocument();
+    });
+  });
+
+  it('handles suspension with description', async () => {
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Suspender').length).toBeGreaterThan(0);
+    });
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+    
+    const descriptionTextarea = screen.getByPlaceholderText('Describa la razón de la suspensión...');
+    fireEvent.change(descriptionTextarea, { target: { value: 'Test suspension reason' } });
+    
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
+    fireEvent.click(acceptButton);
+    
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/Usuario .* suspendido por 1 día/));
+    });
+  });
+
+  it('handles suspension without description', async () => {
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Suspender').length).toBeGreaterThan(0);
+    });
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+    
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
+    fireEvent.click(acceptButton);
+    
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/Usuario .* suspendido por 1 día/));
+    });
+  });
+
+  it('handles search input focus and blur', async () => {
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Buscar usuarios...')).toBeInTheDocument();
+    });
+    
+    const searchInput = screen.getByPlaceholderText('Buscar usuarios...');
+    fireEvent.focus(searchInput);
+    fireEvent.blur(searchInput);
+    
+    // Should not throw any errors
+    expect(searchInput).toBeInTheDocument();
+  });
+
+  it('handles suspension time change and form submission', async () => {
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Suspender').length).toBeGreaterThan(0);
+    });
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+    
+    // Change suspension time to 7 days
+    const timeSelect = screen.getByRole('combobox');
+    fireEvent.change(timeSelect, { target: { value: '7' } });
+    
+    // Add description
+    const descriptionTextarea = screen.getByPlaceholderText('Describa la razón de la suspensión...');
+    fireEvent.change(descriptionTextarea, { target: { value: 'Long suspension reason' } });
+    
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
+    fireEvent.click(acceptButton);
+    
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith(expect.stringMatching(/Usuario .* suspendido por 7 días/));
+    });
+  });
+
+  it('handles modal state reset after successful suspension', async () => {
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Suspender').length).toBeGreaterThan(0);
+    });
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+    
+    const descriptionTextarea = screen.getByPlaceholderText('Describa la razón de la suspensión...');
+    fireEvent.change(descriptionTextarea, { target: { value: 'Test reason' } });
+    
+    const acceptButton = screen.getByRole('button', { name: 'Suspender' });
+    fireEvent.click(acceptButton);
+    
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    
+    // Open modal again and check if description is reset
+    const remainingSuspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(remainingSuspendButton);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+    
+    const newDescriptionTextarea = screen.getByPlaceholderText('Describa la razón de la suspensión...');
+    expect(newDescriptionTextarea).toHaveValue('');
+  });
+
+  it('handles suspension description textarea input with correct character count', async () => {
+    render(<SuspendUser />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Suspender').length).toBeGreaterThan(0);
+    });
+    const suspendButton = screen.getAllByText('Suspender')[0];
+    fireEvent.click(suspendButton);
+    await waitFor(() => {
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+    
+    const descriptionTextarea = screen.getByPlaceholderText('Describa la razón de la suspensión...');
+    fireEvent.change(descriptionTextarea, { target: { value: 'Test suspension reason' } });
+    
+    expect(descriptionTextarea).toHaveValue('Test suspension reason');
+    expect(screen.getByTestId('suspension-description-count').textContent).toBe('22/500 caracteres');
+  });
 }); 

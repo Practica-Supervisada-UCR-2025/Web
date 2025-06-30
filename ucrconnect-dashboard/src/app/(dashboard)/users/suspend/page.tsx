@@ -509,7 +509,7 @@ function SuspendUserContent() {
                   onChange={(e) => setSuspensionDescription(e.target.value)}
                   maxLength={500}
                 />
-                <div className="text-xs text-gray-400 mt-1 text-right">
+                <div className="text-xs text-gray-400 mt-1 text-right" data-testid="suspension-description-count">
                   {suspensionDescription.length}/500 caracteres
                 </div>
               </div>

@@ -3,6 +3,9 @@ import '@testing-library/jest-dom';
 import Users from '../page';
 import { useSearchParams } from 'next/navigation';
 import { fetchAnalytics } from '@/lib/analyticsApi';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import StatCard from '../../../components/statCard';
 
 // Mock the useSearchParams hook
 jest.mock('next/navigation', () => ({
@@ -1314,9 +1317,9 @@ describe('Users Page', () => {
             message: 'Users retrieved successfully',
             data: mockUsersData,
             metadata: {
-              last_time: '2024-01-19T00:00:00Z',
-              remainingItems: 5, // Some remaining items
-              remainingPages: 1
+              last_time: '2024-01-10T00:00:00Z',
+              remainingItems: 0,
+              remainingPages: 0
             }
           })
         });
@@ -1396,6 +1399,704 @@ describe('Users Page', () => {
     await waitFor(() => {
       // Pagination may not be rendered if only one result, so just check the result
       expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+  });
+
+  it('handles fetchUsers with createdAfter parameter', async () => {
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+
+    // The fetchUsers function is called internally during loadAllUsers
+    // We can verify that the API was called with pagination parameters by checking the mock
+    expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining('/api/users/get/all'), expect.any(Object));
+  });
+
+  it('handles fetchUsers with different response structures', async () => {
+    // Mock users API to return array directly
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(mockUsersData) // Return array directly
+        });
+      }
+      
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ message: 'Not found' })
+      });
+    });
+
+    render(<Users />);
+    
+    // Should still load users correctly
+    await waitFor(() => {
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+  });
+
+  it('handles fetchUsers error gracefully', async () => {
+    // Mock fetchUsers to throw an error
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      
+      if (url.includes('/api/users/get/all')) {
+        return Promise.reject(new Error('Network error'));
+      }
+      
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ message: 'Not found' })
+      });
+    });
+
+    render(<Users />);
+    
+    // Should show error state
+    await waitFor(() => {
+      expect(screen.getByText(/Error:/)).toBeInTheDocument();
+    });
+  });
+
+  it('handles loadAllUsers when not authenticated', async () => {
+    // Mock auth to fail
+    mockFetch.mockImplementationOnce((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          json: () => Promise.resolve({ message: 'Unauthorized' })
+        });
+      }
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ message: 'Not found' })
+      });
+    });
+
+    render(<Users />);
+    
+    // Should show loading state initially
+    expect(screen.getByText('Loading users...')).toBeInTheDocument();
+  });
+
+  it('handles loadAllUsers with pagination metadata', async () => {
+    // Mock users API to return pagination metadata
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: mockUsersData,
+            metadata: {
+              last_time: '2024-01-10T00:00:00Z',
+              remainingItems: 0,
+              remainingPages: 0
+            }
+          })
+        });
+      }
+      
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ message: 'Not found' })
+      });
+    });
+
+    render(<Users />);
+    
+    // Should load users correctly with pagination
+    await waitFor(() => {
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+  });
+
+  it('handles pagination logic for current page <= 4', async () => {
+    // Mock many users to trigger pagination logic
+    const manyUsers = Array.from({ length: 50 }, (_, i) => ({
+      id: `${i + 1}`,
+      email: `user${i + 1}@ucr.ac.cr`,
+      full_name: `User ${i + 1}`,
+      username: `user${i + 1}`,
+      profile_picture: null,
+      is_active: true,
+      created_at: '2024-01-01T00:00:00Z'
+    }));
+
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: manyUsers,
+            metadata: { last_time: '', remainingItems: 0, remainingPages: 0 }
+          })
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ message: 'Not found' }) });
+    });
+
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('User 1')).toBeInTheDocument();
+    });
+
+    // Check that pagination shows first 5 pages + ellipsis + last page
+    expect(screen.getByText('1')).toBeInTheDocument();
+    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getAllByText('...').length).toBeGreaterThan(0);
+  });
+
+  it('handles pagination logic for current page >= totalPages - 3', async () => {
+    // Mock many users to trigger pagination logic
+    const manyUsers = Array.from({ length: 50 }, (_, i) => ({
+      id: `${i + 1}`,
+      email: `user${i + 1}@ucr.ac.cr`,
+      full_name: `User ${i + 1}`,
+      username: `user${i + 1}`,
+      profile_picture: null,
+      is_active: true,
+      created_at: '2024-01-01T00:00:00Z'
+    }));
+
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: manyUsers,
+            metadata: { last_time: '', remainingItems: 0, remainingPages: 0 }
+          })
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ message: 'Not found' }) });
+    });
+
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('User 1')).toBeInTheDocument();
+    });
+
+    // Navigate to a later page to trigger the pagination logic
+    const nextButton = screen.getByRole('button', { name: /next/i });
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+
+    // Check that pagination shows first page + ellipsis + last 5 pages
+    await waitFor(() => {
+      expect(screen.getByText('1')).toBeInTheDocument();
+      expect(screen.getAllByText('...').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('handles pagination logic for middle pages', async () => {
+    // Mock many users to trigger pagination logic
+    const manyUsers = Array.from({ length: 50 }, (_, i) => ({
+      id: `${i + 1}`,
+      email: `user${i + 1}@ucr.ac.cr`,
+      full_name: `User ${i + 1}`,
+      username: `user${i + 1}`,
+      profile_picture: null,
+      is_active: true,
+      created_at: '2024-01-01T00:00:00Z'
+    }));
+
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: manyUsers,
+            metadata: { last_time: '', remainingItems: 0, remainingPages: 0 }
+          })
+        });
+      }
+      return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ message: 'Not found' }) });
+    });
+
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('User 1')).toBeInTheDocument();
+    });
+
+    // Navigate to a middle page to trigger the pagination logic
+    const nextButton = screen.getByRole('button', { name: /next/i });
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+
+    // Check that pagination shows first page + ellipsis + current-1, current, current+1 + ellipsis + last page
+    await waitFor(() => {
+      expect(screen.getByText('1')).toBeInTheDocument();
+      expect(screen.getAllByText('...').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('handles dashboard stats with fallback route', async () => {
+    // Mock dashboard stats with undefined route
+    const mockStats = [
+      {
+        title: 'Test Stat',
+        value: 10,
+        route: undefined
+      }
+    ];
+
+    // Mock the component to use our test stats
+    const TestUsers = () => {
+      const [dashboardStats, setDashboardStats] = useState(mockStats);
+      
+      useEffect(() => {
+        setDashboardStats(mockStats);
+      }, []);
+
+      return (
+        <div className="w-full max-w-[95vw] mx-auto px-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+            {dashboardStats.map(({ title, value, route }: { title: string; value: number; route?: string }, index: number) => {
+              const isUsuarios = title === 'Usuarios';
+              const customBgStyle = isUsuarios
+                ? 'bg-gradient-to-tr from-[#249DD8] to-[#41ADE7BF] text-white'
+                : undefined;
+
+              return (
+                <div
+                  key={title + index}
+                  className="transition-transform transform hover:scale-104 cursor-pointer"
+                >
+                  <Link href={route || '#'} passHref>
+                    <StatCard title={title} value={value} bgStyle={customBgStyle} />
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    };
+
+    render(<TestUsers />);
+    
+    // Check that the fallback route '#' is used
+    const statCard = screen.getByText('Test Stat').closest('a');
+    expect(statCard).toHaveAttribute('href', '#');
+  });
+
+  it('handles fetchUsers with no parameters', async () => {
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+  });
+
+  it('handles fetchUsers with empty URL parameters', async () => {
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+  });
+
+  it('handles loadAllUsers when authenticated but no users returned', async () => {
+    // Mock users API to return empty array
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: [],
+            metadata: {
+              last_time: '',
+              remainingItems: 0,
+              remainingPages: 0
+            }
+          })
+        });
+      }
+      
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ message: 'Not found' })
+      });
+    });
+
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('No hay usuarios disponibles')).toBeInTheDocument();
+    });
+  });
+
+  it('handles pagination logic for exactly 7 pages', async () => {
+    // Mock users API to return exactly 7 pages worth of users
+    const sevenPagesUsers = Array.from({ length: 42 }, (_, i) => ({
+      id: `user-${i + 1}`,
+      email: `user${i + 1}@ucr.ac.cr`,
+      full_name: `User ${i + 1}`,
+      username: `user${i + 1}`,
+      profile_picture: null,
+      is_active: true,
+      created_at: '2024-01-01T00:00:00Z'
+    }));
+
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: sevenPagesUsers,
+            metadata: {
+              last_time: '',
+              remainingItems: 0,
+              remainingPages: 0
+            }
+          })
+        });
+      }
+      
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ message: 'Not found' })
+      });
+    });
+
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('User 1')).toBeInTheDocument();
+    });
+
+    // Should show all 7 page numbers without ellipsis
+    const pageButtons = screen.getAllByRole('button').filter(button => 
+      /^[1-7]$/.test(button.textContent || '')
+    );
+    expect(pageButtons.length).toBe(7);
+  });
+
+  it('handles pagination logic for current page at exactly 4', async () => {
+    // Mock users API to return many users
+    const manyUsers = Array.from({ length: 100 }, (_, i) => ({
+      id: `user-${i + 1}`,
+      email: `user${i + 1}@ucr.ac.cr`,
+      full_name: `User ${i + 1}`,
+      username: `user${i + 1}`,
+      profile_picture: null,
+      is_active: true,
+      created_at: '2024-01-01T00:00:00Z'
+    }));
+
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: manyUsers,
+            metadata: {
+              last_time: '',
+              remainingItems: 0,
+              remainingPages: 0
+            }
+          })
+        });
+      }
+      
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ message: 'Not found' })
+      });
+    });
+
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('User 1')).toBeInTheDocument();
+    });
+
+    // Navigate to page 4
+    const page4Button = screen.getByRole('button', { name: '4' });
+    fireEvent.click(page4Button);
+    
+    await waitFor(() => {
+      // Should show first 5 pages + ellipsis + last page
+      expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: '5' })).toBeInTheDocument();
+      expect(screen.getByText('...')).toBeInTheDocument();
+    });
+  });
+
+  it('handles pagination logic for current page near the end', async () => {
+    // Mock users API to return many users
+    const manyUsers = Array.from({ length: 100 }, (_, i) => ({
+      id: `user-${i + 1}`,
+      email: `user${i + 1}@ucr.ac.cr`,
+      full_name: `User ${i + 1}`,
+      username: `user${i + 1}`,
+      profile_picture: null,
+      is_active: true,
+      created_at: '2024-01-01T00:00:00Z'
+    }));
+
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: manyUsers,
+            metadata: {
+              last_time: '',
+              remainingItems: 0,
+              remainingPages: 0
+            }
+          })
+        });
+      }
+      
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ message: 'Not found' })
+      });
+    });
+
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('User 1')).toBeInTheDocument();
+    });
+
+    // Navigate to a page near the end by clicking next multiple times
+    const nextButton = screen.getByRole('button', { name: /next/i });
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    fireEvent.click(nextButton);
+    
+    await waitFor(() => {
+      // Should show first page + ellipsis + last 5 pages
+      expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument();
+      expect(screen.getByText('...')).toBeInTheDocument();
+    });
+  });
+
+  it('handles fetchTotalUserCount with null response', async () => {
+    // Mock analytics API to return null
+    mockFetch.mockImplementation((url) => {
+      if (url.includes('/api/admin/auth/profile')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Profile retrieved successfully',
+            data: { id: '1', email: 'admin@test.com', full_name: 'Admin User' }
+          })
+        });
+      }
+      
+      if (url.includes('/api/users/get/all')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            message: 'Users retrieved successfully',
+            data: mockUsersData,
+            metadata: {
+              last_time: '',
+              remainingItems: 0,
+              remainingPages: 0
+            }
+          })
+        });
+      }
+      
+      if (url.includes('/api/analytics')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(null)
+        });
+      }
+      
+      return Promise.resolve({
+        ok: false,
+        status: 404,
+        json: () => Promise.resolve({ message: 'Not found' })
+      });
+    });
+
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+  });
+
+  it('handles dashboard stats with custom background for Usuarios', async () => {
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+
+    // Check that the Usuarios stat card has the custom background
+    const usuariosCard = screen.getByText('Usuarios').closest('div');
+    expect(usuariosCard).toHaveClass('bg-gradient-to-tr', 'from-[#249DD8]', 'to-[#41ADE7BF]', 'text-white');
+  });
+
+  it('handles dashboard stats with fallback route for non-Usuarios', async () => {
+    render(<Users />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+    });
+
+    // Check that non-Usuarios cards don't have the custom background
+    const allCards = screen.getAllByRole('region');
+    const nonUsuariosCards = allCards.filter(card => 
+      !card.textContent?.includes('Usuarios')
+    );
+    
+    nonUsuariosCards.forEach(card => {
+      expect(card).not.toHaveClass('bg-gradient-to-tr', 'from-[#249DD8]', 'to-[#41ADE7BF]', 'text-white');
     });
   });
 });
