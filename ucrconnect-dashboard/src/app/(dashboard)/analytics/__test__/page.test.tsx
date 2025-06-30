@@ -102,6 +102,105 @@ describe('Analytics Component', () => {
     expect(screen.getByText('Cargando...')).toBeInTheDocument();
   });
 
+  test('uses line chart for total graph type', async () => {
+    (fetchAnalytics as jest.Mock).mockResolvedValue({
+      data: { series: [{ date: '2024-01-01', count: 3 }] },
+    });
+
+    render(<Analytics />);
+    fireEvent.change(screen.getByLabelText('Tipo de gráfico'), {
+      target: { value: 'total' },
+    });
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('chart-mock')).toHaveTextContent('Chart: line');
+    });
+  });
+
+  test('uses bar chart for reported graph type', async () => {
+    (fetchAnalytics as jest.Mock).mockResolvedValue({
+      data: { series: [{ date: '2024-01-01', count: 5 }] },
+    });
+
+    render(<Analytics />);
+    fireEvent.change(screen.getByLabelText('Tipo de gráfico'), {
+      target: { value: 'reported' },
+    });
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('chart-mock')).toHaveTextContent('Chart: bar');
+    });
+  });
+
+  test('shows error if start date is after end date', async () => {
+    render(<Analytics />);
+
+    const startDateInput = screen.getAllByLabelText('Inicio')[0];
+    const endDateInput = screen.getAllByLabelText('Fin')[0];
+
+    fireEvent.change(startDateInput, { target: { value: '2025-01-02' } });
+    fireEvent.change(endDateInput, { target: { value: '2025-01-01' } });
+
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByText('La fecha de inicio debe ser anterior o igual a la fecha de fin')).toBeInTheDocument();
+    });
+  });
+
+  test('sets chart type to line for total graph type', async () => {
+    (fetchAnalytics as jest.Mock).mockResolvedValue({
+      data: { series: [{ date: '2024-01-01', count: 5 }] },
+    });
+
+    render(<Analytics />);
+    fireEvent.change(screen.getByLabelText('Tipo de gráfico'), {
+      target: { value: 'total' },
+    });
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('chart-mock')).toHaveTextContent('Chart: line');
+    });
+  });
+
+  test('sets chart type to bar for reported graph type', async () => {
+    (fetchAnalytics as jest.Mock).mockResolvedValue({
+      data: { series: [{ date: '2024-01-01', count: 5 }] },
+    });
+
+    render(<Analytics />);
+    fireEvent.change(screen.getByLabelText('Tipo de gráfico'), {
+      target: { value: 'reported' },
+    });
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('chart-mock')).toHaveTextContent('Chart: bar');
+    });
+  });
+
+  test('sets chart type to bar when growth is non-cumulative', async () => {
+    (fetchAnalytics as jest.Mock).mockResolvedValue({
+      data: { series: [{ date: '2024-01-01', count: 10 }] },
+    });
+
+    render(<Analytics />);
+    
+    // Cambiar de acumulado a por período
+    fireEvent.change(screen.getByLabelText('Crecimiento'), {
+      target: { value: 'non-cumulative' },
+    });
+
+    fireEvent.click(screen.getByText('Solicitar'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('chart-mock')).toHaveTextContent('Chart: bar');
+    });
+  });
+
   test('shows error message on API failure', async () => {
     (fetchAnalytics as jest.Mock).mockRejectedValue(new Error('Error de API'));
 
