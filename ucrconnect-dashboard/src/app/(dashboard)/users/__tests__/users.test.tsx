@@ -42,7 +42,9 @@ const mockUsersData = [
     username: 'juanperez',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-01T00:00:00Z'
+    created_at: '2024-01-01T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '2',
@@ -51,7 +53,9 @@ const mockUsersData = [
     username: 'mariarodriguez',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-02T00:00:00Z'
+    created_at: '2024-01-02T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '3',
@@ -59,8 +63,10 @@ const mockUsersData = [
     full_name: 'Carlos Méndez',
     username: 'carlosmendez',
     profile_picture: null,
-    is_active: false,
-    created_at: '2024-01-03T00:00:00Z'
+    is_active: true,
+    created_at: '2024-01-03T00:00:00Z',
+    is_banned: true,
+    suspension_end_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: '4',
@@ -69,7 +75,9 @@ const mockUsersData = [
     username: 'anamartinez',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-04T00:00:00Z'
+    created_at: '2024-01-04T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '5',
@@ -77,8 +85,10 @@ const mockUsersData = [
     full_name: 'Luis González',
     username: 'luisgonzalez',
     profile_picture: null,
-    is_active: false,
-    created_at: '2024-01-05T00:00:00Z'
+    is_active: true,
+    created_at: '2024-01-05T00:00:00Z',
+    is_banned: true,
+    suspension_end_date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: '6',
@@ -87,7 +97,9 @@ const mockUsersData = [
     username: 'sofiaramirez',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-06T00:00:00Z'
+    created_at: '2024-01-06T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '7',
@@ -96,7 +108,9 @@ const mockUsersData = [
     username: 'diegoherrera',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-07T00:00:00Z'
+    created_at: '2024-01-07T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '8',
@@ -104,8 +118,10 @@ const mockUsersData = [
     full_name: 'Valeria Mora',
     username: 'valeriamora',
     profile_picture: null,
-    is_active: false,
-    created_at: '2024-01-08T00:00:00Z'
+    is_active: true,
+    created_at: '2024-01-08T00:00:00Z',
+    is_banned: true,
+    suspension_end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: '9',
@@ -114,7 +130,9 @@ const mockUsersData = [
     username: 'andresjimenez',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-09T00:00:00Z'
+    created_at: '2024-01-09T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '10',
@@ -123,7 +141,9 @@ const mockUsersData = [
     username: 'camilarojas',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-10T00:00:00Z'
+    created_at: '2024-01-10T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '11',
@@ -131,8 +151,10 @@ const mockUsersData = [
     full_name: 'Javier Vargas',
     username: 'javiervargas',
     profile_picture: null,
-    is_active: false,
-    created_at: '2024-01-11T00:00:00Z'
+    is_active: true,
+    created_at: '2024-01-11T00:00:00Z',
+    is_banned: true,
+    suspension_end_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: '12',
@@ -141,7 +163,9 @@ const mockUsersData = [
     username: 'isabellasoto',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-12T00:00:00Z'
+    created_at: '2024-01-12T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '13',
@@ -150,7 +174,9 @@ const mockUsersData = [
     username: 'ricardocastro',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-13T00:00:00Z'
+    created_at: '2024-01-13T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '14',
@@ -158,8 +184,10 @@ const mockUsersData = [
     full_name: 'Gabriela Navarro',
     username: 'gabrielanavarro',
     profile_picture: null,
-    is_active: false,
-    created_at: '2024-01-14T00:00:00Z'
+    is_active: true,
+    created_at: '2024-01-14T00:00:00Z',
+    is_banned: true,
+    suspension_end_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: '15',
@@ -168,7 +196,9 @@ const mockUsersData = [
     username: 'fernandocordero',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-15T00:00:00Z'
+    created_at: '2024-01-15T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '16',
@@ -177,7 +207,9 @@ const mockUsersData = [
     username: 'laurchaves',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-16T00:00:00Z'
+    created_at: '2024-01-16T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '17',
@@ -185,8 +217,10 @@ const mockUsersData = [
     full_name: 'Daniel Solís',
     username: 'danielsolis',
     profile_picture: null,
-    is_active: false,
-    created_at: '2024-01-17T00:00:00Z'
+    is_active: true,
+    created_at: '2024-01-17T00:00:00Z',
+    is_banned: true,
+    suspension_end_date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString()
   },
   {
     id: '18',
@@ -195,7 +229,9 @@ const mockUsersData = [
     username: 'marianavega',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-18T00:00:00Z'
+    created_at: '2024-01-18T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   },
   {
     id: '19',
@@ -204,7 +240,9 @@ const mockUsersData = [
     username: 'usuario4',
     profile_picture: null,
     is_active: true,
-    created_at: '2024-01-19T00:00:00Z'
+    created_at: '2024-01-19T00:00:00Z',
+    is_banned: false,
+    suspension_end_date: ''
   }
 ];
 
@@ -342,9 +380,9 @@ describe('Users Page', () => {
     
     // Check status badges
     const activeStatuses = screen.getAllByText('Activo');
-    const inactiveStatuses = screen.getAllByText('Inactivo');
+    const suspendedStatuses = screen.getAllByText('Suspendido');
     expect(activeStatuses.length).toBeGreaterThan(0);
-    expect(inactiveStatuses.length).toBeGreaterThan(0);
+    expect(suspendedStatuses.length).toBeGreaterThan(0);
   });
 
   it('displays correct user status badges with proper styling', async () => {
@@ -352,15 +390,15 @@ describe('Users Page', () => {
     
     await waitFor(() => {
       const activeBadges = screen.getAllByText('Activo');
-      const inactiveBadges = screen.getAllByText('Inactivo');
+      const suspendedBadges = screen.getAllByText('Suspendido');
 
       expect(activeBadges.length).toBeGreaterThan(0);
       activeBadges.forEach(badge => {
         expect(badge).toHaveClass('bg-[#609000]/20', 'text-[#609000]');
       });
 
-      expect(inactiveBadges.length).toBeGreaterThan(0);
-      inactiveBadges.forEach(badge => {
+      expect(suspendedBadges.length).toBeGreaterThan(0);
+      suspendedBadges.forEach(badge => {
         expect(badge).toHaveClass('bg-red-100', 'text-red-700');
       });
     });

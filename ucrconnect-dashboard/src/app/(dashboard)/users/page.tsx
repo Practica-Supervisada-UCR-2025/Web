@@ -13,6 +13,8 @@ interface User {
   profile_picture: string;
   is_active: boolean;
   created_at: string;
+  is_banned: boolean;
+  suspension_end_date: string;
 }
 
 interface UsersResponse {
@@ -459,7 +461,7 @@ function UsersContent() {
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
+            className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
             placeholder="Buscar usuarios..."
             value={searchQuery}
             onChange={(e) => {
@@ -534,11 +536,11 @@ function UsersContent() {
                     <td className="text-gray-900 px-4 sm:px-6 py-4 whitespace-nowrap">{user.username}</td>
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.is_active 
-                        ? 'bg-[#609000]/20 text-[#609000]'
-                        : 'bg-red-100 text-red-700'
+                        user.is_banned 
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-[#609000]/20 text-[#609000]'
                     }`}>
-                        {user.is_active ? 'Activo' : 'Inactivo'}
+                        {user.is_banned ? 'Suspendido' : 'Activo'}
                     </span>
                     </td>
                   </tr>

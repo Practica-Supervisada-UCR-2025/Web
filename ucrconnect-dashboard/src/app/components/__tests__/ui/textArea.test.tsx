@@ -4,23 +4,27 @@ import { TextArea } from '@/components/ui/textArea';
 
 describe('TextArea', () => {
   it('renderiza el label y textarea correctamente', () => {
+    const handleChange = jest.fn();
     render(
       <TextArea
         id="comentario"
         label="Comentario"
         value="Texto inicial"
+        onChange={handleChange}
       />
     );
     expect(screen.getByLabelText(/Comentario/i)).toBeInTheDocument();
   });
 
   it('muestra el asterisco si es requerido', () => {
+    const handleChange = jest.fn();
     render(
       <TextArea
         id="comentario"
         label="Comentario"
         value=""
         required
+        onChange={handleChange}
       />
     );
     expect(screen.getByText('*')).toBeInTheDocument();
@@ -44,12 +48,14 @@ describe('TextArea', () => {
   });
 
   it('aplica estilos de solo lectura cuando readOnly es true', () => {
+    const handleChange = jest.fn();
     render(
       <TextArea
         id="comentario"
         label="Comentario"
         value="Solo lectura"
         readOnly
+        onChange={handleChange}
       />
     );
     const textarea = screen.getByLabelText(/Comentario/i);
@@ -59,11 +65,13 @@ describe('TextArea', () => {
   });
 
   it('aplica clases de enfoque cuando no hay error ni es readOnly', () => {
+    const handleChange = jest.fn();
     render(
       <TextArea
         id="comentario"
         label="Comentario"
         value=""
+        onChange={handleChange}
       />
     );
     const textarea = screen.getByLabelText(/Comentario/i);
@@ -71,12 +79,14 @@ describe('TextArea', () => {
   });
 
   it('muestra mensaje de error si se proporciona', () => {
+    const handleChange = jest.fn();
     render(
       <TextArea
         id="comentario"
         label="Comentario"
         value=""
         error="Este campo es obligatorio"
+        onChange={handleChange}
       />
     );
     expect(screen.getByText('Este campo es obligatorio')).toBeInTheDocument();
@@ -85,6 +95,7 @@ describe('TextArea', () => {
   it('llama a onBlur si se proporciona', async () => {
     const user = userEvent.setup();
     const handleBlur = jest.fn();
+    const handleChange = jest.fn();
 
     render(
       <TextArea
@@ -92,6 +103,7 @@ describe('TextArea', () => {
         label="Comentario"
         value=""
         onBlur={handleBlur}
+        onChange={handleChange}
       />
     );
 

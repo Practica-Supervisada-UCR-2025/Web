@@ -10,7 +10,8 @@ interface User {
   profile_picture: string;
   is_active: boolean;
   created_at: string;
-  suspensionDays?: number; // Optional field for suspension tracking
+  is_banned: boolean;
+  suspension_end_date: string;
 }
 
 interface UsersResponse {
@@ -26,7 +27,6 @@ interface UsersResponse {
 function SuspendUserContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [showActivateModal, setShowActivateModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [suspensionTime, setSuspensionTime] = useState('1');
   const [suspensionDescription, setSuspensionDescription] = useState('');
@@ -37,6 +37,23 @@ function SuspendUserContent() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [suspending, setSuspending] = useState(false);
   const usersPerPage = 6;
+
+  // Function to calculate remaining suspension days
+  const calculateRemainingSuspensionDays = (suspensionEndDate: string): number => {
+    if (!suspensionEndDate) return 0;
+    
+    const endDate = new Date(suspensionEndDate);
+    const now = new Date();
+    
+    // If suspension has ended, return 0
+    if (endDate <= now) return 0;
+    
+    // Calculate difference in days
+    const diffTime = endDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return Math.max(0, diffDays);
+  };
 
   // Check authentication status
   useEffect(() => {
@@ -128,6 +145,17 @@ function SuspendUserContent() {
     if (isAuthenticated) {
       fetchUsers();
     }
+  }, [isAuthenticated]);
+
+  // Refresh users every minute to update suspension countdown
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const interval = setInterval(() => {
+      fetchUsers();
+    }, 60000); // Refresh every minute
+
+    return () => clearInterval(interval);
   }, [isAuthenticated]);
 
   const filteredUsers = users.filter(user => 
@@ -228,12 +256,8 @@ function SuspendUserContent() {
 
         const data = await response.json();
         
-        // Update local state to reflect the suspension
-        setUsers(users.map(user => 
-          user.id === selectedUser.id 
-            ? { ...user, is_active: false, suspensionDays: parseInt(suspensionTime) }
-            : user
-        ));
+        // Refresh users list to get updated data from backend
+        await fetchUsers();
         
         setShowModal(false);
         setSuspensionDescription(''); // Reset description
@@ -242,22 +266,6 @@ function SuspendUserContent() {
         toast.error(error instanceof Error ? error.message : 'Error al suspender usuario');
       } finally {
         setSuspending(false);
-      }
-    }
-  };
-
-  const handleActivateUser = () => {
-    if (selectedUser) {
-      try {
-        setUsers(users.map(user => 
-          user.id === selectedUser.id 
-            ? { ...user, is_active: true, suspensionDays: 0 }
-            : user
-        ));
-        setShowActivateModal(false);
-        toast.success(`Usuario ${selectedUser.full_name} activado exitosamente`);
-      } catch (error) {
-        toast.error('Error al activar usuario');
       }
     }
   };
@@ -298,7 +306,7 @@ function SuspendUserContent() {
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
+            className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
             placeholder="Buscar usuarios..."
             value={searchQuery}
             onChange={(e) => {
@@ -357,18 +365,21 @@ function SuspendUserContent() {
                     <td className="text-gray-900 px-4 sm:px-6 py-4 whitespace-nowrap">{user.username}</td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        user.is_active 
-                          ? 'bg-[#609000]/20 text-[#609000]'
-                          : 'bg-red-100 text-red-700'
+                        user.is_banned 
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-[#609000]/20 text-[#609000]'
                       }`}>
-                        {user.is_active ? 'Activo' : 'Inactivo'}
+                        {user.is_banned ? 'Suspendido' : 'Activo'}
                       </span>
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-red-500">
-                      {!user.is_active && user.suspensionDays ? `${user.suspensionDays} ${user.suspensionDays === 1 ? 'día' : 'días'}` : ''}
+                      {(() => {
+                        const remainingDays = calculateRemainingSuspensionDays(user.suspension_end_date);
+                        return remainingDays > 0 ? `${remainingDays} ${remainingDays === 1 ? 'día' : 'días'}` : '';
+                      })()}
                     </td>
                     <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                      {user.is_active ? (
+                      {!user.is_banned ? (
                         <span 
                           className="px-2 inline-flex text-xs leading-5 rounded-full border border-red-700 text-red-700 hover:bg-red-700 hover:text-white transition-all duration-300 cursor-pointer"
                           onClick={() => {
@@ -535,39 +546,6 @@ function SuspendUserContent() {
                   ) : (
                     'Suspender'
                   )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showActivateModal && (
-          <div 
-            className="fixed inset-0 backdrop-blur-sm bg-black/10 flex items-center justify-center z-50 p-4"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setShowActivateModal(false);
-              }
-            }}
-            data-testid="modal-overlay"
-          >
-            <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-sm shadow-xl" role="dialog" aria-labelledby="activate-modal-title">
-              <h2 id="activate-modal-title" className="text-xl font-semibold text-gray-800 mb-4 text-center">
-                ¿Está seguro que quiere activar al usuario {selectedUser?.full_name}?
-              </h2>
-
-              <div className="flex justify-center gap-4 mt-6">
-                <button 
-                  className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-xl"
-                  onClick={() => setShowActivateModal(false)}
-                >
-                  Cancelar
-                </button>
-                <button 
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl"
-                  onClick={handleActivateUser}
-                > 
-                  Activar
                 </button>
               </div>
             </div>
