@@ -78,6 +78,7 @@ function SuspendUserContent() {
       setUsers([]);
 
       let allUsers: User[] = [];
+      let seenUserIds = new Set<string>(); // Track unique user IDs
       let hasMore = true;
       let lastTime = new Date(0).toISOString();
 
@@ -104,8 +105,12 @@ function SuspendUserContent() {
 
         const data: UsersResponse = await response.json();
         
-        // Add new users to our collection
-        allUsers = [...allUsers, ...data.data];
+        // Filter out duplicates before adding to collection
+        const newUsers = data.data.filter(user => !seenUserIds.has(user.id));
+        newUsers.forEach(user => seenUserIds.add(user.id));
+        
+        // Add only new users to our collection
+        allUsers = [...allUsers, ...newUsers];
         
         // Update pagination state
         hasMore = data.metadata.remainingItems > 0;
@@ -509,7 +514,7 @@ function SuspendUserContent() {
                   onChange={(e) => setSuspensionDescription(e.target.value)}
                   maxLength={500}
                 />
-                <div className="text-xs text-gray-400 mt-1 text-right">
+                <div className="text-xs text-gray-400 mt-1 text-right" data-testid="suspension-description-count">
                   {suspensionDescription.length}/500 caracteres
                 </div>
               </div>
