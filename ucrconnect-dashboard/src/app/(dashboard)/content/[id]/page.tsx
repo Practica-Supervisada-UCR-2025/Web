@@ -310,7 +310,7 @@ export default function PostDetail(): JSX.Element {
                     break;
                 case 'suspend_user':
                     setPost({ ...post, is_active: false, status: 0 });
-                    setSuccessMessage(`Usuario suspendido por ${suspensionDays} d\u00edas exitosamente`);
+                    setSuccessMessage(`Usuario suspendido por ${suspensionDays} ${suspensionDays === 1 ? 'día' : 'días'} exitosamente`);
                     setHideButtons(true);
                     break;
             }
@@ -329,20 +329,51 @@ export default function PostDetail(): JSX.Element {
     // Handle hide post
     const handleHidePost = async (suspensionDays?: number): Promise<void> => {
         if (suspensionDays) {
-            // Show "not implemented" message for user suspension
-            setSuccessMessage('Funcionalidad de suspensi\u00f3n de usuario no implementada a\u00fan');
-            setHideButtons(true);
-            setTimeout(() => {
-                router.push('/content');
-            }, 2000);
+            // Suspend user using the API
+            setActionLoading(true);
+            setError(null);
+            try {
+                const response = await fetch('/api/users/suspend', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: post?.user_id,
+                        days: suspensionDays,
+                        description: suspensionReason || `Usuario suspendido por moderación - ${suspensionDays} ${suspensionDays === 1 ? 'día' : 'días'}`
+                    }),
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('No tienes permisos para suspender usuarios');
+                    } else if (response.status === 400) {
+                        throw new Error(result.details || 'Error de validación en la suspensión');
+                    } else {
+                        throw new Error(result.message || 'Error al suspender el usuario');
+                    }
+                }
+
+                // Hide the post after successful suspension
+                await handleDeletePost();
+                setSuccessMessage(`Usuario suspendido por ${suspensionDays} ${suspensionDays === 1 ? 'día' : 'días'} exitosamente`);
+                setHideButtons(true);
+                setTimeout(() => {
+                    router.push('/content');
+                }, 2000);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Error al suspender el usuario');
+            } finally {
+                setActionLoading(false);
+            }
         } else {
             await handleDeletePost();
         }
     };
-    // Handle clear reports
-    const handleClearReports = async (): Promise<void> => {
-        await handleModerationAction('clear_reports');
-    };
+
     // Clear messages after timeout
     useEffect(() => {
         if (successMessage) {
@@ -525,7 +556,7 @@ export default function PostDetail(): JSX.Element {
                 {/* User Info and Reports */}
                 <div className="flex justify-between items-start mb-6">
                     <div>
-                        <Link href={`/users?search=${encodeURIComponent(post.user_id)}&email=${encodeURIComponent(post.email)}`}>
+                        <Link href={`/users?search=${encodeURIComponent(post.username)}&email=${encodeURIComponent(post.email)}`}>
                             <h2 className="text-xl font-semibold text-[#249dd8] hover:text-[#1b87b9] cursor-pointer">{post.username}</h2>
                         </Link>
                         <p className="text-gray-600">{post.email}</p>
@@ -583,11 +614,11 @@ export default function PostDetail(): JSX.Element {
                     <h3 className="text-lg font-bold text-[#249dd8] mb-4">Comentarios ({totalComments})</h3>
                     
                     {loading ? (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <div className="text-center py-8 bg-gray-50 rounded-xl">
                             <p className="text-gray-500">Cargando comentarios...</p>
                         </div>
                     ) : error ? (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <div className="text-center py-8 bg-gray-50 rounded-x;">
                             <p className="text-red-500">{error}</p>
                         </div>
                     ) : comments.length > 0 ? (
@@ -596,13 +627,13 @@ export default function PostDetail(): JSX.Element {
                             {comments.map((comment) => (
                                 <div 
                                     key={comment.id} 
-                                    className="bg-gray-50 p-4 rounded-lg"
+                                    className="bg-gray-50 p-4 rounded-xl"
                                     data-testid="comment-item"
                                     data-created-at={comment.created_at}
                                 >
                                     <div className="flex items-center gap-2 mb-2">
                                         <Link 
-                                            href={`/users?search=${encodeURIComponent(comment.user_id)}&email=${encodeURIComponent(comment.email)}`}
+                                            href={`/users?search=${encodeURIComponent(comment.username)}${comment.email ? `&email=${encodeURIComponent(comment.email)}` : ''}`}
                                             className="font-semibold text-[#249dd8] hover:underline"
                                             data-testid="user-profile-link"
                                         >
@@ -645,7 +676,7 @@ export default function PostDetail(): JSX.Element {
                             )}
                         </>
                     ) : (
-                        <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <div className="text-center py-8 bg-gray-50 rounded-xl">
                             <p className="text-gray-500">No hay comentarios para mostrar</p>
                         </div>
                     )}
@@ -722,7 +753,7 @@ export default function PostDetail(): JSX.Element {
 
             {showSuspendModal && (
                 <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-6">
+                    <div className="bg-white rounded-xl w-full max-w-md p-6">
                         <h3 className="text-xl font-semibold mb-4 text-center mb-4 text-gray-800">&iquest;Tambi&eacute;n deseas suspender al usuario?</h3>
                         <div className="flex justify-center gap-4 mt-6">
                             <button
@@ -809,7 +840,7 @@ export default function PostDetail(): JSX.Element {
             )}
             {showConfirmClearReports && (
                 <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg w-full max-w-md p-6">
+                    <div className="bg-white rounded-xl w-full max-w-md p-6">
                         <h3 className="text-xl font-semibold mb-4 text-center mb-4 text-gray-800">
                             {post.is_active ? 'Confirmar eliminaci\u00f3n de reportes' : 'Confirmar restauraci\u00f3n de publicaci\u00f3n'}
                         </h3>
