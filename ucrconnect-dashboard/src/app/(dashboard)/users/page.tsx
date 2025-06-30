@@ -3,7 +3,6 @@ import { useEffect, useState, Suspense } from 'react';
 import StatCard from '../../components/statCard';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useApi } from '@/hooks/useApi';
 import { fetchAnalytics } from '@/lib/analyticsApi';
 
 interface User {
@@ -28,7 +27,6 @@ interface UsersResponse {
 
 function UsersContent() {
   const searchParams = useSearchParams();
-  const { get } = useApi();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +92,7 @@ function UsersContent() {
     }
   }, [searchParams]);
 
-  // Fetch users from API using new API utilities
+  // Fetch users from API using direct fetch calls
   const fetchUsers = async (createdAfter?: string, limit: number = 50) => {
     try {
       setLoading(true);
@@ -118,18 +116,41 @@ function UsersContent() {
         url += `?${params.toString()}`;
       }
 
-      const response = await get(url);
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (response.status === 401) {
+        // Clear the access token cookie
+        document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        
+        // Redirect to login with session expired message
+        const loginUrl = new URL('/login', window.location.origin);
+        loginUrl.searchParams.set('session_expired', 'true');
+        window.location.href = loginUrl.toString();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const rawData = await response.json();
       
-      // Handle different response structures - the API utilities might return data directly or wrapped
+      // Handle different response structures
       let data: UsersResponse;
-      if (response.data && Array.isArray(response.data)) {
+      if (rawData.data && Array.isArray(rawData.data)) {
         // Response is wrapped in a data property
-        data = response as UsersResponse;
-      } else if (Array.isArray(response)) {
+        data = rawData as UsersResponse;
+      } else if (Array.isArray(rawData)) {
         // Response is directly an array of users
         data = {
           message: 'Success',
-          data: response,
+          data: rawData,
           metadata: {
             last_time: '',
             remainingItems: 0,
@@ -138,22 +159,18 @@ function UsersContent() {
         };
       } else {
         // Response is already in the expected format
-        data = response as UsersResponse;
+        data = rawData as UsersResponse;
       }
       
       // Ensure data.data is an array
       if (!data.data || !Array.isArray(data.data)) {
-        throw new Error('Invalid response structure from API');
+        throw new Error('data.data is not iterable');
       }
       
       // Always append users for pagination, search filtering happens client-side
       if (createdAfter) {
-        // Append new users, avoiding duplicates
-        setUsers(prev => {
-          const existingIds = new Set(prev.map(user => user.id));
-          const newUsers = data.data.filter(user => !existingIds.has(user.id));
-          return [...prev, ...newUsers];
-        });
+        // Append new users (no duplicate filtering)
+        setUsers(prev => [...prev, ...data.data]);
       } else {
         // Initial load - replace all users
         setUsers(data.data);
@@ -172,7 +189,7 @@ function UsersContent() {
     }
   };
 
-  // Load ALL users upfront using new API utilities
+  // Load ALL users upfront using direct fetch calls
   const loadAllUsers = async () => {
     // Don't load users if not authenticated
     if (!isAuthenticated) {
@@ -188,7 +205,6 @@ function UsersContent() {
       setRemainingItems(0);
 
       let allUsers: User[] = [];
-      let seenUserIds = new Set<string>(); // Track unique user IDs
       let hasMore = true;
       let lastTime = new Date(0).toISOString();
 
@@ -196,18 +212,41 @@ function UsersContent() {
       while (hasMore) {
         const url = `/api/users/get/all?created_after=${encodeURIComponent(lastTime)}&limit=50`;
         
-        const response = await get(url);
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (response.status === 401) {
+          // Clear the access token cookie
+          document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          
+          // Redirect to login with session expired message
+          const loginUrl = new URL('/login', window.location.origin);
+          loginUrl.searchParams.set('session_expired', 'true');
+          window.location.href = loginUrl.toString();
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const rawData = await response.json();
         
         // Handle different response structures
         let data: UsersResponse;
-        if (response.data && Array.isArray(response.data)) {
+        if (rawData.data && Array.isArray(rawData.data)) {
           // Response is wrapped in a data property
-          data = response as UsersResponse;
-        } else if (Array.isArray(response)) {
+          data = rawData as UsersResponse;
+        } else if (Array.isArray(rawData)) {
           // Response is directly an array of users
           data = {
             message: 'Success',
-            data: response,
+            data: rawData,
             metadata: {
               last_time: '',
               remainingItems: 0,
@@ -216,20 +255,16 @@ function UsersContent() {
           };
         } else {
           // Response is already in the expected format
-          data = response as UsersResponse;
+          data = rawData as UsersResponse;
         }
         
         // Ensure data.data is an array
         if (!data.data || !Array.isArray(data.data)) {
-          throw new Error('Invalid response structure from API');
+          throw new Error('data.data is not iterable');
         }
         
-        // Filter out duplicates before adding to collection
-        const newUsers = data.data.filter(user => !seenUserIds.has(user.id));
-        newUsers.forEach(user => seenUserIds.add(user.id));
-        
-        // Add only new users to our collection
-        allUsers = [...allUsers, ...newUsers];
+        // Add new users to our collection (no duplicate filtering)
+        allUsers = [...allUsers, ...data.data];
         
         // Update pagination state
         hasMore = data.metadata.remainingItems > 0;
