@@ -2,24 +2,47 @@
 import { useEffect, useState, Suspense } from 'react';
 import StatCard from '../../components/statCard';
 import Link from 'next/link';
-import { mockUsers } from './mockUsers';
 import { useSearchParams } from 'next/navigation';
+import { fetchAnalytics } from '@/lib/analyticsApi';
 
 interface User {
-  id?: string;
-  name: string;
+  id: string;
   email: string;
-  type: string;
-  status: string;
-  suspensionDays: number;
+  full_name: string;
+  username: string;
+  profile_picture: string;
+  is_active: boolean;
+  created_at: string;
+  is_banned: boolean;
+  suspension_end_date: string;
+}
+
+interface UsersResponse {
+  message: string;
+  data: User[];
+  metadata: {
+    last_time: string;
+    remainingItems: number;
+    remainingPages: number;
+  };
 }
 
 function UsersContent() {
   const searchParams = useSearchParams();
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [hasMoreUsers, setHasMoreUsers] = useState(false);
+  const [lastTime, setLastTime] = useState<string | null>(null);
+  const [remainingItems, setRemainingItems] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
   const [dashboardStats, setDashboardStats] = useState([
     {
       title: 'Usuarios',
-      value: mockUsers.length,
+      value: 0,
+      change: 12,
       route: '/users'
     }
   ]);
@@ -27,6 +50,36 @@ function UsersContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 6;
+
+  // Check authentication status
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/admin/auth/profile', {
+          credentials: 'include',
+        });
+        
+        if (response.status === 401) {
+          setIsAuthenticated(false);
+          window.location.href = '/login';
+          return;
+        }
+        
+        if (response.ok) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+        window.location.href = '/login';
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   // Set initial search query from URL parameters
   useEffect(() => {
@@ -41,22 +94,341 @@ function UsersContent() {
     }
   }, [searchParams]);
 
-  const filteredUsers = mockUsers.filter((user: User) => 
-    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (user.id && user.id.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // Fetch users from API using direct fetch calls
+  const fetchUsers = async (createdAfter?: string, limit: number = 50) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  // Calculate pagination
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+      let url = '/api/users/get/all';
+      const params = new URLSearchParams();
+
+      // Always use pagination parameters for the API call
+      if (createdAfter && limit) {
+        params.append('created_after', createdAfter);
+        params.append('limit', limit.toString());
+      } else {
+        // Initial load - get first page
+        const initialDate = new Date(0).toISOString(); // Start from beginning
+        params.append('created_after', initialDate);
+        params.append('limit', '50');
+      }
+
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (response.status === 401) {
+        // Clear the access token cookie
+        document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        
+        // Redirect to login with session expired message
+        const loginUrl = new URL('/login', window.location.origin);
+        loginUrl.searchParams.set('session_expired', 'true');
+        window.location.href = loginUrl.toString();
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const rawData = await response.json();
+      
+      // Handle different response structures
+      let data: UsersResponse;
+      if (rawData.data && Array.isArray(rawData.data)) {
+        // Response is wrapped in a data property
+        data = rawData as UsersResponse;
+      } else if (Array.isArray(rawData)) {
+        // Response is directly an array of users
+        data = {
+          message: 'Success',
+          data: rawData,
+          metadata: {
+            last_time: '',
+            remainingItems: 0,
+            remainingPages: 0
+          }
+        };
+      } else {
+        // Response is already in the expected format
+        data = rawData as UsersResponse;
+      }
+      
+      // Ensure data.data is an array
+      if (!data.data || !Array.isArray(data.data)) {
+        throw new Error('data.data is not iterable');
+      }
+      
+      // Always append users for pagination, search filtering happens client-side
+      if (createdAfter) {
+        // Append new users (no duplicate filtering)
+        setUsers(prev => [...prev, ...data.data]);
+      } else {
+        // Initial load - replace all users
+        setUsers(data.data);
+      }
+      setHasMoreUsers(data.metadata.remainingItems > 0);
+      setLastTime(data.metadata.last_time);
+      setRemainingItems(data.metadata.remainingItems);
+
+      // Don't update total count here - it comes from analytics API
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch users');
+      console.error('Error fetching users:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load ALL users upfront using direct fetch calls
+  const loadAllUsers = async () => {
+    // Don't load users if not authenticated
+    if (!isAuthenticated) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      setUsers([]);
+      setHasMoreUsers(true);
+      setLastTime(null);
+      setRemainingItems(0);
+
+      let allUsers: User[] = [];
+      let hasMore = true;
+      let lastTime = new Date(0).toISOString();
+
+      // Keep fetching until we have all users
+      while (hasMore) {
+        const url = `/api/users/get/all?created_after=${encodeURIComponent(lastTime)}&limit=50`;
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (response.status === 401) {
+          // Clear the access token cookie
+          document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          
+          // Redirect to login with session expired message
+          const loginUrl = new URL('/login', window.location.origin);
+          loginUrl.searchParams.set('session_expired', 'true');
+          window.location.href = loginUrl.toString();
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const rawData = await response.json();
+        
+        // Handle different response structures
+        let data: UsersResponse;
+        if (rawData.data && Array.isArray(rawData.data)) {
+          // Response is wrapped in a data property
+          data = rawData as UsersResponse;
+        } else if (Array.isArray(rawData)) {
+          // Response is directly an array of users
+          data = {
+            message: 'Success',
+            data: rawData,
+            metadata: {
+              last_time: '',
+              remainingItems: 0,
+              remainingPages: 0
+            }
+          };
+        } else {
+          // Response is already in the expected format
+          data = rawData as UsersResponse;
+        }
+        
+        // Ensure data.data is an array
+        if (!data.data || !Array.isArray(data.data)) {
+          throw new Error('data.data is not iterable');
+        }
+        
+        // Add new users to our collection (no duplicate filtering)
+        allUsers = [...allUsers, ...data.data];
+        
+        // Update pagination state
+        hasMore = data.metadata.remainingItems > 0;
+        lastTime = data.metadata.last_time;
+        setRemainingItems(data.metadata.remainingItems);
+      }
+
+      // Set all users at once
+      setUsers(allUsers);
+      setHasMoreUsers(false);
+      setLastTime(null);
+      setRemainingItems(0);
+
+      // Don't update total count here - it comes from analytics API
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch all users');
+      console.error('Error fetching all users:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load initial users only when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadAllUsers();
+      fetchTotalUserCount();
+    }
+  }, [isAuthenticated]);
+
+  // Fetch total user count from analytics API
+  const fetchTotalUserCount = async () => {
+    try {
+      const today = new Date();
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(today.getMonth() - 6);
+
+      const response = await fetchAnalytics({
+        interval: 'monthly',
+        startDate: sixMonthsAgo.toISOString().split('T')[0],
+        endDate: today.toISOString().split('T')[0],
+        graphType: 'growth',
+        cumulative: true
+      });
+
+      const totalUsers = response?.data?.totalUsers ?? 0;
+      setTotalUsers(totalUsers);
+      setDashboardStats(prev => prev.map(stat => 
+        stat.title === 'Usuarios' ? { ...stat, value: totalUsers } : stat
+      ));
+    } catch (err) {
+      console.error('Error fetching total user count:', err);
+      // Fallback to counting loaded users if analytics fails
+    }
+  };
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setCurrentPage(1);
+    }
+  }, [searchQuery]);
+
+  const filteredUsers = users.filter((user: User) => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      user.email.toLowerCase().includes(query) ||
+      user.full_name.toLowerCase().includes(query) ||
+      user.username.toLowerCase().includes(query)
+    );
+  });
+
+  // Calculate pagination for current page display
   const startIndex = (currentPage - 1) * usersPerPage;
   const endIndex = startIndex + usersPerPage;
   const currentUsers = filteredUsers.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
-  // Handle page changes
+  // Calculate total pages - now based on filtered results
+  const totalAvailablePages = totalPages;
+
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
   };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 7; // Show max 7 page numbers
+    
+    if (totalAvailablePages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalAvailablePages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show pages with ellipsis
+      if (currentPage <= 4) {
+        // Show first 5 pages + ellipsis + last page
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalAvailablePages);
+      } else if (currentPage >= totalAvailablePages - 3) {
+        // Show first page + ellipsis + last 5 pages
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalAvailablePages - 4; i <= totalAvailablePages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Show first page + ellipsis + current-1, current, current+1 + ellipsis + last page
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalAvailablePages);
+      }
+    }
+    
+    return pages;
+  };
+
+  if (loading && users.length === 0) {
+    return (
+      <div className="w-full max-w-[95vw] mx-auto px-4">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-gray-600">Loading users...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full max-w-[95vw] mx-auto px-4">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-red-600">Error: {error}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading while checking authentication
+  if (isAuthenticated === null) {
+    return (
+      <div className="w-full max-w-[95vw] mx-auto px-4">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-gray-600">Checking authentication...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render anything if not authenticated (will redirect to login)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="w-full max-w-[95vw] mx-auto px-4">
@@ -89,7 +461,7 @@ function UsersContent() {
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#1b87b9] focus:border-[#1b87b9] sm:text-sm shadow-md"
+            className="block w-full pl-10 pr-3 py-2 text-gray-600 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-[#2980B9] focus:border-[#2980B9] sm:text-sm shadow-md"
             placeholder="Buscar usuarios..."
             value={searchQuery}
             onChange={(e) => {
@@ -110,7 +482,7 @@ function UsersContent() {
           <Link href="/users/suspend" className="flex-1 sm:flex-none">
             <button className="w-full sm:w-auto border border-[#249dd8]/10 text-[#249dd8] font-bold px-4 py-2 rounded-xl cursor-pointer hover:bg-[#249dd8]/20 transition shadow-lg flex items-center justify-center gap-2">
               <div className="bg-[#1b87b9] rounded-xl p-1">
-                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/> </svg>
+                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/> </svg>
               </div>
               Suspender usuario
             </button>
@@ -125,34 +497,75 @@ function UsersContent() {
               <tr>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correo</th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
                 <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>          
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {currentUsers.map((user: User, index: number) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="text-[#1b87b9] px-4 sm:px-6 py-4 whitespace-nowrap">{user.name}</td>
+              {currentUsers.length > 0 ? (
+                currentUsers.map((user: User, index: number) => (
+                  <tr key={`${user.id}-${startIndex + index}`} className="hover:bg-gray-50">
+                    <td className="text-[#2980B9] px-4 sm:px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
+                          {user.profile_picture ? (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.full_name} profile`}
+                              className="w-full h-full object-cover block"
+                              style={{ aspectRatio: '1/1', minWidth: '3rem', minHeight: '3rem', maxWidth: '3rem', maxHeight: '3rem' }}
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = 'data:image/svg+xml;utf8,<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><circle cx=\"24\" cy=\"24\" r=\"24\" fill=\"%239CA3AF\"/><path d=\"M24 24c3.31 0 6-2.69 6-6s-2.69-6-6-6-6 2.69-6 6 2.69 6 6 6zm0 3c-4 0-12 2-12 6v3h24v-3c0-4-8-6-12-6z\" fill=\"white\"/></svg>';
+                              }}
+                            />
+                          ) : (
+                            <img
+                              src={'data:image/svg+xml;utf8,<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="%239CA3AF"/><path d="M24 24c3.31 0 6-2.69 6-6s-2.69-6-6-6-6 2.69-6 6 2.69 6 6 6zm0 3c-4 0-12 2-12 6v3h24v-3c0-4-8-6-12-6z" fill="white"/></svg>'}
+                              alt="placeholder"
+                              className="w-full h-full object-cover block"
+                              style={{ aspectRatio: '1/1', minWidth: '3rem', minHeight: '3rem', maxWidth: '3rem', maxHeight: '3rem' }}
+                            />
+                          )}
+                        </div>
+                        <span>{user.full_name}</span>
+                      </div>
+                    </td>
                   <td className="text-gray-900 px-4 sm:px-6 py-4 whitespace-nowrap">{user.email}</td>
-                  <td className="text-gray-900 px-4 sm:px-6 py-4 whitespace-nowrap">{user.type}</td>
+                    <td className="text-gray-900 px-4 sm:px-6 py-4 whitespace-nowrap">{user.username}</td>
                   <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-xl ${
-                      user.status === 'Activo' 
-                        ? 'bg-[#609000]/20 text-[#609000]'
-                        : 'bg-red-100 text-red-700'
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user.is_banned 
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-[#609000]/20 text-[#609000]'
                     }`}>
-                      {user.status}
+                        {user.is_banned ? 'Suspendido' : 'Activo'}
                     </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                    {searchQuery.trim() ? (
+                      `No se encontraron usuarios con "${searchQuery}" en email, nombre o username`
+                    ) : (
+                      'No hay usuarios disponibles'
+                    )}
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Pagination - only show if there are users and multiple pages */}
+        {users.length > 0 && totalAvailablePages > 1 && (
+          <>
         <div className="flex justify-center gap-2 mt-4 flex-wrap">
           <button
+            aria-label="previous"
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
             className={`p-2 rounded-lg ${
@@ -166,25 +579,29 @@ function UsersContent() {
             </svg>
           </button>
 
-          {[...Array(totalPages)].map((_, index) => (
+              {getPageNumbers().map((page, index) => (
             <button
               key={index}
-              onClick={() => handlePageChange(index + 1)}
+                  onClick={() => typeof page === 'number' ? handlePageChange(page) : undefined}
+                  disabled={page === '...'}
               className={`px-3 py-1 rounded-lg ${
-                currentPage === index + 1
+                    page === '...'
+                      ? 'bg-transparent text-gray-400 cursor-default'
+                      : currentPage === page
                   ? 'bg-[#249dd8] text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              {index + 1}
+                  {page}
             </button>
           ))}
 
           <button
+            aria-label="next"
             onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
+                disabled={currentPage === totalAvailablePages}
             className={`p-2 rounded-lg ${
-              currentPage === totalPages
+                  currentPage === totalAvailablePages
                 ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 : 'bg-[#249dd8] text-white hover:bg-[#1b87b9]'
             }`}
@@ -194,6 +611,15 @@ function UsersContent() {
             </svg>
           </button>
         </div>
+
+            {/* Show loading indicator only during initial load */}
+            {loading && (
+              <div className="flex justify-center mt-4">
+                <div className="text-sm text-gray-600">Loading all users...</div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

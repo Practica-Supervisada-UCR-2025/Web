@@ -1,41 +1,44 @@
 /* __test__/profileApi.test.ts */
 import { fetchProfileFromApiRoute, updateProfile } from '@/lib/profileApi'
 
-describe('profileApi utilities', () => {
-  const originalFetch = global.fetch
+// Mock the API utilities
+jest.mock('@/lib/apiUtils', () => ({
+  apiGet: jest.fn(),
+  apiPatch: jest.fn(),
+}))
 
-  afterEach(() => {
-    // Restore the original fetch implementation after each test
-    global.fetch = originalFetch
-    jest.resetAllMocks()
+import { apiGet } from '@/lib/apiUtils'
+
+describe('profileApi utilities', () => {
+  const mockApiGet = apiGet as jest.MockedFunction<typeof apiGet>
+
+  beforeEach(() => {
+    jest.clearAllMocks()
   })
 
   describe('fetchProfileFromApiRoute', () => {
     it('should return profile data when the request is successful', async () => {
       const mockProfile = { id: '123', name: 'Admin' }
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue({ data: mockProfile }),
-      }) as unknown as typeof fetch
+      mockApiGet.mockResolvedValue(mockProfile)
 
       const data = await fetchProfileFromApiRoute()
 
-      expect(global.fetch).toHaveBeenCalledWith('/api/admin/auth/profile')
+      expect(mockApiGet).toHaveBeenCalledWith('/api/admin/auth/profile')
       expect(data).toEqual(mockProfile)
     })
 
     it('should throw an error when the request is not ok', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-      }) as unknown as typeof fetch
+      mockApiGet.mockRejectedValue(new Error('Session expired'))
 
-      await expect(fetchProfileFromApiRoute()).rejects.toThrow('Error fetching profile')
+      await expect(fetchProfileFromApiRoute()).rejects.toThrow('Session expired')
     })
   })
 
   describe('updateProfile', () => {
     it('should send a PATCH request and return updated data on success', async () => {
       const mockUpdatedProfile = { id: '123', name: 'Admin Updated' }
+      
+      // Mock the fetch call directly since updateProfile still uses fetch
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ data: mockUpdatedProfile }),
@@ -49,6 +52,7 @@ describe('profileApi utilities', () => {
       expect(global.fetch).toHaveBeenCalledWith('/api/admin/auth/profile', {
         method: 'PATCH',
         body: formData,
+        credentials: 'include',
       })
       expect(data).toEqual(mockUpdatedProfile)
     })
