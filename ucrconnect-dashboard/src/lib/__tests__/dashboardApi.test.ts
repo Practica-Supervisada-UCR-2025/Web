@@ -93,7 +93,7 @@ describe('dashboardApi', () => {
       const result = await fetchPostCountLast30Days();
 
       expect(fetchAnalytics).toHaveBeenCalledWith(expect.objectContaining({
-        interval: 'daily',
+        interval: 'weekly',
         graphType: 'total',
       }));
 
