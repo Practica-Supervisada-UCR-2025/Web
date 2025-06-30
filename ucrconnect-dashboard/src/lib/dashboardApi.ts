@@ -52,7 +52,7 @@ export async function fetchPostCountLast30Days() {
   startDate.setDate(endDate.getDate() - 30);
 
   const response = await fetchAnalytics({
-    interval: 'daily',
+    interval: 'weekly',
     startDate: formatDate(startDate),
     endDate: formatDate(endDate),
     graphType: 'total',
