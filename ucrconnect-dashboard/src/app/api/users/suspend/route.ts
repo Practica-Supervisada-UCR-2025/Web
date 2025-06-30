@@ -62,9 +62,6 @@ export async function POST(request: NextRequest) {
 
     // Make request to backend API
     const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/user/suspend`;
-    
-    console.log('Making request to backend:', backendUrl);
-    console.log('Request body:', JSON.stringify(requestBody, null, 2));
 
     const backendResponse = await fetch(backendUrl, {
       method: 'POST',
@@ -74,9 +71,6 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify(requestBody),
     });
-
-    console.log('Backend response status:', backendResponse.status);
-    console.log('Backend response headers:', Object.fromEntries(backendResponse.headers.entries()));
 
     // Handle non-JSON responses
     const contentType = backendResponse.headers.get('content-type');
