@@ -656,6 +656,9 @@ export default function PostDetail(): JSX.Element {
                     <div className="flex flex-wrap gap-4 pt-6 border-t">
                         {post.is_active ? (
                             // Buttons for active posts
+                            // Attention: If you are a future developer planning to implement the restore feature,
+                            // make sure the backend is updated to not only reactivate the post,
+                            // but also set the "active_post" variable to 0.
                             <>
                                 <button
                                     onClick={() => setShowHideConfirmModal(true)}
@@ -667,7 +670,7 @@ export default function PostDetail(): JSX.Element {
                                 <button
                                     onClick={() => setShowConfirmClearReports(true)}
                                     disabled={actionLoading || parseInt(post.active_reports) === 0}
-                                    className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-xl font-medium transition-colors"
+                                    className="hidden px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-xl font-medium transition-colors"
                                 >
                                     {actionLoading ? 'Procesando...' : 'Eliminar reportes'}
                                 </button>
@@ -678,7 +681,7 @@ export default function PostDetail(): JSX.Element {
                                     <button
                                         onClick={() => setShowConfirmClearReports(true)}
                                         disabled={actionLoading}
-                                        className="px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-xl font-medium transition-colors"
+                                        className="hidden px-6 py-3 bg-[#249dd8] hover:bg-[#1b87b9] disabled:bg-gray-400 text-white rounded-xl font-medium transition-colors"
                                     >
                                         {actionLoading ? 'Procesando...' : 'Restaurar publicación'}
                                     </button>
